@@ -1,11 +1,25 @@
 function Invoke-APICall {
+    <#
+    .SYNOPSIS
+        Helper function for displaying information about request parameters of AZURE OpenAI API version.
+    .NOTES
+        Author: Wojciech Napierała
+        Date:   2023-07-02
+    .LINK
+        GitHub repo: https://github.com/voytas75/AzureOpenAI-PowerShell
+    .EXAMPLE
+        Invoke-APICall -RawAPIUrl 'https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/cognitiveservices/data-plane/AzureOpenAI/inference/preview/2023-06-01-preview/inference.json'
+    #>
+    
+    
     param (
-        [Parameter()]
-        $RawAPIUrl = 'https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/cognitiveservices/data-plane/AzureOpenAI/inference/preview/2023-06-01-preview/inference.json'
+        [Parameter(Mandatory = $true)]
+        [string]$RawAPIUrl
     )
 
     $response = Invoke-RestMethod -Uri $RawAPIUrl -TimeoutSec 5
 
+    Write-Output $response.info
     # chat completions
     Write-Output "chat completions, properties:"
     # properties
