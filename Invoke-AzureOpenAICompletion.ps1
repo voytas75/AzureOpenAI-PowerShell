@@ -79,6 +79,7 @@ function Invoke-AzureOpenAICompletion {
     .NOTES
     Author: Wojciech Napierała
     Date:   2023-06-27
+    Repo: https://github.com/voytas75/AzureOpenAI-PowerShell
     #>
     
     [CmdletBinding()]
