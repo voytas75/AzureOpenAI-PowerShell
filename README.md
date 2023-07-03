@@ -66,45 +66,5 @@ $response = Invoke-APICall -RawAPIUrl "https://api.example.com/endpoint"
 
 ## Output
 
-The function retrieves the response from the API endpoint and assigns it to the `$response` variable.
-
-### Chat Completions
-
-#### Properties
-
-```powershell
-$response.paths."/deployments/{deployment-id}/chat/completions".post.requestBody.content."application/json".schema.properties
-```
-
-#### Required
-
-```powershell
-$response.paths."/deployments/{deployment-id}/chat/completions".post.requestBody.content."application/json".schema.required
-```
-
-### Completions
-#### Properties
-
-```powershell
-$response.paths."/deployments/{deployment-id}/completions".post.requestBody.content."application/json".schema.properties
-```
-
-#### Required
-
-```powershell
-$response.paths."/deployments/{deployment-id}/completions".post.requestBody.content."application/json".schema.required
-```
-
-### Embeddings
-
-#### Properties
-
-```powershell
-$response.paths."/deployments/{deployment-id}/embeddings".post.requestBody.content."application/json".schema.properties
-```
-
-#### Required
-
-```powershell
-$response.paths."/deployments/{deployment-id}/embeddings".post.requestBody.content."application/json".schema.required
-```
+The function retrieves the specification REST API for AZURE OpenAI version '2023-06-01-preview' <https://github.com/Azure/azure-rest-api-specs/tree/main/specification/cognitiveservices/data-plane/AzureOpenAI/inference/preview/2023-06-01-preview>. 
+Other versions:<https://github.com/Azure/azure-rest-api-specs/tree/main/specification/cognitiveservices/data-plane/AzureOpenAI/inference>.
