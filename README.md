@@ -73,6 +73,18 @@ Invoke-AzureOpenAICompletion `
 
 This example makes an API request to an AZURE OpenAI and outputs the response message.
 
+#### API Key
+
+The PowerShell code provides a function called `Get-Headers` that retrieves the headers required to make an API request to the Azure OpenAI service. One of the parameters for this function is `ApiKeyVariable`, which represents the name of the environment variable where the API key is stored. The code checks if the API key is valid by verifying if the specified environment variable exists and retrieves the API key value from it.
+
+The API key is an essential component for authenticating and authorizing requests to the Azure OpenAI service. It acts as a unique identifier and security credential that grants access to the service. In the context of the PowerShell code, the API key is used to construct the headers for the API request, ensuring that the request is authenticated and authorized.
+
+The `Get-Headers` function retrieves the API key from the specified environment variable and constructs the headers with the necessary content type and API key values. These headers are then used in the subsequent API request to the Azure OpenAI service.
+
+By providing the API key through the `ApiKeyVariable` parameter when invoking the `Get-Headers` function, users can securely and conveniently authenticate their API requests to the Azure OpenAI service.
+
+`ApiKeyVariable` = `API_AZURE_OPENAI`
+
 ### Function: `Invoke-APICall`
 
 Helper function for displaying information about request parameters of AZURE OpenAI API version.
