@@ -16,10 +16,10 @@ These functionalities are part of Azure OpenAI's offering and are powered by sta
 
 ## Functionalities
 
-- [x] Completion - Function [`Invoke-AzureOpenAICompletion`](https://github.com/voytas75/AzureOpenAI-PowerShell#invoke-azureopenaicompletion)
+- [x] Completion - Function [`Invoke-AzureOpenAICompletion`](https://github.com/voytas75/AzureOpenAI-PowerShell#function-invoke-azureopenaicompletion)
 - [ ] Chat completion - Function `Invoke-AzureOpenAIChatCompletion`
 - [ ] Embedding - Function `Invoke-AzureOpenAIEmbedding`
-- [x] Helper function for displaying information about request parameters - Function [`Invoke-APICall`](https://github.com/voytas75/AzureOpenAI-PowerShell#function-name-invoke-apicall)
+- [x] Helper function for displaying information about request parameters - Function [`Invoke-APICall`](https://github.com/voytas75/AzureOpenAI-PowerShell#function-invoke-apicall)
 
 ### Function: `Invoke-AzureOpenAICompletion`
 
