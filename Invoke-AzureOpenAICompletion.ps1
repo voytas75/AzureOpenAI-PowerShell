@@ -168,6 +168,7 @@ function Invoke-AzureOpenAICompletion {
 
         return $headers
     }
+    
     # Define system and user messages
     function Get-Prompt {
 
