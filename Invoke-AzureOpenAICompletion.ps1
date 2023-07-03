@@ -404,7 +404,7 @@ function Invoke-AzureOpenAICompletion {
             -completion_config $completion_config `
             -model $model
         $bodyJSON = ($body | ConvertTo-Json)
-        $bodyJSON
+        Write-Verbose ($bodyJSON | Out-String)
         $urlChat = Get-Url
         $response = Invoke-ApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON
         Show-ResponseMessage -content $response.choices[0].text -stream "console"
