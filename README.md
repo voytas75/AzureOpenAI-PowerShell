@@ -1,5 +1,7 @@
 # AzureOpenAI-PowerShell
 
+![]()
+
 Welcome to the GitHub repository for Azure OpenAI PowerShell Functions! This project provides a collection of PowerShell functions that allow you to interact with Azure OpenAI's powerful language models, including GPT-3.
 
 [What is Azure OpenAI Service?](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/overview)
