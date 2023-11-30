@@ -37,6 +37,10 @@ By providing the API key through the `ApiKeyVariable` parameter when invoking th
 
 </details>
 
+## Parameters
+
+`API version`: [preview](https://github.com/Azure/azure-rest-api-specs/tree/main/specification/cognitiveservices/data-plane/AzureOpenAI/inference/preview), [stable](https://github.com/Azure/azure-rest-api-specs/tree/main/specification/cognitiveservices/data-plane/AzureOpenAI/inference/stable)
+
 ## Functionalities
 
 - [x] Completion - Function [`Invoke-AzureOpenAICompletion`](#function-invoke-azureopenaicompletion)

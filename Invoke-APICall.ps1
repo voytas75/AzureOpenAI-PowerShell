@@ -19,7 +19,7 @@ function Invoke-APICall {
 
     $response = Invoke-RestMethod -Uri $RawAPIUrl -TimeoutSec 5
 
-    Write-Output $response.info
+    Write-Output $response.info | fl
     # chat completions
     Write-Output "chat completions, properties:"
     # properties
