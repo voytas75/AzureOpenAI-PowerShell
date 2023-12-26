@@ -8,7 +8,7 @@ Welcome to the GitHub repository for Azure OpenAI PowerShell Functions! This pro
 
 <details>
 
-  <summary>Completion, Chat Completion, and Embedding</summary>
+  <summary>Completion, Chat Completion, Embedding, and image generation</summary>
 
 In Azure OpenAI, Completion, Chat Completions, and Embeddings are specific functionalities that leverage the power of language models to perform different tasks. Here's a brief overview of each:
 
