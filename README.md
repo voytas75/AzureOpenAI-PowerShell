@@ -20,6 +20,7 @@ In Azure OpenAI, Completion, Chat Completions, and Embeddings are specific funct
 
 These functionalities are part of Azure OpenAI's offering and are powered by state-of-the-art language models, such as GPT-3. They provide developers with powerful tools to leverage natural language processing and generation capabilities within their applications, automation workflows, or any task that involves working with text data.
 
+4. **DALL-E 3**
 </details>
 
 <details>
@@ -45,7 +46,8 @@ By providing the API key through the `ApiKeyVariable` parameter when invoking th
 
 - [x] Completion - Function [`Invoke-AzureOpenAICompletion`](#function-invoke-azureopenaicompletion)
 - [x] Chat completion - Function [`Invoke-AzureOpenAIChatCompletion`](#function-invoke-azureopenaichatcompletion)
-- [x] Embedding - Function [`Invoke-AzureOpenAIEmbedding`](#function-invoke-azureopenaiembedding))
+- [x] Embedding - Function [`Invoke-AzureOpenAIEmbedding`](#function-invoke-azureopenaiembedding)
+- [ ] DALL-E 3 - Function [`Invoke-AzureOpenAIDalle3`](#function-invoke-azureopenaidalle3)
 - [x] Helper function for displaying information about request parameters - Function [`Invoke-APICall`](#function-invoke-apicall)
 
 ### Function: `Invoke-AzureOpenAICompletion`
@@ -148,6 +150,31 @@ Invoke-AzureOpenAIEmbedding `
     -Endpoint "https://example.openai.azure.com" `
     -Deployment "example_model_ada002_1" `
     -User "BobbyK"
+```
+
+### Function: `Invoke-AzureOpenAIDalle3`
+
+This function generates images from a text description using Azure OpenAI's DALL-E 3 model.
+
+#### Parameters
+
+- `serviceName`: The name of the Azure service.
+- `apiKey`: The API key for the Azure service.
+- `prompt`: The text description to generate the image from.
+- `model`: The model to use for image generation. Default is 'dalle3'.
+- `SavePath`: The path where the generated image will be saved. Default is the user's Pictures folder.
+
+#### Usage
+
+```powershell
+. .\Invoke-AzureOpenAIDalle3.ps1
+
+Invoke-AzureOpenAIDalle3 `
+    -serviceName "example_service" `
+    -apiKey "your_api_key" `
+    -prompt "A futuristic city skyline at sunset." `
+    -model "dalle3" `
+    -SavePath "C:\Users\BobbyK\Pictures"
 ```
 
 ### Function: `Invoke-APICall`
