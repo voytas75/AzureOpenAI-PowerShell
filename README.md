@@ -20,7 +20,7 @@ In Azure OpenAI, Completion, Chat Completions, and Embeddings are specific funct
 
 4. **DALL-E 3**: The DALL-E models, currently in preview, generate images from text prompts that the user provides.
 
-These functionalities are part of Azure OpenAI's offering and are powered by state-of-the-art language models, such as GPT-3. They provide developers with powerful tools to leverage natural language processing and generation capabilities within their applications, automation workflows, or any task that involves working with text data.
+These functionalities are part of Azure OpenAI's offering and are powered by state-of-the-art language models, such as GPT-4. They provide developers with powerful tools to leverage natural language processing and generation capabilities within their applications, automation workflows, or any task that involves working with text data.
 </details>
 
 <details>
