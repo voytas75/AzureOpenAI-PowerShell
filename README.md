@@ -47,7 +47,7 @@ By providing the API key through the `ApiKeyVariable` parameter when invoking th
 - [x] Completion - Function [`Invoke-AzureOpenAICompletion`](#function-invoke-azureopenaicompletion)
 - [x] Chat completion - Function [`Invoke-AzureOpenAIChatCompletion`](#function-invoke-azureopenaichatcompletion)
 - [x] Embedding - Function [`Invoke-AzureOpenAIEmbedding`](#function-invoke-azureopenaiembedding)
-- [ ] DALL-E 3 - Function [`Invoke-AzureOpenAIDalle3`](#function-invoke-azureopenaidalle3)
+- [x] DALL-E 3 - Function [`Invoke-AzureOpenAIDalle3`](#function-invoke-azureopenaidalle3)
 - [x] Helper function for displaying information about request parameters - Function [`Invoke-APICall`](#function-invoke-apicall)
 
 ### Function: `Invoke-AzureOpenAICompletion`
