@@ -29,9 +29,22 @@ function Invoke-AzureOpenAIDALLE3 {
         
     # Use a try-catch block to handle potential errors in the API call
     try {
-        # Make the API call
-        $response = Invoke-RestMethod -Method Post -Uri $URI -Body $requestBodyJSON -Headers $header -TimeoutSec 30 -ErrorAction Stop
+        # Make the API call and start a job to prevent blocking
+        $job = Start-Job -ScriptBlock {
+            param($URI, $requestBodyJSON, $header)
+            Invoke-RestMethod -Method Post -Uri $URI -Body $requestBodyJSON -Headers $header -TimeoutSec 30 -ErrorAction Stop
+        } -ArgumentList $URI, $requestBodyJSON, $header
 
+        # Start a timer to display progress every second while waiting for the response
+        while (($job.JobStateInfo.State -eq 'Running') -or ($job.JobStateInfo.State -eq 'NotStarted')) {
+            Write-Host "." -NoNewline -ForegroundColor DarkGreen
+            Start-Sleep -Milliseconds 500
+        }
+        Write-Host ""
+
+        # Wait for the job to finish and collect the response
+        $response = Receive-Job -Id $job.Id -Wait -ErrorAction Stop
+        
         # Get the revised prompt and image URL from the response
         $imageRevisedPrompt = $response.data[0].revised_prompt
         $imageUrl = $response.data[0].url
@@ -59,8 +72,13 @@ function Invoke-AzureOpenAIDALLE3 {
         Write-Host $promptFullName -ForegroundColor Blue
     }
     catch {
-        # Display an error message if there was an issue with the API call
-        Show-Error -ErrorMessage "Error getting image file: $($_.Exception.Message)"
+        # If any error occurs during the process, the error details (file, line, character, and message) are printed to the console.
+        Write-Host "[e] Error in file: $($_.InvocationInfo.ScriptName)" -ForegroundColor DarkRed
+        Write-Host "[e] Error in line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor DarkRed
+        Write-Host "[e] Error at char: $($_.InvocationInfo.OffsetInLine)" -ForegroundColor DarkRed
+        Write-Host "[e] An error occurred:" -NoNewline
+        Write-Host " $($_.Exception.Message)" -ForegroundColor DarkRed
+        Write-Host ""
     }
 
 }
