@@ -194,7 +194,7 @@ function Invoke-AzureOpenAIDALLE3 {
         Write-Host "[e] Error in line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor DarkRed
         Write-Host "[e] Error at char: $($_.InvocationInfo.OffsetInLine)" -ForegroundColor DarkRed
         Write-Host "[e] An error occurred:" -NoNewline
-        Show-Error $_.Exception.Message
+        Write-Host " $($_.Exception.Message)" -ForegroundColor DarkRed
         Write-Host ""
     }
 
