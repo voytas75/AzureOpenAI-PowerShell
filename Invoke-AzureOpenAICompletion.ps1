@@ -216,7 +216,7 @@ function Invoke-AzureOpenAICompletion {
             [string]$model
         )
         if ($model -eq 'gpt-35-turbo') {
-            $body = @{
+            $body = [ordered]@{
                 'prompt'            = $prompt
                 'max_tokens'        = $MaxTokens
                 'temperature'       = $temperature
@@ -279,6 +279,10 @@ function Invoke-AzureOpenAICompletion {
         )
     
         try {
+            Write-Verbose $url -Verbose
+            Write-Verbose $headers -Verbose
+            Write-Verbose $bodyJSON -Verbose
+
             $response = Invoke-RestMethod -Uri $url -Method POST -Headers $headers -Body $bodyJSON -TimeoutSec 240 -ErrorAction Stop
             return $response
         }
@@ -371,7 +375,7 @@ function Invoke-AzureOpenAICompletion {
         }
         else {
             # Variable is not set
-            Write-Verbose "The user environment variable '$VariableName' is not set."
+            Write-Verbose "The user environment variable '$VariableName' is not set." -Verbose
             return $false
         }
     }
@@ -409,6 +413,7 @@ function Invoke-AzureOpenAICompletion {
         Write-Verbose ($bodyJSON | Out-String)
         $urlChat = Get-Url
         $response = Invoke-ApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON
+        
         Show-ResponseMessage -content $response.choices[0].text -stream "console"
         Show-FinishReason -finishReason $response.choices.finish_reason
         Show-Usage -usage $response.usage

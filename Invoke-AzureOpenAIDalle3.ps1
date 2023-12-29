@@ -2,7 +2,8 @@ function Invoke-AzureOpenAIDALLE3 {
     [CmdletBinding()]
     param (
         [string]$serviceName,
-        [string]$prompt,
+        [Parameter(ValueFromPipeline = $true)]
+        [string]$Prompt,
         [string]$model = 'dalle3',
         [string]$user,
         [string]$ApiVersion = "2023-12-01-preview",
