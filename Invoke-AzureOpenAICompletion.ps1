@@ -279,9 +279,9 @@ function Invoke-AzureOpenAICompletion {
         )
     
         try {
-            Write-Verbose $url -Verbose
-            Write-Verbose $headers -Verbose
-            Write-Verbose $bodyJSON -Verbose
+            Write-Verbose $url
+            Write-Verbose $headers
+            Write-Verbose $bodyJSON
 
             $response = Invoke-RestMethod -Uri $url -Method POST -Headers $headers -Body $bodyJSON -TimeoutSec 240 -ErrorAction Stop
             return $response
@@ -419,7 +419,8 @@ function Invoke-AzureOpenAICompletion {
         Show-Usage -usage $response.usage
     }
     catch {
-        Show-Error -ErrorMessage $_.Exception.Message
+        $_.error
+        #Show-Error -ErrorMessage $_.Exception.Message
     }
 }
 
