@@ -2,12 +2,24 @@ function Invoke-AzureOpenAIWrapper {
     [CmdletBinding()]
     param (
         [string]$serviceName,
+
         [Parameter(ValueFromPipeline = $true)]
         [string]$Prompt,
+
         [string]$user,
+
         [string]$ApiVersion,
+
         [string]$SystemPromptFileName,
-        [string]$Deployment
+
+        [string]$Deployment,
+
+        [ValidateSet("turbo", "playground", "dpo", "dreamshaper", "deliberate", "pixart", "dalle3xl", "formulaxl")]
+        [string]$model = "pixart",
+
+        [switch]$pollinations,
+
+        [switch]$pollinationspaint
     )
     begin {
         . .\AzureOpenAI-PowerShell\Invoke-AzureOpenAIChatCompletion.ps1
@@ -28,10 +40,15 @@ function Invoke-AzureOpenAIWrapper {
             Write-Host $chatOutput -ForegroundColor Cyan
 
             Invoke-AzureOpenAIDALLE3 -serviceName $serviceName -prompt $chatOutput
-            Generate-Artwork -Prompt $chatOutput -Once
-            Generate-ArtworkPaint -Prompt $prompt -Once
-        } else {
+            if ($pollinations) {
+                Generate-Artwork -model $model -Prompt $chatOutput -Once
+            }
+        }
+        else {
             Write-Host "skipping..." -ForegroundColor DarkRed
+        }
+        if ($pollinationspaint) {
+            Generate-ArtworkPaint -model $model -Prompt $prompt -Once
         }
     }
 }
