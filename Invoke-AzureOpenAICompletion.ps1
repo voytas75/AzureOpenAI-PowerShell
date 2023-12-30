@@ -413,7 +413,7 @@ function Invoke-AzureOpenAICompletion {
         Write-Verbose ($bodyJSON | Out-String)
         $urlChat = Get-Url
         $response = Invoke-ApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON
-        
+
         Show-ResponseMessage -content $response.choices[0].text -stream "console"
         Show-FinishReason -finishReason $response.choices.finish_reason
         Show-Usage -usage $response.usage

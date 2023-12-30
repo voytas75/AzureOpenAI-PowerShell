@@ -305,6 +305,8 @@ function Invoke-AzureOpenAIChatCompletion {
                 Invoke-RestMethod -Uri $url -Method POST -Headers $headers -Body $bodyJSON -TimeoutSec 30 -ErrorAction Stop
             } -ArgumentList $url, $headers, $bodyJSON
             
+            Write-Verbose ("Job: $($response | ConvertTo-Json)" )
+
             while (($response.JobStateInfo.State -eq 'Running') -or ($response.JobStateInfo.State -eq 'NotStarted')) {
                 Write-Host "." -NoNewline -ForegroundColor DarkBlue
                 Start-Sleep -Milliseconds 500
@@ -312,14 +314,11 @@ function Invoke-AzureOpenAIChatCompletion {
             Write-Host ""    
 
             $response = Receive-Job -Id $response.Id -Wait -ErrorAction Stop
+
             return $response
         }
         catch {
-            $errorVar = ""
-            $errorVar = $Error
-            $errorVar
-
-            Show-Error -ErrorVar $errorVar
+            Write-Output $_.Error
         }
     }
     
@@ -532,10 +531,14 @@ function Invoke-AzureOpenAIChatCompletion {
             $bodyJSON = ($body | ConvertTo-Json)
             
             $response = Invoke-ApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON
+
             
             if ($null -eq $response) {
+                Write-Verbose "Response is empty"
                 break
             }
+
+            Write-Verbose ("Receive job: $($response | ConvertTo-Json)" | Out-String)
 
             $assistant_response = $response.choices[0].message.content
 
@@ -546,7 +549,8 @@ function Invoke-AzureOpenAIChatCompletion {
                 Write-Verbose "OneTimeUserPrompt Break"
                 return (Show-ResponseMessage -content $assistant_response -stream "assistant" | Out-String)
                 break
-            } else {
+            }
+            else {
                 Show-ResponseMessage -content $assistant_response -stream "assistant"
                 Write-Verbose "NO OneTimeUserPrompt"
             
@@ -555,7 +559,7 @@ function Invoke-AzureOpenAIChatCompletion {
     
                 $user_message = Read-Host "Enter chat message (user)" 
                 $messages += @{"role" = "user"; "content" = $user_message }
-                }
+            }
             
         } while ($true)
     }

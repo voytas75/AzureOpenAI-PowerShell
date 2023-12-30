@@ -19,10 +19,15 @@ function Invoke-AzureOpenAIWrapper {
         # Call Invoke-AzureOpenAIChatCompletion function and remove a given string from output
         $chatOutput = (Invoke-AzureOpenAIChatCompletion -APIVersion $ApiVersion -Endpoint "https://$serviceName.openai.azure.com" -Deployment $Deployment -User $User -Temperature 0.6 -N 1 -FrequencyPenalty 0 -PresencePenalty 0 -TopP 0 -Stop $null -Stream $false -OneTimeUserPrompt $prompt -SystemPromptFileName "ArtFusion2.txt").replace("Response assistant (assistant):", "").trim()
     
-        Write-Host $chatOutput -ForegroundColor Cyan
+        if ($chatOutput) {
 
-        Invoke-AzureOpenAIDALLE3 -serviceName $serviceName -prompt $chatOutput
-        Generate-Artwork -Prompt $chatOutput -Once
-        Generate-ArtworkPaint -Prompt $prompt -Once
+            Write-Host $chatOutput -ForegroundColor Cyan
+
+            Invoke-AzureOpenAIDALLE3 -serviceName $serviceName -prompt $chatOutput
+            Generate-Artwork -Prompt $chatOutput -Once
+            Generate-ArtworkPaint -Prompt $prompt -Once
+        } else {
+            Write-Host "skipping..." -ForegroundColor DarkRed
+        }
     }
 }

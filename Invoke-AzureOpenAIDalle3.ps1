@@ -143,6 +143,15 @@ function Invoke-AzureOpenAIDALLE3 {
         }
         Write-Host ""
 
+        # Define the filenames for the prompt and image
+        $data = (get-date).ToString("yyyyMMddHHmmss")
+        $PromptFileName = "$data.png.DATA.txt"
+        $ImageFileName = "$data.png"
+            
+        # Get the full paths for the prompt and image
+        $promptFullName = Join-Path $SavePath $PromptFileName
+        $ImageFullName = Join-Path $SavePath $ImageFileName
+        
         # Check if the job failed and display an error message if it did
         # If it did not fail, it retrieves the response and extracts the image URL and revised prompt
         # It then saves the image and revised prompt to files
@@ -157,15 +166,6 @@ function Invoke-AzureOpenAIDALLE3 {
 
             # Display the revised prompt
             write-host $imageRevisedPrompt -ForegroundColor Cyan
-
-            # Define the filenames for the prompt and image
-            $data = (get-date).ToString("yyyyMMddHHmmss")
-            $PromptFileName = "$data.png.DATA.txt"
-            $ImageFileName = "$data.png"
-    
-            # Get the full paths for the prompt and image
-            $promptFullName = Join-Path $SavePath $PromptFileName
-            $ImageFullName = Join-Path $SavePath $ImageFileName
     
             # Save the revised prompt to a file
             "Prompt: $prompt" | Add-Content -Path $promptFullName -Force
@@ -180,13 +180,20 @@ function Invoke-AzureOpenAIDALLE3 {
             Write-Host $promptFullName -ForegroundColor Blue
         }
         else {
+
             Write-Host "Job failed: " -NoNewline -ForegroundColor DarkRed
             [void]($response = Receive-Job -Id $job.Id -Wait -ErrorVariable joberror -ErrorAction SilentlyContinue)
             #$joberror.Exception | ConvertTo-Json
             $jobErrormessage = ($joberror.ErrorDetails.message | Convertfrom-Json).error
             write-host "$($jobErrormessage.code):" -NoNewline -ForegroundColor DarkYellow
             Write-Host " $($jobErrormessage.message)" -ForegroundColor DarkYellow
-   
+
+            # Save the prompt and joberrormessageto a file
+            "[Error] ($($jobErrormessage.code)): $($jobErrormessage.message)" | Add-Content -Path $promptFullName -Force
+            "Prompt: $prompt" | Add-Content -Path $promptFullName -Force
+
+            # Display the paths of the saved files
+            Write-Host $promptFullName -ForegroundColor Blue
         }
     }
     catch {
