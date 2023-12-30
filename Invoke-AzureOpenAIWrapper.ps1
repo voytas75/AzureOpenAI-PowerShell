@@ -16,6 +16,10 @@ function Invoke-AzureOpenAIWrapper {
         . .\skryptyVoytasa\pollprompt.ps1
     }
     process {        
+
+        if (-not $prompt) {
+            $prompt = read-Host "Prompt"
+        }
         # Call Invoke-AzureOpenAIChatCompletion function and remove a given string from output
         $chatOutput = (Invoke-AzureOpenAIChatCompletion -APIVersion $ApiVersion -Endpoint "https://$serviceName.openai.azure.com" -Deployment $Deployment -User $User -Temperature 0.6 -N 1 -FrequencyPenalty 0 -PresencePenalty 0 -TopP 0 -Stop $null -Stream $false -OneTimeUserPrompt $prompt -SystemPromptFileName "ArtFusion2.txt").replace("Response assistant (assistant):", "").trim()
     
