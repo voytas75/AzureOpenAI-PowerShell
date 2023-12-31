@@ -67,13 +67,15 @@ function Invoke-AzureOpenAIWrapper {
 
         # Switch to trigger pollinations functionality
         [switch]$pollinations,
-
-        # Switch to trigger pollinations painting functionality
-        [switch]$pollinationspaint
+[switch]$pollinationspaint,
+        [double]$Temperature = 0.6,
+        [int]$N = 1,
+        [double]$FrequencyPenalty = 0,
+        [double]$PresencePenalty = 0,
+        [double]$TopP = 0,
+        [string]$Stop = $null
     )
 
-    # Import the necessary functions from other scripts
-    # Record the start time of the script
     begin {
         Write-Verbose "Importing necessary functions from other scripts"
         . .\AzureOpenAI-PowerShell\Invoke-AzureOpenAIChatCompletion.ps1
@@ -100,7 +102,7 @@ function Invoke-AzureOpenAIWrapper {
         
         Write-Verbose "Calling the Invoke-AzureOpenAIChatCompletion function and removing unnecessary output"
         try {
-            $chatOutput = (Invoke-AzureOpenAIChatCompletion -APIVersion $ApiVersion -Endpoint "https://$serviceName.openai.azure.com" -Deployment $Deployment -User $User -Temperature 0.6 -N 1 -FrequencyPenalty 0 -PresencePenalty 0 -TopP 0 -Stop $null -Stream $false -OneTimeUserPrompt $prompt -SystemPromptFileName "ArtFusion2.txt").replace("Response assistant (assistant):", "").trim()
+            $chatOutput = (Invoke-AzureOpenAIChatCompletion -APIVersion $ApiVersion -Endpoint "https://$serviceName.openai.azure.com" -Deployment $Deployment -User $User -Temperature $Temperature -N $N -FrequencyPenalty $FrequencyPenalty -PresencePenalty $PresencePenalty -TopP $TopP -Stop $Stop -Stream $false -OneTimeUserPrompt $prompt -SystemPromptFileName "ArtFusion2.txt").replace("Response assistant (assistant):", "").trim()
         }
         catch {
             Write-Host "Error in Invoke-AzureOpenAIChatCompletion: $_" -ForegroundColor Red
@@ -145,6 +147,7 @@ function Invoke-AzureOpenAIWrapper {
                 Write-Host "Error in Generate-ArtworkPaint: $_" -ForegroundColor Red
             }
         }
+Remove-Variable -Name prompt, chatOutput -ErrorAction SilentlyContinue
     }
 
     # Record the end time of the script
@@ -156,7 +159,6 @@ function Invoke-AzureOpenAIWrapper {
         $executionTime = ($endTime - $startTime).TotalSeconds
         Write-Host "Execution time: $executionTime seconds" -ForegroundColor Yellow
 
-        Write-Verbose "Cleaning up variables used in the script to free up memory"
-        Remove-Variable -Name prompt, chatOutput, startTime, endTime, executionTime -ErrorAction SilentlyContinue
+        Remove-Variable -Name startTime, endTime, executionTime -ErrorAction SilentlyContinue
     }
 }
