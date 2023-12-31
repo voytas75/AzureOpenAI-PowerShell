@@ -67,7 +67,7 @@ function Invoke-AzureOpenAIWrapper {
 
         # Switch to trigger pollinations functionality
         [switch]$pollinations,
-[switch]$pollinationspaint,
+        [switch]$pollinationspaint,
         [double]$Temperature = 0.6,
         [int]$N = 1,
         [double]$FrequencyPenalty = 0,
@@ -147,7 +147,7 @@ function Invoke-AzureOpenAIWrapper {
                 Write-Host "Error in Generate-ArtworkPaint: $_" -ForegroundColor Red
             }
         }
-Remove-Variable -Name prompt, chatOutput -ErrorAction SilentlyContinue
+        Remove-Variable -Name prompt, chatOutput -ErrorAction SilentlyContinue
     }
 
     # Record the end time of the script
