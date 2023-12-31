@@ -1,5 +1,45 @@
 # This function serves as a wrapper for invoking Azure OpenAI services
 function Invoke-AzureOpenAIWrapper {
+    <#
+    .SYNOPSIS
+    This script serves as a wrapper for invoking Azure OpenAI services.
+
+    .DESCRIPTION
+    This script allows users to interact with various Azure OpenAI services. It imports necessary functions from other scripts, 
+    handles the user prompt, calls the appropriate Azure OpenAI function based on the input parameters, and handles any errors that may occur. 
+    It also provides options to generate artwork based on the chat output or the initial prompt.
+
+    .PARAMETER serviceName
+    The name of the Azure OpenAI service to be invoked. This should correspond to the Azure OpenAI service's unique identifier.
+
+    .PARAMETER Prompt
+    The text to be used for invoking the Azure OpenAI service. This can be provided directly or piped in.
+
+    .PARAMETER user
+    The username to be used for the service invocation.
+
+    .PARAMETER ApiVersion
+    The API version to be used for the service invocation.
+
+    .PARAMETER SystemPromptFileName
+    The filename where system prompts are stored.
+
+    .PARAMETER Deployment
+    The deployment information for the Azure OpenAI service.
+
+    .PARAMETER model
+    The model to be used for the service invocation at Pollinations only. 
+
+    .PARAMETER pollinations
+    If this switch is set, the script will generate artwork based on the chat output.
+
+    .PARAMETER pollinationspaint
+    If this switch is set, the script will generate artwork based on the initial prompt.
+
+    .EXAMPLE
+    PS> .\Invoke-AzureOpenAIWrapper.ps1 -serviceName "serviceName" -Prompt "Hello, world!" -user "user" -ApiVersion "v1" -SystemPromptFileName "ArtFusion2.txt" -Deployment "deployment" -model "pixart" -pollinations -pollinationspaint
+    #>
+
     [CmdletBinding()]
     param (
         # Name of the Azure OpenAI service to be invoked
@@ -35,13 +75,13 @@ function Invoke-AzureOpenAIWrapper {
     # Import the necessary functions from other scripts
     # Record the start time of the script
     begin {
-        # Import the necessary functions from other scripts
+        Write-Verbose "Importing necessary functions from other scripts"
         . .\AzureOpenAI-PowerShell\Invoke-AzureOpenAIChatCompletion.ps1
         . .\AzureOpenAI-PowerShell\Invoke-AzureOpenAIDalle3.ps1
         . .\skryptyVoytasa\pollpromptpaint.ps1
         . .\skryptyVoytasa\pollprompt.ps1
 
-        # Record the start time of the script
+        Write-Verbose "Recording the start time of the script"
         $startTime = Get-Date
     }
 
@@ -53,34 +93,57 @@ function Invoke-AzureOpenAIWrapper {
     # Skip further processing if there's no chat output
     # Generate artwork based on the initial prompt if $pollinationspaint is set
     process {        
-        # If no prompt is provided, prompt the user for it
+        Write-Verbose "Checking if prompt is provided"
         if (-not $prompt) {
             $prompt = read-Host "Prompt"
         }
         
-        # Call the Invoke-AzureOpenAIChatCompletion function and remove unnecessary output
-        # Trim the output to remove leading and trailing whitespace
-        $chatOutput = (Invoke-AzureOpenAIChatCompletion -APIVersion $ApiVersion -Endpoint "https://$serviceName.openai.azure.com" -Deployment $Deployment -User $User -Temperature 0.6 -N 1 -FrequencyPenalty 0 -PresencePenalty 0 -TopP 0 -Stop $null -Stream $false -OneTimeUserPrompt $prompt -SystemPromptFileName "ArtFusion2.txt").replace("Response assistant (assistant):", "").trim()
+        Write-Verbose "Calling the Invoke-AzureOpenAIChatCompletion function and removing unnecessary output"
+        try {
+            $chatOutput = (Invoke-AzureOpenAIChatCompletion -APIVersion $ApiVersion -Endpoint "https://$serviceName.openai.azure.com" -Deployment $Deployment -User $User -Temperature 0.6 -N 1 -FrequencyPenalty 0 -PresencePenalty 0 -TopP 0 -Stop $null -Stream $false -OneTimeUserPrompt $prompt -SystemPromptFileName "ArtFusion2.txt").replace("Response assistant (assistant):", "").trim()
+        }
+        catch {
+            Write-Host "Error in Invoke-AzureOpenAIChatCompletion: $_" -ForegroundColor Red
+            return
+        }
     
-        # If there's output from the chat completion, process it further
+        Write-Verbose "Checking if there's output from the chat completion"
         if ($chatOutput) {
-            # Display the chat output
+            Write-Verbose "Displaying the chat output"
             Write-Host $chatOutput -ForegroundColor Cyan
 
-            # Invoke other Azure OpenAI functions based on the chat output
-            Invoke-AzureOpenAIDALLE3 -serviceName $serviceName -prompt $chatOutput
-            # If the pollinations switch is set, generate artwork based on the chat output
+            Write-Verbose "Invoking other Azure OpenAI functions based on the chat output"
+            try {
+                Invoke-AzureOpenAIDALLE3 -serviceName $serviceName -prompt $chatOutput
+            }
+            catch {
+                Write-Host "Error in Invoke-AzureOpenAIDALLE3: $_" -ForegroundColor Red
+            }
+            Write-Verbose "Checking if the pollinations switch is set"
             if ($pollinations) {
-                Generate-Artwork -model $model -Prompt $chatOutput -Once
+                Write-Verbose "Generating artwork based on the chat output"
+                try {
+                    Generate-Artwork -model $model -Prompt $chatOutput -Once
+                }
+                catch {
+                    Write-Host "Error in Generate-Artwork: $_" -ForegroundColor Red
+                }
             }
         }
         else {
+            Write-Verbose "Skipping further processing as there's no chat output"
             Write-Host "skipping..." -ForegroundColor DarkRed
         }
 
-        # If the pollinationspaint switch is set, generate artwork based on the initial prompt
+        Write-Verbose "Checking if the pollinationspaint switch is set"
         if ($pollinationspaint) {
-            Generate-ArtworkPaint -model $model -Prompt $prompt -Once
+            Write-Verbose "Generating artwork based on the initial prompt"
+            try {
+                Generate-ArtworkPaint -model $model -Prompt $prompt -Once
+            }
+            catch {
+                Write-Host "Error in Generate-ArtworkPaint: $_" -ForegroundColor Red
+            }
         }
     }
 
@@ -88,12 +151,12 @@ function Invoke-AzureOpenAIWrapper {
     # Calculate the total execution time
     # Clean up variables used in the script to free up memory
     end {
-        # Record the end time of the script and calculate the total execution time
+        Write-Verbose "Recording the end time of the script and calculating the total execution time"
         $endTime = Get-Date
         $executionTime = ($endTime - $startTime).TotalSeconds
         Write-Host "Execution time: $executionTime seconds" -ForegroundColor Yellow
 
-        # Clean up variables used in the script to free up memory
+        Write-Verbose "Cleaning up variables used in the script to free up memory"
         Remove-Variable -Name prompt, chatOutput, startTime, endTime, executionTime -ErrorAction SilentlyContinue
     }
 }
