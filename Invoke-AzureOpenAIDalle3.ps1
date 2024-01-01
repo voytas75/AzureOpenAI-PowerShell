@@ -7,7 +7,8 @@ function Invoke-AzureOpenAIDALLE3 {
         [string]$model = 'dalle3',
         [string]$user,
         [string]$ApiVersion = "2023-12-01-preview",
-        [string]$SavePath = [Environment]::GetFolderPath([Environment+SpecialFolder]::MyPictures)
+        [string]$SavePath = [Environment]::GetFolderPath([Environment+SpecialFolder]::MyPictures),
+        [int]$ImageLoops = 1
     )
 
     function Get-Headers {
@@ -127,73 +128,75 @@ function Invoke-AzureOpenAIDALLE3 {
 
     # Use a try-catch block to handle potential errors in the API call
     try {
+        for ($i = 0; $i -lt $ImageLoops; $i++) {
 
-        # Make the API call and start a job to prevent blocking
-        # It uses the URI, body, and headers defined above
-        $job = Start-Job -ScriptBlock {
-            param($URI, $requestBodyJSON, $headers)
-            Invoke-RestMethod -Method Post -Uri $URI -Body $requestBodyJSON -Headers $headers -TimeoutSec 30 
-        } -ArgumentList $URI, $requestBodyJSON, $headers
+            # Make the API call and start a job to prevent blocking
+            # It uses the URI, body, and headers defined above
+            $job = Start-Job -ScriptBlock {
+                param($URI, $requestBodyJSON, $headers)
+                Invoke-RestMethod -Method Post -Uri $URI -Body $requestBodyJSON -Headers $headers -TimeoutSec 30 
+            } -ArgumentList $URI, $requestBodyJSON, $headers
 
-        # Start a timer to display progress every second while waiting for the response
-        # If the job is still running, it prints a dot
-        while (($job.JobStateInfo.State -eq 'Running') -or ($job.JobStateInfo.State -eq 'NotStarted')) {
-            Write-Host "." -NoNewline -ForegroundColor DarkGreen
-            Start-Sleep -Milliseconds 500
-        }
-        Write-Host ""
+            # Start a timer to display progress every second while waiting for the response
+            # If the job is still running, it prints a dot
+            while (($job.JobStateInfo.State -eq 'Running') -or ($job.JobStateInfo.State -eq 'NotStarted')) {
+                Write-Host "." -NoNewline -ForegroundColor DarkGreen
+                Start-Sleep -Milliseconds 500
+            }
+            Write-Host ""
 
-        # Define the filenames for the prompt and image
-        $data = (get-date).ToString("yyyyMMddHHmmss")
-        $PromptFileName = "$data.png.DATA.txt"
-        $ImageFileName = "$data.png"
+            # Define the filenames for the prompt and image
+            $data = (get-date).ToString("yyyyMMddHHmmss")
+            $PromptFileName = "$data.png.DATA.txt"
+            $ImageFileName = "$data.png"
             
-        # Get the full paths for the prompt and image
-        $promptFullName = Join-Path $SavePath $PromptFileName
-        $ImageFullName = Join-Path $SavePath $ImageFileName
+            # Get the full paths for the prompt and image
+            $promptFullName = Join-Path $SavePath $PromptFileName
+            $ImageFullName = Join-Path $SavePath $ImageFileName
         
-        # Check if the job failed and display an error message if it did
-        # If it did not fail, it retrieves the response and extracts the image URL and revised prompt
-        # It then saves the image and revised prompt to files
-        if ($job.JobStateInfo.State -ne 'Failed') {
+            # Check if the job failed and display an error message if it did
+            # If it did not fail, it retrieves the response and extracts the image URL and revised prompt
+            # It then saves the image and revised prompt to files
+            if ($job.JobStateInfo.State -ne 'Failed') {
 
-            # Wait for the job to finish and collect the response
-            $response = Receive-Job -Id $job.Id -Wait
+                # Wait for the job to finish and collect the response
+                $response = Receive-Job -Id $job.Id -Wait
 
-            # Get the revised prompt and image URL from the response
-            $imageRevisedPrompt = $response.data[0].revised_prompt
-            $imageUrl = $response.data[0].url
+                # Get the revised prompt and image URL from the response
+                $imageRevisedPrompt = $response.data[0].revised_prompt
+                $imageUrl = $response.data[0].url
 
-            # Display the revised prompt
-            write-host $imageRevisedPrompt -ForegroundColor Cyan
+                # Display the revised prompt
+                write-host $imageRevisedPrompt -ForegroundColor Cyan
     
-            # Save the revised prompt to a file
-            "Prompt: $prompt" | Add-Content -Path $promptFullName -Force
-            "Revised prompt: $imageRevisedPrompt" | Add-Content -Path $promptFullName -Force
+                # Save the revised prompt to a file
+                "Prompt: $prompt" | Add-Content -Path $promptFullName -Force
+                "Revised prompt: $imageRevisedPrompt" | Add-Content -Path $promptFullName -Force
 
-            # Download the image and save it to a file using .NET WebClient for better performance
-            $webClient = New-Object System.Net.WebClient
-            $webClient.DownloadFile($imageUrl, $ImageFullName)
+                # Download the image and save it to a file using .NET WebClient for better performance
+                $webClient = New-Object System.Net.WebClient
+                $webClient.DownloadFile($imageUrl, $ImageFullName)
         
-            # Display the paths of the saved files
-            Write-Host $ImageFullName -ForegroundColor Blue
-            Write-Host $promptFullName -ForegroundColor Blue
-        }
-        else {
+                # Display the paths of the saved files
+                Write-Host $ImageFullName -ForegroundColor Blue
+                Write-Host $promptFullName -ForegroundColor Blue
+            }
+            else {
 
-            Write-Host "Job failed: " -NoNewline -ForegroundColor DarkRed
-            [void]($response = Receive-Job -Id $job.Id -Wait -ErrorVariable joberror -ErrorAction SilentlyContinue)
-            #$joberror.Exception | ConvertTo-Json
-            $jobErrormessage = ($joberror.ErrorDetails.message | Convertfrom-Json).error
-            write-host "$($jobErrormessage.code):" -NoNewline -ForegroundColor DarkYellow
-            Write-Host " $($jobErrormessage.message)" -ForegroundColor DarkYellow
+                Write-Host "Job failed: " -NoNewline -ForegroundColor DarkRed
+                [void]($response = Receive-Job -Id $job.Id -Wait -ErrorVariable joberror -ErrorAction SilentlyContinue)
+                #$joberror.Exception | ConvertTo-Json
+                $jobErrormessage = ($joberror.ErrorDetails.message | Convertfrom-Json).error
+                write-host "$($jobErrormessage.code):" -NoNewline -ForegroundColor DarkYellow
+                Write-Host " $($jobErrormessage.message)" -ForegroundColor DarkYellow
 
-            # Save the prompt and joberrormessageto a file
-            "[Error] ($($jobErrormessage.code)): $($jobErrormessage.message)" | Add-Content -Path $promptFullName -Force
-            "Prompt: $prompt" | Add-Content -Path $promptFullName -Force
+                # Save the prompt and joberrormessageto a file
+                "[Error] ($($jobErrormessage.code)): $($jobErrormessage.message)" | Add-Content -Path $promptFullName -Force
+                "Prompt: $prompt" | Add-Content -Path $promptFullName -Force
 
-            # Display the paths of the saved files
-            Write-Host $promptFullName -ForegroundColor Blue
+                # Display the paths of the saved files
+                Write-Host $promptFullName -ForegroundColor Blue
+            }
         }
     }
     catch {

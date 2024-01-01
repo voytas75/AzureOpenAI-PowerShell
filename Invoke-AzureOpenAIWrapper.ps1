@@ -36,8 +36,11 @@ function Invoke-AzureOpenAIWrapper {
     .PARAMETER pollinationspaint
     If this switch is set, the script will generate artwork based on the initial prompt.
 
+    .PARAMETER ImageLoops
+    The number of times to loop the image generation process.
+
     .EXAMPLE
-    PS> .\Invoke-AzureOpenAIWrapper.ps1 -serviceName "serviceName" -Prompt "Hello, world!" -user "user" -ApiVersion "v1" -SystemPromptFileName "ArtFusion2.txt" -Deployment "deployment" -model "pixart" -pollinations -pollinationspaint
+    PS> .\Invoke-AzureOpenAIWrapper.ps1 -serviceName "serviceName" -Prompt "Hello, world!" -user "user" -ApiVersion "v1" -SystemPromptFileName "ArtFusion2.txt" -Deployment "deployment" -model "pixart" -pollinations -pollinationspaint -ImageLoops 5
     #>
 
     [CmdletBinding()]
@@ -73,7 +76,10 @@ function Invoke-AzureOpenAIWrapper {
         [double]$FrequencyPenalty = 0,
         [double]$PresencePenalty = 0,
         [double]$TopP = 0,
-        [string]$Stop = $null
+        [string]$Stop = $null,
+
+        # Number of times to loop the image generation process
+        [int]$ImageLoops = 1
     )
 
     begin {
@@ -94,7 +100,8 @@ function Invoke-AzureOpenAIWrapper {
     # Generate artwork based on the chat output if $pollinations is set
     # Skip further processing if there's no chat output
     # Generate artwork based on the initial prompt if $pollinationspaint is set
-    process {        
+    process {    
+    
         Write-Verbose "Checking if prompt is provided"
         if (-not $prompt) {
             $prompt = read-Host "Prompt"
@@ -108,15 +115,18 @@ function Invoke-AzureOpenAIWrapper {
             Write-Host "Error in Invoke-AzureOpenAIChatCompletion: $_" -ForegroundColor Red
             return
         }
-    
+
+
         Write-Verbose "Checking if there's output from the chat completion"
         if ($chatOutput) {
             Write-Verbose "Displaying the chat output"
             Write-Host $chatOutput -ForegroundColor Cyan
 
+            $dallePrompt = $chatOutput + " (remove unsafe elements:1.5)"
+
             Write-Verbose "Invoking other Azure OpenAI functions based on the chat output"
             try {
-                Invoke-AzureOpenAIDALLE3 -serviceName $serviceName -prompt $chatOutput
+                Invoke-AzureOpenAIDALLE3 -serviceName $serviceName -prompt $dallePrompt
             }
             catch {
                 Write-Host "Error in Invoke-AzureOpenAIDALLE3: $_" -ForegroundColor Red
@@ -125,7 +135,7 @@ function Invoke-AzureOpenAIWrapper {
             if ($pollinations) {
                 Write-Verbose "Generating artwork based on the chat output"
                 try {
-                    Generate-Artwork -model $model -Prompt $chatOutput -Once
+                    Generate-Artwork -model $model -Prompt $chatOutput -Once -ImageLoops $ImageLoops
                 }
                 catch {
                     Write-Host "Error in Generate-Artwork: $_" -ForegroundColor Red
