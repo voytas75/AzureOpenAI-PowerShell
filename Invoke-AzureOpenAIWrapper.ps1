@@ -126,7 +126,7 @@ function Invoke-AzureOpenAIWrapper {
 
             Write-Verbose "Invoking other Azure OpenAI functions based on the chat output"
             try {
-                Invoke-AzureOpenAIDALLE3 -serviceName $serviceName -prompt $dallePrompt
+                Invoke-AzureOpenAIDALLE3 -serviceName $serviceName -prompt $dallePrompt -ImageLoops $ImageLoops
             }
             catch {
                 Write-Host "Error in Invoke-AzureOpenAIDALLE3: $_" -ForegroundColor Red
@@ -151,7 +151,7 @@ function Invoke-AzureOpenAIWrapper {
         if ($pollinationspaint) {
             Write-Verbose "Generating artwork based on the initial prompt"
             try {
-                Generate-ArtworkPaint -model $model -Prompt $prompt -Once
+                Generate-ArtworkPaint -model $model -Prompt $prompt -Once -ImageLoops $ImageLoops
             }
             catch {
                 Write-Host "Error in Generate-ArtworkPaint: $_" -ForegroundColor Red
