@@ -2,13 +2,21 @@ function Invoke-AzureOpenAIDALLE3 {
     [CmdletBinding()]
     param (
         [string]$serviceName,
+
         [Parameter(ValueFromPipeline = $true)]
         [string]$Prompt,
+
         [string]$model = 'dalle3',
+
         [string]$user,
+
         [string]$ApiVersion = "2023-12-01-preview",
+
         [string]$SavePath = [Environment]::GetFolderPath([Environment+SpecialFolder]::MyPictures),
-        [int]$ImageLoops = 1
+
+        [int]$ImageLoops = 1,
+
+        [int]$n = 1
     )
 
     function Get-Headers {
@@ -134,14 +142,15 @@ function Invoke-AzureOpenAIDALLE3 {
             # It uses the URI, body, and headers defined above
             $job = Start-Job -ScriptBlock {
                 param($URI, $requestBodyJSON, $headers)
-                Invoke-RestMethod -Method Post -Uri $URI -Body $requestBodyJSON -Headers $headers -TimeoutSec 30 
+                Invoke-RestMethod -Method Post -Uri $URI -Body $requestBodyJSON -Headers $headers -TimeoutSec 30
             } -ArgumentList $URI, $requestBodyJSON, $headers
 
-            # Start a timer to display progress every second while waiting for the response
-            # If the job is still running, it prints a dot
+            Write-Host "dalle3: [n:'${n}', user:'${user}', imageloops:'$($j=$i+1;$j)/${imageloops}'] ." -NoNewline -ForegroundColor Green
+
+            # If the job is still running, it does progress
             while (($job.JobStateInfo.State -eq 'Running') -or ($job.JobStateInfo.State -eq 'NotStarted')) {
-                Write-Host "." -NoNewline -ForegroundColor DarkGreen
-                Start-Sleep -Milliseconds 500
+                Write-Host "." -NoNewline -ForegroundColor Green
+                Start-Sleep -Milliseconds 1000
             }
             Write-Host ""
 

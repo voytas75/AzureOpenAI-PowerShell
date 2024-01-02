@@ -309,7 +309,7 @@ function Invoke-AzureOpenAIChatCompletion {
 
             while (($response.JobStateInfo.State -eq 'Running') -or ($response.JobStateInfo.State -eq 'NotStarted')) {
                 Write-Host "." -NoNewline -ForegroundColor DarkBlue
-                Start-Sleep -Milliseconds 500
+                Start-Sleep -Milliseconds 1000
             }
             Write-Host ""    
 
@@ -530,6 +530,8 @@ function Invoke-AzureOpenAIChatCompletion {
 
             $bodyJSON = ($body | ConvertTo-Json)
             
+            Write-Host "chat comp.: [temp:'${Temperature}', top_p:'${TopP}', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'] ." -NoNewline -ForegroundColor Green
+
             $response = Invoke-ApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON
 
             

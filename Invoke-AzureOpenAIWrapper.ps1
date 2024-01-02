@@ -137,7 +137,7 @@ function Invoke-AzureOpenAIWrapper {
 
             Write-Verbose "Invoking other Azure OpenAI functions based on the chat output"
             try {
-                Invoke-AzureOpenAIDALLE3 -serviceName $serviceName -prompt $dallePrompt -ImageLoops $ImageLoops
+                Invoke-AzureOpenAIDALLE3 -serviceName $serviceName -prompt $dallePrompt -ImageLoops $ImageLoops -user $user
             }
             catch {
                 Write-Host "Error in Invoke-AzureOpenAIDALLE3: $_" -ForegroundColor Red
