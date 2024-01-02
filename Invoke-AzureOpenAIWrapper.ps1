@@ -120,7 +120,10 @@ function Invoke-AzureOpenAIWrapper {
         
         Write-Verbose "Calling the Invoke-AzureOpenAIChatCompletion function and removing unnecessary output"
         try {
-            $chatOutput = (Invoke-AzureOpenAIChatCompletion -APIVersion $ApiVersion -Endpoint "https://$serviceName.openai.azure.com" -Deployment $Deployment -User $User -Temperature $Temperature -N $N -FrequencyPenalty $FrequencyPenalty -PresencePenalty $PresencePenalty -TopP $TopP -Stop $Stop -Stream $false -OneTimeUserPrompt $prompt -SystemPromptFileName "ArtFusion2.txt").replace("Response assistant (assistant):", "").trim()
+            $chatOutput = Invoke-AzureOpenAIChatCompletion -APIVersion $ApiVersion -Endpoint "https://$serviceName.openai.azure.com" -Deployment $Deployment -User $User -Temperature $Temperature -N $N -FrequencyPenalty $FrequencyPenalty -PresencePenalty $PresencePenalty -TopP $TopP -Stop $Stop -Stream $false -OneTimeUserPrompt $prompt -SystemPromptFileName "ArtFusion2.txt"
+            $chatOutput = $chatOutput.replace("**Long Description**: ", "")
+            $chatOutput = $chatOutput.replace("Response assistant (assistant):", "")
+            $chatOutput = $chatOutput.TRIM()
         }
         catch {
             Write-Host "Error in Invoke-AzureOpenAIChatCompletion: $_" -ForegroundColor Red
@@ -170,7 +173,8 @@ function Invoke-AzureOpenAIWrapper {
             try {
                 if ($model) {
                     Generate-ArtworkPaint -model $model -Prompt $prompt -Once -ImageLoops $ImageLoops -seed $seed -negative $negative
-                } else {
+                }
+                else {
                     Generate-ArtworkPaint -Prompt $prompt -Once -ImageLoops $ImageLoops -seed $seed -negative $negative
                 }
             }
