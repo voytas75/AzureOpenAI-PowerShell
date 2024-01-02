@@ -65,21 +65,32 @@ function Invoke-AzureOpenAIWrapper {
         [string]$Deployment,
 
         # Model to be used for the service invocation at Pollinations only
-        [ValidateSet("turbo", "playground", "dpo", "dreamshaper", "deliberate", "pixart", "dalle3xl", "formulaxl")]
+        [ValidateSet("turbo", "playground", "dpo", "dreamshaper", "deliberate", "pixart", "realvis", "formulaxl")]
         [string]$model = "pixart",
 
         # Switch to trigger pollinations functionality
         [switch]$pollinations,
+
         [switch]$pollinationspaint,
+
         [double]$Temperature = 0.6,
+
         [int]$N = 1,
+
         [double]$FrequencyPenalty = 0,
+
         [double]$PresencePenalty = 0,
+
         [double]$TopP = 0,
+
         [string]$Stop = $null,
 
         # Number of times to loop the image generation process
-        [int]$ImageLoops = 1
+        [int]$ImageLoops = 1,
+
+        [int]$seed,
+
+        [string]$negative
     )
 
     begin {
@@ -135,7 +146,7 @@ function Invoke-AzureOpenAIWrapper {
             if ($pollinations) {
                 Write-Verbose "Generating artwork based on the chat output"
                 try {
-                    Generate-Artwork -model $model -Prompt $chatOutput -Once -ImageLoops $ImageLoops
+                    Generate-Artwork -model $model -Prompt $chatOutput -Once -ImageLoops $ImageLoops -seed $seed -negative $negative
                 }
                 catch {
                     Write-Host "Error in Generate-Artwork: $_" -ForegroundColor Red
@@ -151,7 +162,7 @@ function Invoke-AzureOpenAIWrapper {
         if ($pollinationspaint) {
             Write-Verbose "Generating artwork based on the initial prompt"
             try {
-                Generate-ArtworkPaint -model $model -Prompt $prompt -Once -ImageLoops $ImageLoops
+                Generate-ArtworkPaint -model $model -Prompt $prompt -Once -ImageLoops $ImageLoops -seed $seed -negative $negative
             }
             catch {
                 Write-Host "Error in Generate-ArtworkPaint: $_" -ForegroundColor Red
