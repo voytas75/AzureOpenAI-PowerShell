@@ -132,8 +132,8 @@ function Invoke-AzureOpenAIWrapper {
         if ($chatOutput) {
             Write-Verbose "Displaying the chat output"
             Write-Host $chatOutput -ForegroundColor Cyan
-
-            $dallePrompt = $chatOutput + " (remove unsafe elements:1.5)"
+            $promptaddstring = " safe"
+            $dallePrompt = $chatOutput + $promptaddstring
 
             Write-Verbose "Invoking other Azure OpenAI functions based on the chat output"
             try {
@@ -146,7 +146,13 @@ function Invoke-AzureOpenAIWrapper {
             if ($pollinations) {
                 Write-Verbose "Generating artwork based on the chat output"
                 try {
-                    Generate-Artwork -model $model -Prompt $chatOutput -Once -ImageLoops $ImageLoops -seed $seed -negative $negative
+                    if ($model) {
+                        Generate-Artwork -model $model -Prompt $chatOutput -Once -ImageLoops $ImageLoops -seed $seed -negative $negative
+                    }
+                    else {
+                        Generate-Artwork -Prompt $chatOutput -Once -ImageLoops $ImageLoops -seed $seed -negative $negative
+                    }
+                    
                 }
                 catch {
                     Write-Host "Error in Generate-Artwork: $_" -ForegroundColor Red
@@ -162,7 +168,11 @@ function Invoke-AzureOpenAIWrapper {
         if ($pollinationspaint) {
             Write-Verbose "Generating artwork based on the initial prompt"
             try {
-                Generate-ArtworkPaint -model $model -Prompt $prompt -Once -ImageLoops $ImageLoops -seed $seed -negative $negative
+                if ($model) {
+                    Generate-ArtworkPaint -model $model -Prompt $prompt -Once -ImageLoops $ImageLoops -seed $seed -negative $negative
+                } else {
+                    Generate-ArtworkPaint -Prompt $prompt -Once -ImageLoops $ImageLoops -seed $seed -negative $negative
+                }
             }
             catch {
                 Write-Host "Error in Generate-ArtworkPaint: $_" -ForegroundColor Red
