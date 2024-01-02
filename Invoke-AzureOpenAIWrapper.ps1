@@ -66,7 +66,7 @@ function Invoke-AzureOpenAIWrapper {
 
         # Model to be used for the service invocation at Pollinations only
         [ValidateSet("turbo", "playground", "dpo", "dreamshaper", "deliberate", "pixart", "realvis", "formulaxl")]
-        [string]$model = "pixart",
+        [string]$model,
 
         # Switch to trigger pollinations functionality
         [switch]$pollinations,
