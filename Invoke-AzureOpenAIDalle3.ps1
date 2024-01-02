@@ -145,11 +145,12 @@ function Invoke-AzureOpenAIDALLE3 {
                 Invoke-RestMethod -Method Post -Uri $URI -Body $requestBodyJSON -Headers $headers -TimeoutSec 30
             } -ArgumentList $URI, $requestBodyJSON, $headers
 
-            Write-Host "dalle3: [n:'${n}', user:'${user}', imageloops:'$($j=$i+1;$j)/${imageloops}'] ." -NoNewline -ForegroundColor Green
+            Write-Host "[dalle3]" -ForegroundColor Green
+            Write-Host "{n:'${n}', user:'${user}', imageloops:'$($j=$i+1;$j)/${imageloops}'} " -NoNewline -ForegroundColor Magenta
 
             # If the job is still running, it does progress
             while (($job.JobStateInfo.State -eq 'Running') -or ($job.JobStateInfo.State -eq 'NotStarted')) {
-                Write-Host "." -NoNewline -ForegroundColor Green
+                Write-Host "." -NoNewline -ForegroundColor Blue
                 Start-Sleep -Milliseconds 1000
             }
             Write-Host ""
