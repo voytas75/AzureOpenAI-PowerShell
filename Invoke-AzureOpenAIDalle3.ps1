@@ -28,7 +28,9 @@ function Invoke-AzureOpenAIDALLE3 {
 
         [int]$ImageLoops = 1,
 
-        [int]$n = 1
+        [int]$n = 1,
+
+        [int]$timeoutSec = 60
     )
 
     function Get-Headers {
@@ -171,9 +173,9 @@ function Invoke-AzureOpenAIDALLE3 {
             # Make the API call and start a job to prevent blocking
             # It uses the URI, body, and headers defined above
             $job = Start-Job -ScriptBlock {
-                param($URI, $requestBodyJSON, $headers)
-                Invoke-RestMethod -Method Post -Uri $URI -Body $requestBodyJSON -Headers $headers -TimeoutSec 30
-            } -ArgumentList $URI, $requestBodyJSON, $headers
+                param($URI, $requestBodyJSON, $headers, $timeoutSec)
+                Invoke-RestMethod -Method Post -Uri $URI -Body $requestBodyJSON -Headers $headers -TimeoutSec $timeoutSec
+            } -ArgumentList $URI, $requestBodyJSON, $headers, $timeoutSec
 
             Write-Host "[dalle3]" -ForegroundColor Green
             Write-Host "{n:'${n}', size:'${size}', rf:'${response_format}', quality:'${quality}', user:'${user}', style:'${style}', imageloops:'$($j=$i+1;$j)/${imageloops}'} " -NoNewline -ForegroundColor Magenta
@@ -225,14 +227,11 @@ function Invoke-AzureOpenAIDALLE3 {
 
                 Write-Host "Job failed: " -NoNewline -ForegroundColor DarkRed
                 [void]($response = Receive-Job -Id $job.Id -Wait -ErrorVariable joberror -ErrorAction SilentlyContinue)
-                #$joberror.Exception | ConvertTo-Json
-                #$jobErrormessage = ($joberror.ErrorDetails.message | Convertfrom-Json).error
-                $jobErrormessage = $joberror.ErrorDetails.message
-                write-host "$($jobErrormessage.code):" -NoNewline -ForegroundColor DarkYellow
-                Write-Host " $($jobErrormessage.message)" -ForegroundColor DarkYellow
+                #$joberror | ConvertTo-Json
+                write-host "$($jobError.Exception.ErrorRecord.Exception)" -ForegroundColor DarkYellow
 
                 # Save the prompt and joberrormessageto a file
-                "[Error] ($($jobErrormessage.code)): $($jobErrormessage.message)" | Add-Content -Path $promptFullName -Force
+                "[Error] ($($jobError.Exception.ErrorRecord.Exception))" | Add-Content -Path $promptFullName -Force
                 "Prompt: $prompt" | Add-Content -Path $promptFullName -Force
 
                 # Display the paths of the saved files

@@ -90,7 +90,11 @@ function Invoke-AzureOpenAIWrapper {
 
         [int]$seed,
 
-        [string]$negative
+        [string]$negative,
+
+        [ValidateSet("1024x1024", "1792x1024", "1024x1792")]
+        [string]$size = "1792x1024"
+
     )
 
     begin {
@@ -141,20 +145,26 @@ function Invoke-AzureOpenAIWrapper {
 
             Write-Verbose "Invoking other Azure OpenAI functions based on the chat output"
             try {
-                Invoke-AzureOpenAIDALLE3 -serviceName $serviceName -prompt $dallePrompt -ImageLoops $ImageLoops -user $user
+                Invoke-AzureOpenAIDALLE3 -serviceName $serviceName -prompt $dallePrompt -ImageLoops $ImageLoops -user $user -size $size
             }
             catch {
                 Write-Host "Error in Invoke-AzureOpenAIDALLE3: $_" -ForegroundColor Red
             }
+
+            Write-Verbose "Extracting width and height from size"
+            $dimensions = $size.Split('x')
+            $width = $dimensions[0]
+            $height = $dimensions[1]
+
             Write-Verbose "Checking if the pollinations switch is set"
             if ($pollinations) {
                 Write-Verbose "Generating artwork based on the chat output"
                 try {
                     if ($model) {
-                        Generate-Artwork -model $model -Prompt $chatOutput -Once -ImageLoops $ImageLoops -seed $seed -negative $negative
+                        Generate-Artwork -model $model -Prompt $chatOutput -Once -ImageLoops $ImageLoops -seed $seed -negative $negative -width $width -height $height
                     }
                     else {
-                        Generate-Artwork -Prompt $chatOutput -Once -ImageLoops $ImageLoops -seed $seed -negative $negative
+                        Generate-Artwork -Prompt $chatOutput -Once -ImageLoops $ImageLoops -seed $seed -negative $negative -width $width -height $height
                     }
                     
                 }
@@ -173,10 +183,10 @@ function Invoke-AzureOpenAIWrapper {
             Write-Verbose "Generating artwork based on the initial prompt"
             try {
                 if ($model) {
-                    Generate-ArtworkPaint -model $model -Prompt $prompt -Once -ImageLoops $ImageLoops -seed $seed -negative $negative
+                    Generate-ArtworkPaint -model $model -Prompt $prompt -Once -ImageLoops $ImageLoops -seed $seed -negative $negative -width $width -height $height 
                 }
                 else {
-                    Generate-ArtworkPaint -Prompt $prompt -Once -ImageLoops $ImageLoops -seed $seed -negative $negative
+                    Generate-ArtworkPaint -Prompt $prompt -Once -ImageLoops $ImageLoops -seed $seed -negative $negative -width $width -height $height
                 }
             }
             catch {
