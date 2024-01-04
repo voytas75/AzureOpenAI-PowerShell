@@ -20,6 +20,22 @@ function Invoke-APICall {
     $response = Invoke-RestMethod -Uri $RawAPIUrl -TimeoutSec 5
 
     Write-Output $response.info | fl
+
+    # chat completions
+    Write-Output "images generations, properties:"
+    # properties
+    $response.paths."/deployments/{deployment-id}/images/generations".post.requestbody.content | ConvertTo-Json -Depth 4
+    $response | ConvertTo-Json -Depth 1
+    $response.servers.variables | ConvertTo-Json
+    
+    #/components/schemas/imageGenerationsRequest
+    write-host ""
+    
+    Write-Output "images generations, required:"
+    #required
+    $response.paths."/deployments/{deployment-id}/images/generations".post.requestBody.content."application/json".schema.required
+    
+
     # chat completions
     Write-Output "chat completions, properties:"
     # properties

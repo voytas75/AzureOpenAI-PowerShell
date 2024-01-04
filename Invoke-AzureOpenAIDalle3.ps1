@@ -8,6 +8,18 @@ function Invoke-AzureOpenAIDALLE3 {
 
         [string]$model = 'dalle3',
 
+        [ValidateSet("1024x1024", "1792x1024", "1024x1792")]
+        [string]$size = "1792x1024",
+
+        [ValidateSet("url", "b64_json")]
+        [string]$response_format = "url",
+
+        [ValidateSet("standard", "hd")]
+        [string]$quality = "hd",
+
+        [ValidateSet("natural", "vivid")]
+        [string]$style = "natural",
+
         [string]$user,
 
         [string]$ApiVersion = "2023-12-01-preview",
@@ -37,6 +49,7 @@ function Invoke-AzureOpenAIDALLE3 {
             if (Test-UserEnvironmentVariable -VariableName $ApiKeyVariable) {
                 $ApiKey = [System.Environment]::GetEnvironmentVariable($ApiKeyVariable, "user")
                 $headers["api-key"] = $ApiKey
+                $headers["Content-Type"] = "application/json"
             } 
         }
         catch {
@@ -110,13 +123,30 @@ function Invoke-AzureOpenAIDALLE3 {
             [int]$n = 1,
 
             [Parameter(Mandatory = $false)]
-            [string]$user
+            [string]$user,
+
+            [Parameter(Mandatory = $false)]
+            [string]$size,
+
+            [Parameter(Mandatory = $false)]
+            [string]$response_format,
+
+            [Parameter(Mandatory = $false)]
+            [string]$quality,
+
+            [Parameter(Mandatory = $false)]
+            [string]$style
+
         )
         
         $body = [ordered]@{
-            'prompt' = $prompt
-            'n'      = $n
-            'user'   = $user
+            'prompt'          = $prompt
+            'n'               = $n
+            'user'            = $user
+            'size'            = $size
+            'response_format' = $response_format
+            'quality'         = $quality
+            'style'           = $style
         }
         return ($body | ConvertTo-Json)
     }
@@ -126,7 +156,7 @@ function Invoke-AzureOpenAIDALLE3 {
     $azureEndpoint = "https://${serviceName}.openai.azure.com"
         
     # Create the JSON request body for the API call
-    $requestBodyJSON = get-BodyJSON -prompt $prompt -n 1 -user $user
+    $requestBodyJSON = get-BodyJSON -prompt $prompt -n $n -user $user -size $size -response_format $response_format -quality $quality -style $style
 
     # Define the headers for the API call
     $headers = Get-Headers -ApiKey "API_AZURE_OPENAI"
@@ -146,7 +176,7 @@ function Invoke-AzureOpenAIDALLE3 {
             } -ArgumentList $URI, $requestBodyJSON, $headers
 
             Write-Host "[dalle3]" -ForegroundColor Green
-            Write-Host "{n:'${n}', user:'${user}', imageloops:'$($j=$i+1;$j)/${imageloops}'} " -NoNewline -ForegroundColor Magenta
+            Write-Host "{n:'${n}', size:'${size}', rf:'${response_format}', quality:'${quality}',  user:'${user}', style:'${style}', imageloops:'$($j=$i+1;$j)/${imageloops}'} " -NoNewline -ForegroundColor Magenta
 
             # If the job is still running, it does progress
             while (($job.JobStateInfo.State -eq 'Running') -or ($job.JobStateInfo.State -eq 'NotStarted')) {
