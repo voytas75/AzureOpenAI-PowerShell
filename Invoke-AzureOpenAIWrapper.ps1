@@ -123,6 +123,7 @@ function Invoke-AzureOpenAIWrapper {
             $chatOutput = Invoke-AzureOpenAIChatCompletion -APIVersion $ApiVersion -Endpoint "https://$serviceName.openai.azure.com" -Deployment $Deployment -User $User -Temperature $Temperature -N $N -FrequencyPenalty $FrequencyPenalty -PresencePenalty $PresencePenalty -TopP $TopP -Stop $Stop -Stream $false -OneTimeUserPrompt $prompt -SystemPromptFileName "ArtFusion2.txt"
             $chatOutput = $chatOutput.replace("**Long Description**: ", "")
             $chatOutput = $chatOutput.replace("Response assistant (assistant):", "")
+            $chatOutput = $chatOutput.replace("`n"," ")
             $chatOutput = $chatOutput.TRIM()
         }
         catch {

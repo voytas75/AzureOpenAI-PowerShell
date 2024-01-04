@@ -226,7 +226,8 @@ function Invoke-AzureOpenAIDALLE3 {
                 Write-Host "Job failed: " -NoNewline -ForegroundColor DarkRed
                 [void]($response = Receive-Job -Id $job.Id -Wait -ErrorVariable joberror -ErrorAction SilentlyContinue)
                 #$joberror.Exception | ConvertTo-Json
-                $jobErrormessage = ($joberror.ErrorDetails.message | Convertfrom-Json).error
+                #$jobErrormessage = ($joberror.ErrorDetails.message | Convertfrom-Json).error
+                $jobErrormessage = $joberror.ErrorDetails.message
                 write-host "$($jobErrormessage.code):" -NoNewline -ForegroundColor DarkYellow
                 Write-Host " $($jobErrormessage.message)" -ForegroundColor DarkYellow
 
