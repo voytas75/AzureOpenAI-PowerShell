@@ -68,6 +68,8 @@ function Invoke-AzureOpenAIWrapper {
         [ValidateSet("turbo", "playground", "dpo", "dreamshaper", "deliberate", "pixart", "realvis", "formulaxl")]
         [string]$model,
 
+        [switch]$AzureOpenAIImageGenerate,
+
         # Switch to trigger pollinations functionality
         [switch]$pollinations,
 
@@ -127,7 +129,7 @@ function Invoke-AzureOpenAIWrapper {
             $chatOutput = Invoke-AzureOpenAIChatCompletion -APIVersion $ApiVersion -Endpoint "https://$serviceName.openai.azure.com" -Deployment $Deployment -User $User -Temperature $Temperature -N $N -FrequencyPenalty $FrequencyPenalty -PresencePenalty $PresencePenalty -TopP $TopP -Stop $Stop -Stream $false -OneTimeUserPrompt $prompt -SystemPromptFileName "ArtFusion2.txt"
             $chatOutput = $chatOutput.replace("**Long Description**: ", "")
             $chatOutput = $chatOutput.replace("Response assistant (assistant):", "")
-            $chatOutput = $chatOutput.replace("`n"," ")
+            $chatOutput = $chatOutput.replace("`n", " ")
             $chatOutput = $chatOutput.TRIM()
         }
         catch {
@@ -140,17 +142,21 @@ function Invoke-AzureOpenAIWrapper {
         if ($chatOutput) {
             Write-Verbose "Displaying the chat output"
             Write-Host $chatOutput -ForegroundColor Cyan
-            $promptaddstring = " safe"
+            
+            $promptaddstring = ""
             $dallePrompt = $chatOutput + $promptaddstring
 
-            Write-Verbose "Invoking other Azure OpenAI functions based on the chat output"
-            try {
-                Invoke-AzureOpenAIDALLE3 -serviceName $serviceName -prompt $dallePrompt -ImageLoops $ImageLoops -user $user -size $size
-            }
-            catch {
-                Write-Host "Error in Invoke-AzureOpenAIDALLE3: $_" -ForegroundColor Red
-            }
+            Write-Verbose "Checking if the AzureOpenAIImageGenerate switch is set"
+            if ($AzureOpenAIImageGenerate) {
 
+                Write-Verbose "Invoking other Azure OpenAI functions based on the chat output"
+                try {
+                    Invoke-AzureOpenAIDALLE3 -serviceName $serviceName -prompt $dallePrompt -ImageLoops $ImageLoops -user $user -size $size
+                }
+                catch {
+                    Write-Host "Error in Invoke-AzureOpenAIDALLE3: $_" -ForegroundColor Red
+                }
+            }
             Write-Verbose "Extracting width and height from size"
             $dimensions = $size.Split('x')
             $width = $dimensions[0]
