@@ -65,7 +65,7 @@ function Invoke-AzureOpenAIWrapper {
         [string]$Deployment,
 
         # Model to be used for the service invocation at Pollinations only
-        [ValidateSet("turbo", "playground", "dpo", "dreamshaper", "deliberate", "pixart", "realvis", "formulaxl")]
+        [ValidateSet("swizz8", "dreamshaper", "deliberate", "juggernaut")]
         [string]$model,
 
         [switch]$AzureOpenAIImageGenerate,
