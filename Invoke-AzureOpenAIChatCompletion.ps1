@@ -1,16 +1,16 @@
 function Invoke-AzureOpenAIChatCompletion {
     <#
     .SYNOPSIS
-    This script makes an API request to an OpenAI chatbot and outputs the response message.
+    This script makes an API request to an AZURE OpenAI chatbot and outputs the response message.
     
     .DESCRIPTION
-    This script defines functions to make an API request to an OpenAI chatbot and output the response message. The user can input their own messages and specify various parameters such as temperature and frequency penalty.
+    This script defines functions to make an API request to an AZURE OpenAI chatbot and output the response message. The user can input their own messages and specify various parameters such as temperature and frequency penalty.
     
     .PARAMETER APIVersion
-    The version of the OpenAI API to use.
+    The version of the AZURE OpenAI API to use.
     
     .PARAMETER Endpoint
-    The endpoint URL for the OpenAI API.
+    The endpoint URL for the AZURE OpenAI API.
     
     .PARAMETER Deployment
     The name of the OpenAI deployment to use.
@@ -42,10 +42,10 @@ function Invoke-AzureOpenAIChatCompletion {
     .EXAMPLE
     PS C:\> Invoke-AzureOpenAIChatCompletion -APIVersion "2023-06-01-preview" -Endpoint "https://example.openai.azure.com" -Deployment "example_model_gpt35_!" -User "BobbyK" -Temperature 0.6 -N 1 -FrequencyPenalty 0 -PresencePenalty 0 -TopP 0 -Stop $null -Stream $false
     
-    This example makes an API request to an OpenAI chatbot and outputs the response message.
+    This example makes an API request to an AZURE OpenAI chatbot and outputs the response message.
     
     .NOTES
-    Author: Wojciech Napierała
+    Author: Wojciech Napierala
     Date:   2023-06-27
     #>
     
@@ -302,7 +302,7 @@ function Invoke-AzureOpenAIChatCompletion {
         try {
             $response = Start-Job -ScriptBlock {
                 param($url, $headers, $bodyJSON)
-                Invoke-RestMethod -Uri $url -Method POST -Headers $headers -Body $bodyJSON -TimeoutSec 30 -ErrorAction Stop
+                Invoke-RestMethod -Uri $url -Method POST -Headers $headers -Body $bodyJSON -TimeoutSec 60 -ErrorAction Stop
             } -ArgumentList $url, $headers, $bodyJSON
             
             Write-Verbose ("Job: $($response | ConvertTo-Json)" )
@@ -313,12 +313,20 @@ function Invoke-AzureOpenAIChatCompletion {
             }
             Write-Host ""    
 
+            if($response.JobStateInfo.State -eq 'Failed') {
+                #Write-Output $($response.ChildJobs[0].JobStateInfo.Reason.message
+                
+            }
+
+
             $response = Receive-Job -Id $response.Id -Wait -ErrorAction Stop
+
+            Write-Verbose ($response | Out-String)
 
             return $response
         }
         catch {
-            Write-Output $_.Error
+            Write-Warning ($_.Exception.Message)
         }
     }
     
@@ -350,9 +358,9 @@ function Invoke-AzureOpenAIChatCompletion {
             [string]$stream
         )
     
-        Write-Output ""
-        Write-Output "Response assistant ($stream):"
-        Write-Output $content
+        Write-Host ""
+        Write-Host "Response assistant ($stream):"
+        Write-Host $content
     }
     
     # Function to output the finish reason
@@ -378,9 +386,50 @@ function Invoke-AzureOpenAIChatCompletion {
             [string]$finishReason
         )
     
-        Write-Output ""
-        Write-Output "Finish reason: $($finishReason)"
+        Write-Host ""
+        Write-Host "Finish reason: $($finishReason)"
     }
+    
+    function Show-PromptFilterResults {
+        <#
+        .SYNOPSIS
+        Outputs the prompt filter results.
+        
+        .DESCRIPTION
+        This function prints the prompt filter results to the console.
+        
+        .PARAMETER response
+        The prompt filter results to be displayed. This parameter is mandatory.
+        
+        .EXAMPLE
+        Show-PromptFilterResults -prompt_filter_results "Filtered results"
+        
+        .OUTPUTS
+        None. This function outputs the prompt filter results to the console.
+        #> 
+        param(
+            [Parameter(Mandatory = $true)]
+            [PSCustomObject]$response
+        )
+    
+        Write-Host ""
+        Write-Host "Prompt Filter Results:"
+        #Write-Output $response.prompt_filter_results
+
+        # Iterate through each item in prompt_filter_results
+        foreach ($result in $response.prompt_filter_results) {
+            # Extract the content_filter_results
+            $contentFilterResults = $result.content_filter_results
+
+            # Convert content_filter_results to PowerShell object
+            $contentFilterObject = $contentFilterResults | Out-String
+
+            # Display the content_filter_results for each prompt_index
+            Write-Host "Results for prompt_index $($result.prompt_index):"
+            $contentFilterObject
+        }
+    }
+
     
     # Function to output the usage
     function Show-Usage {
@@ -508,7 +557,7 @@ function Invoke-AzureOpenAIChatCompletion {
 
         # user prompt message
         if ($OneTimeUserPrompt) {
-            $userMessage = $OneTimeUserPrompt
+            $userMessage = $OneTimeUserPrompt | Out-String # must be string not array of strings
             Write-Verbose "OneTimeUserPrompt: $userMessage"
         }
         else {
@@ -516,8 +565,6 @@ function Invoke-AzureOpenAIChatCompletion {
             $userMessage = Read-Host "Enter chat message (user)"
             Write-Verbose $userMessage
         }
-
-        Write-Verbose "after OneTimeUserPrompt: $usermessage"
         
         $messages = Get-Messages -system_message $system_message -UserMessage $userMessage
         Write-Verbose "Messages: $($messages | out-string)"
@@ -534,7 +581,6 @@ function Invoke-AzureOpenAIChatCompletion {
             Write-Host "{SysPFile:'${SystemPromptFileName}', temp:'${Temperature}', top_p:'${TopP}', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
 
             $response = Invoke-ApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON
-
             
             if ($null -eq $response) {
                 Write-Verbose "Response is empty"
@@ -546,16 +592,24 @@ function Invoke-AzureOpenAIChatCompletion {
             $assistant_response = $response.choices[0].message.content
 
             $messages += @{"role" = "assistant"; "content" = $assistant_response }
-
             
             if ($OneTimeUserPrompt) {
-                Write-Verbose "OneTimeUserPrompt Break"
+                Write-Verbose "OneTimeUserPrompt output with return"
+
+                Write-Verbose "Show-FinishReason"
+                Write-Information -MessageData (Show-FinishReason -finishReason $response.choices.finish_reason | Out-String) -InformationAction Continue
+                Write-Verbose "Show-PromptFilterResults"
+                Write-Information -MessageData (Show-PromptFilterResults -response $response | Out-String) -InformationAction Continue
+                Write-Verbose "Show-Usage"
+                Write-Information -MessageData (Show-Usage -usage $response.usage | Out-String) -InformationAction Continue
+
+                Write-Verbose "Show-ResponseMessage - return"
                 return (Show-ResponseMessage -content $assistant_response -stream "assistant" | Out-String)
-                break
             }
             else {
-                Show-ResponseMessage -content $assistant_response -stream "assistant"
                 Write-Verbose "NO OneTimeUserPrompt"
+
+                Show-ResponseMessage -content $assistant_response -stream "assistant"
             
                 Write-Information -MessageData (Show-FinishReason -finishReason $response.choices.finish_reason | Out-String) -InformationAction Continue
                 Write-Information -MessageData (Show-Usage -usage $response.usage | Out-String) -InformationAction Continue

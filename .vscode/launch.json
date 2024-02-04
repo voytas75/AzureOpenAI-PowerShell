@@ -1,0 +1,15 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "PowerShell: Launch Script",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": ". D:/dane/voytas/Dokumenty/visual_studio_code/github/AzureOpenAI-PowerShell/Invoke-AzureOpenAIChatCompletion.ps1; Invoke-AzureOpenAIChatCompletion -APIVersion \"2023-12-01-preview\" -Endpoint \"https://udtazureopenai.openai.azure.com\" -Deployment \"udtgpt4\" -User \"BobbyK\" -Temperature 0.6 -N 1 -FrequencyPenalty 0 -PresencePenalty 0 -TopP 0 -Stop $null -Stream $false -SystemPromptFileName \"TextAnalyzer3.txt\" -OneTimeUserPrompt (get-content \"C:/Users/voytas/OneDrive/chatGPT/blocktext/2.txt\" -Raw)",
+            "args": []
+        }
+    ]
+}
