@@ -77,7 +77,11 @@ function Invoke-AzureOpenAIChatCompletion {
         [string]$SystemPromptFileName,
         [Parameter(Mandatory = $false, ValueFromPipeline = $true)]
         [ValidateNotNullOrEmpty()]
-        [string]$OneTimeUserPrompt
+        [string]$OneTimeUserPrompt,
+        [string]$logfile,
+        [string]$usermessage,
+        [switch]$Precise,
+        [switch]$Creative
     )
     
     # Function to generate the headers for the API request.
@@ -302,7 +306,7 @@ function Invoke-AzureOpenAIChatCompletion {
         try {
             $response = Start-Job -ScriptBlock {
                 param($url, $headers, $bodyJSON)
-                Invoke-RestMethod -Uri $url -Method POST -Headers $headers -Body $bodyJSON -TimeoutSec 60 -ErrorAction Stop
+                Invoke-RestMethod -Uri $url -Method POST -Headers $headers -Body $bodyJSON -TimeoutSec 240 -ErrorAction Stop
             } -ArgumentList $url, $headers, $bodyJSON
             
             Write-Verbose ("Job: $($response | ConvertTo-Json)" )
@@ -313,7 +317,7 @@ function Invoke-AzureOpenAIChatCompletion {
             }
             Write-Host ""    
 
-            if($response.JobStateInfo.State -eq 'Failed') {
+            if ($response.JobStateInfo.State -eq 'Failed') {
                 #Write-Output $($response.ChildJobs[0].JobStateInfo.Reason.message
                 
             }
@@ -358,9 +362,11 @@ function Invoke-AzureOpenAIChatCompletion {
             [string]$stream
         )
     
-        Write-Host ""
-        Write-Host "Response assistant ($stream):"
-        Write-Host $content
+        #Write-Host ""
+        #Write-Host "Response assistant ($stream):"
+        #Write-Host $content
+
+        return ("Response assistant ($stream):`n${content}")
     }
     
     # Function to output the finish reason
@@ -386,8 +392,8 @@ function Invoke-AzureOpenAIChatCompletion {
             [string]$finishReason
         )
     
-        Write-Host ""
-        Write-Host "Finish reason: $($finishReason)"
+        Write-Output ""
+        Write-Output "(Finish reason: $finishReason)"
     }
     
     function Show-PromptFilterResults {
@@ -429,35 +435,7 @@ function Invoke-AzureOpenAIChatCompletion {
             $contentFilterObject
         }
     }
-
-    
-    # Function to output the usage
-    function Show-Usage {
-        <#
-        .SYNOPSIS
-        Outputs the usage.
-        
-        .DESCRIPTION
-        This function prints the usage to the console.
-        
-        .PARAMETER usage
-        The usage to be displayed. This parameter is mandatory.
-        
-        .EXAMPLE
-        Show-Usage -usage "1"
-        
-        .OUTPUTS
-        None. This function outputs the usage to the console.
-        #> 
-        param(
-            [Parameter(Mandatory = $true)]
-            [string]$usage
-        )
-    
-        Write-Output ""
-        Write-Output "Usage:"
-        Write-Output $usage
-    }
+ 
     
     # Function to handle errors
     function Show-Error {
@@ -540,16 +518,53 @@ function Invoke-AzureOpenAIChatCompletion {
         }
     }
     
+    # Function to output the usage
+    function Show-Usage {
+        <#
+            .SYNOPSIS
+            Outputs the usage.
+            
+            .DESCRIPTION
+            This function prints the usage to the console.
+            
+            .PARAMETER usage
+            The usage to be displayed. This parameter is mandatory.
+            
+            .EXAMPLE
+            Show-Usage -usage "1"
+            
+            .OUTPUTS
+            None. This function outputs the usage to the console.
+            #> 
+        param(
+            [Parameter(Mandatory = $true)]
+            [System.Management.Automation.PSCustomObject]$usage
+        )
+        #$_message = @()
+        #if ($usage.Count -gt 0) {
+        #    [void]($usage.keys | ForEach-Object { $_message += '{0}: {1}' -f $_, $usage[$_] })
+        #}
+        #else {
+        #    Write-Host "No usage information provided."
+        #    return
+        #}
+        #Write-Information ($($usage | gm) | Out-String) -InformationAction Continue
+        $usageData = $usage.keys | ForEach-Object {"$($_): $($usage[$_])"}
+        return "Usage:`n$usageData"
+        #return "Usage:`n$_message"
+
+    }
+    
     try {
 
         # Call functions to execute API request and output results
         $headers = Get-Headers -ApiKeyVariable "API_AZURE_OPENAI"
 
         # system prompt
-        $system_message = get-content -Raw -path (Join-Path $PSScriptRoot "prompts\$SystemPromptFileName") -Encoding UTF8
+        $system_message = get-content -path (Join-Path $PSScriptRoot "prompts\$SystemPromptFileName") -Encoding UTF8 -Raw 
         
         # cleaning system prompt
-        $system_message = [System.Text.RegularExpressions.Regex]::Replace($system_message, "[^\x00-\x7F]", "")
+        $system_message = [System.Text.RegularExpressions.Regex]::Replace($system_message, "[^\x00-\x7F]", "")        
 
         if ($VerbosePreference -eq "Continue") {
             Write-verbose (Show-ResponseMessage -content $system_message -stream "system" | Out-String)
@@ -557,13 +572,25 @@ function Invoke-AzureOpenAIChatCompletion {
 
         # user prompt message
         if ($OneTimeUserPrompt) {
-            $userMessage = $OneTimeUserPrompt | Out-String # must be string not array of strings
+            # cleaning user message
+            $userMessage = [System.Text.RegularExpressions.Regex]::Replace($OneTimeUserPrompt, "[^\x00-\x7F]", "") | Out-String # must be string not array of strings
             Write-Verbose "OneTimeUserPrompt: $userMessage"
         }
         else {
             Write-Verbose "NO OneTimeUserPrompt: $userMessage"
-            $userMessage = Read-Host "Enter chat message (user)"
+            if (-not $usermessage) {
+                $userMessage = Read-Host "Enter chat message (user)"
+            }
+            $userMessage = [System.Text.RegularExpressions.Regex]::Replace($usermessage, "[^\x00-\x7F]", "") | Out-String # must be string not array of strings
             Write-Verbose $userMessage
+        }
+        if($Creative) {
+            $Temperature = 0.7
+            $TopP = 0.95
+        }
+        if($Precise) {
+            $Temperature = 0.3
+            $TopP = 0.8
         }
         
         $messages = Get-Messages -system_message $system_message -UserMessage $userMessage
@@ -571,6 +598,9 @@ function Invoke-AzureOpenAIChatCompletion {
 
         $urlChat = Get-Url -Endpoint $Endpoint -Deployment $Deployment -APIVersion $APIVersion
         Write-Verbose "urtChat: $urlChat"
+
+        Add-Content -Path $logfile -Value "System promp:`n$system_message" -Force
+        Add-Content -Path $logfile -Value "user message:`n$userMessage"
 
         do {
             $body = Get-Body -messages $messages -temperature $Temperature -top_p $TopP -frequency_penalty $FrequencyPenalty -presence_penalty $PresencePenalty -user $User -n $N -stop $Stop -stream $Stream
@@ -592,7 +622,8 @@ function Invoke-AzureOpenAIChatCompletion {
             $assistant_response = $response.choices[0].message.content
 
             $messages += @{"role" = "assistant"; "content" = $assistant_response }
-            
+
+
             if ($OneTimeUserPrompt) {
                 Write-Verbose "OneTimeUserPrompt output with return"
 
@@ -604,18 +635,30 @@ function Invoke-AzureOpenAIChatCompletion {
                 Write-Information -MessageData (Show-Usage -usage $response.usage | Out-String) -InformationAction Continue
 
                 Write-Verbose "Show-ResponseMessage - return"
-                return (Show-ResponseMessage -content $assistant_response -stream "assistant" | Out-String)
+                $responseText = (Show-ResponseMessage -content $assistant_response -stream "assistant" | Out-String)
+                Add-Content -Path $logfile -Value "OneTimeUserPrompt: $OneTimeUserPrompt"
+                Add-Content -Path $logfile -Value "ResponseText: $responseText"
+                return ($responseText)
             }
             else {
                 Write-Verbose "NO OneTimeUserPrompt"
 
                 Show-ResponseMessage -content $assistant_response -stream "assistant"
             
-                Write-Information -MessageData (Show-FinishReason -finishReason $response.choices.finish_reason | Out-String) -InformationAction Continue
-                Write-Information -MessageData (Show-Usage -usage $response.usage | Out-String) -InformationAction Continue
-    
+                Add-Content -Path $logfile -Value "assistant reposnse: $assistant_response"
+
+#                Write-Information -MessageData (Show-FinishReason -finishReason $response.choices.finish_reason | Out-String) -InformationAction Continue
+                
+                #$usage = $response.usage
+                #$usage
+#                $usage.keys
+#                $usageData = $usage.keys | ForEach-Object {"$($_): $($usage[$_])"}
+#                $usageData
+#                Write-Information -MessageData (Show-Usage -usage $response.usage | Out-String) -InformationAction Continue
+
                 $user_message = Read-Host "Enter chat message (user)" 
                 $messages += @{"role" = "user"; "content" = $user_message }
+                Add-Content -Path $logfile -Value "user response:`n$user_message"
             }
             
         } while ($true)

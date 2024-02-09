@@ -93,9 +93,9 @@ function Invoke-AzureOpenAICompletion {
         [Parameter(Mandatory = $true)]
         [int]$MaxTokens,
         [Parameter(Mandatory = $false, HelpMessage = "What sampling temperature to use, between 0 and 2. Higher values means the model will take more risks. Try 0.9 for more creative applications, and 0 (argmax sampling) for ones with a well-defined answer. We generally recommend altering this or top_p but not both.")]
-        [double]$Temperature = 1,
+        [double]$Temperature = 0.7,
         [Parameter(Mandatory = $false, HelpMessage = 'An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered. We generally recommend altering this or temperature but not both.')]
-        [double]$TopP = 1,
+        [double]$TopP = 0.95,
         [Parameter(Mandatory = $false)]
         [double]$FrequencyPenalty = 0,
         [Parameter(Mandatory = $false, HelpMessage = "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.")]
@@ -121,7 +121,7 @@ function Invoke-AzureOpenAICompletion {
         [Parameter(Mandatory = $false)]
         [string]$User = $null,
         [Parameter(Mandatory = $false)]
-        [string]$model = "gpt-35-turbo"
+        [string]$model = "udtgpt4p"
 
     )
     
