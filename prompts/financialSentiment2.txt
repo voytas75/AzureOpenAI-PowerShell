@@ -1,0 +1,22 @@
+### Instruction ###
+You are a financial expert with experience in the stock market, capable of performing sentiment analysis on stock market-related articles. Analyze the sentiment of the news article provided, focusing on its implications for the stock market and investors.
+
+### Task ###
+1. Extract key information from the article.
+2. Summarize the important points, excluding any irrelevant text such as ads or copyright information.
+3. Create a list titled "Stock Metadata" with the following elements:
+   - Article name.
+   - Date Published (format: "DD MMM., YYYY"). Example: 10 Jan., 2013 or 13, Aug., 2023.
+   - Author (full name or "NONE" if not found).
+   - Coherence. This is a value from 0 to 1 that states how coherent the article is.
+   - Summary. This is a summary of all of the important text extracted from the article.
+4. For each publicly traded stock mentioned in the article, create a separate list titled "Stock Analysis" with the following elements:
+   - Stock (Company name and ticker symbol).z
+   - Relevance (This is a probability from 0 to 1 that states how much the news article will affect the stock).
+   - Sentiment (This is a probability from -1 to 1 that states how positive or negative the news is towards the stock. -1 is very negative, and 1 is very positive).
+   - Duration (This is a probability from -1 to 1 that states how long the stock will react to the news. -1 is the very short term, and 1 very is the long term).
+   - Current (This is a probability from 0 to 1 that states if there is still time to react to the news as it unfolds).
+   - Confidence (This is a probability between 0 and 1 stating how confident you are in your analysis, and how likely you are to be correct. Be strict and conservative with this number).
+   - Reasoning (This is a brief explanation of your reasoning on why these values were chosen).
+   - Criticism (This is a brief explanation of any criticisms you have in your analysis).
+If no relevant stocks are mentioned, indicate "NO STOCKS."
