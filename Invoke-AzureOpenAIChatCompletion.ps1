@@ -549,12 +549,114 @@ function Invoke-AzureOpenAIChatCompletion {
         #    return
         #}
         #Write-Information ($($usage | gm) | Out-String) -InformationAction Continue
-        $usageData = $usage.keys | ForEach-Object {"$($_): $($usage[$_])"}
+        $usageData = $usage.keys | ForEach-Object { "$($_): $($usage[$_])" }
         return "Usage:`n$usageData"
         #return "Usage:`n$_message"
 
     }
     
+    # Here's an example of how the Adjust-ParametersForSwitches function might look:
+    function Set-ParametersForSwitches3 {
+        param(
+            [bool]$Creative,
+            [bool]$Precise
+        )
+        if ($Creative) {
+            $script:Temperature = 0.7
+            $script:TopP = 0.95
+        }
+        if ($Precise) {
+            $script:Temperature = 0.3
+            $script:TopP = 0.8
+        }
+    }
+
+    function Set-ParametersForSwitches2 {
+        param([bool]$Creative, [bool]$Precise)
+        if ($Creative) {
+            $Temperature = 0.7
+            $TopP = 0.95
+        }
+        elseif ($Precise) {
+            $Temperature = 0.3
+            $TopP = 0.8
+        }
+        return @{ 'Temperature' = $Temperature; 'TopP' = $TopP }
+    }
+    
+    function Set-ParametersForSwitches {
+        <#
+        .SYNOPSIS
+        Adjusts temperature and top_p parameters based on the provided switches.
+
+        .DESCRIPTION
+        Sets the temperature and top_p parameters to predefined values based on whether the Creative or Precise switch is used.
+
+        .PARAMETER Creative
+        A switch to set parameters for creative output.
+
+        .PARAMETER Precise
+        A switch to set parameters for precise output.
+
+        .OUTPUTS
+        Hashtable of adjusted parameters.
+        #>
+        param(
+            [switch]$Creative,
+            [switch]$Precise
+        )
+        $parameters = @{
+            'Temperature' = 1.0
+            'TopP'        = 1.0
+        }
+    
+        if ($Creative) {
+            $parameters['Temperature'] = 0.7
+            $parameters['TopP'] = 0.95
+        }
+        elseif ($Precise) {
+            $parameters['Temperature'] = 0.3
+            $parameters['TopP'] = 0.8
+        }
+    
+        return $parameters
+    }
+
+    function Log-Message {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string]$Message,
+            [Parameter(Mandatory = $true)]
+            [string]$LogFile,
+            [Parameter(Mandatory = $false)]
+            [string]$Level = "INFO"
+        )
+        # Usage:
+        #Log-Message -Message "System prompt:`n$system_message" -LogFile $logfile -Level "VERBOSE"
+        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        $logEntry = "[$timestamp [$Level]] $Message"
+        Add-Content -Path $LogFile -Value $logEntry -Force
+    }
+   
+
+    function Format-Error {
+        param(
+            [System.Management.Automation.ErrorRecord]$ErrorVar
+        )
+        Write-Output $ErrorVar
+    }
+
+    function Format-Message {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string]$Message
+        )
+        # Usage:
+        #$userMessage = Format-Message -Message $OneTimeUserPrompt
+        return [System.Text.RegularExpressions.Regex]::Replace($Message, "[^\x00-\x7F]", "")
+    }
+   
+
     try {
 
         # Call functions to execute API request and output results
@@ -573,25 +675,22 @@ function Invoke-AzureOpenAIChatCompletion {
         # user prompt message
         if ($OneTimeUserPrompt) {
             # cleaning user message
-            $userMessage = [System.Text.RegularExpressions.Regex]::Replace($OneTimeUserPrompt, "[^\x00-\x7F]", "") | Out-String # must be string not array of strings
+            #$userMessage = [System.Text.RegularExpressions.Regex]::Replace($OneTimeUserPrompt, "[^\x00-\x7F]", "") | Out-String # must be string not array of strings
+            $userMessage = Format-Message -Message $OneTimeUserPrompt
             Write-Verbose "OneTimeUserPrompt: $userMessage"
         }
         else {
             Write-Verbose "NO OneTimeUserPrompt: $userMessage"
-            if (-not $usermessage) {
+            if (-not $userMessage) {
                 $userMessage = Read-Host "Enter chat message (user)"
             }
-            $userMessage = [System.Text.RegularExpressions.Regex]::Replace($usermessage, "[^\x00-\x7F]", "") | Out-String # must be string not array of strings
+            #$userMessage = [System.Text.RegularExpressions.Regex]::Replace($usermessage, "[^\x00-\x7F]", "") | Out-String # must be string not array of strings
+            $userMessage = Format-Message -Message $userMessage
             Write-Verbose $userMessage
         }
-        if($Creative) {
-            $Temperature = 0.7
-            $TopP = 0.95
-        }
-        if($Precise) {
-            $Temperature = 0.3
-            $TopP = 0.8
-        }
+
+        # Adjust parameters based on switches.
+        $parameters = Set-ParametersForSwitches -Creative:$Creative -Precise:$Precise
         
         $messages = Get-Messages -system_message $system_message -UserMessage $userMessage
         Write-Verbose "Messages: $($messages | out-string)"
@@ -599,16 +698,16 @@ function Invoke-AzureOpenAIChatCompletion {
         $urlChat = Get-Url -Endpoint $Endpoint -Deployment $Deployment -APIVersion $APIVersion
         Write-Verbose "urtChat: $urlChat"
 
-        Add-Content -Path $logfile -Value "System promp:`n$system_message" -Force
-        Add-Content -Path $logfile -Value "user message:`n$userMessage"
+        Log-Message -Message "System promp:`n$system_message" -LogFile $logfile
+        Log-Message -Message "User message:`n$userMessage" -LogFile $logfile
 
         do {
-            $body = Get-Body -messages $messages -temperature $Temperature -top_p $TopP -frequency_penalty $FrequencyPenalty -presence_penalty $PresencePenalty -user $User -n $N -stop $Stop -stream $Stream
+            $body = Get-Body -messages $messages -temperature $parameters['Temperature'] -top_p $parameters['TopP'] -frequency_penalty $FrequencyPenalty -presence_penalty $PresencePenalty -user $User -n $N -stop $Stop -stream $Stream
 
             $bodyJSON = ($body | ConvertTo-Json)
             
             Write-Host "[Chat completion]" -ForegroundColor Green
-            Write-Host "{SysPFile:'${SystemPromptFileName}', temp:'${Temperature}', top_p:'${TopP}', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
+            Write-Host "{SysPFile:'${SystemPromptFileName}', temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
 
             $response = Invoke-ApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON
             
@@ -636,8 +735,10 @@ function Invoke-AzureOpenAIChatCompletion {
 
                 Write-Verbose "Show-ResponseMessage - return"
                 $responseText = (Show-ResponseMessage -content $assistant_response -stream "assistant" | Out-String)
-                Add-Content -Path $logfile -Value "OneTimeUserPrompt: $OneTimeUserPrompt"
-                Add-Content -Path $logfile -Value "ResponseText: $responseText"
+
+                Log-Message -Message "OneTimeUserPrompt:`n$OneTimeUserPrompt" -LogFile $logfile
+                Log-Message -Message "ResponseText:`n$responseText" -LogFile $logfile
+
                 return ($responseText)
             }
             else {
@@ -645,29 +746,28 @@ function Invoke-AzureOpenAIChatCompletion {
 
                 Show-ResponseMessage -content $assistant_response -stream "assistant"
             
-                Add-Content -Path $logfile -Value "assistant reposnse: $assistant_response"
+                Log-Message -Message "Assistant reposnse:`n$assistant_response" -LogFile $logfile
 
-#                Write-Information -MessageData (Show-FinishReason -finishReason $response.choices.finish_reason | Out-String) -InformationAction Continue
+                #                Write-Information -MessageData (Show-FinishReason -finishReason $response.choices.finish_reason | Out-String) -InformationAction Continue
                 
                 #$usage = $response.usage
                 #$usage
-#                $usage.keys
-#                $usageData = $usage.keys | ForEach-Object {"$($_): $($usage[$_])"}
-#                $usageData
-#                Write-Information -MessageData (Show-Usage -usage $response.usage | Out-String) -InformationAction Continue
+                #                $usage.keys
+                #                $usageData = $usage.keys | ForEach-Object {"$($_): $($usage[$_])"}
+                #                $usageData
+                #                Write-Information -MessageData (Show-Usage -usage $response.usage | Out-String) -InformationAction Continue
 
                 $user_message = Read-Host "Enter chat message (user)" 
                 $messages += @{"role" = "user"; "content" = $user_message }
-                Add-Content -Path $logfile -Value "user response:`n$user_message"
+
+                Log-Message -Message "User response:`n$user_message" -LogFile $logfile
             }
             
         } while ($true)
     }
     catch {
-        #Show-Error -ErrorVar $_.Error
-        Write-Output $_.Error
+        Format-Error -ErrorVar $_
     }
 
 }
-
     
