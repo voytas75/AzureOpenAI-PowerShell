@@ -622,7 +622,7 @@ function Invoke-AzureOpenAIChatCompletion {
         return $parameters
     }
 
-    function Log-Message {
+    function Write-LogMessage {
         param(
             [Parameter(Mandatory = $true)]
             [string]$Message,
@@ -632,7 +632,7 @@ function Invoke-AzureOpenAIChatCompletion {
             [string]$Level = "INFO"
         )
         # Usage:
-        #Log-Message -Message "System prompt:`n$system_message" -LogFile $logfile -Level "VERBOSE"
+        #Write-LogMessage -Message "System prompt:`n$system_message" -LogFile $logfile -Level "VERBOSE"
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         $logEntry = "[$timestamp [$Level]] $Message"
         Add-Content -Path $LogFile -Value $logEntry -Force
@@ -698,8 +698,8 @@ function Invoke-AzureOpenAIChatCompletion {
         $urlChat = Get-Url -Endpoint $Endpoint -Deployment $Deployment -APIVersion $APIVersion
         Write-Verbose "urtChat: $urlChat"
 
-        Log-Message -Message "System promp:`n$system_message" -LogFile $logfile
-        Log-Message -Message "User message:`n$userMessage" -LogFile $logfile
+        Write-LogMessage -Message "System promp:`n$system_message" -LogFile $logfile
+        Write-LogMessage -Message "User message:`n$userMessage" -LogFile $logfile
 
         do {
             $body = Get-Body -messages $messages -temperature $parameters['Temperature'] -top_p $parameters['TopP'] -frequency_penalty $FrequencyPenalty -presence_penalty $PresencePenalty -user $User -n $N -stop $Stop -stream $Stream
@@ -736,8 +736,8 @@ function Invoke-AzureOpenAIChatCompletion {
                 Write-Verbose "Show-ResponseMessage - return"
                 $responseText = (Show-ResponseMessage -content $assistant_response -stream "assistant" | Out-String)
 
-                Log-Message -Message "OneTimeUserPrompt:`n$OneTimeUserPrompt" -LogFile $logfile
-                Log-Message -Message "ResponseText:`n$responseText" -LogFile $logfile
+                Write-LogMessage -Message "OneTimeUserPrompt:`n$OneTimeUserPrompt" -LogFile $logfile
+                Write-LogMessage -Message "ResponseText:`n$responseText" -LogFile $logfile
 
                 return ($responseText)
             }
@@ -746,7 +746,7 @@ function Invoke-AzureOpenAIChatCompletion {
 
                 Show-ResponseMessage -content $assistant_response -stream "assistant"
             
-                Log-Message -Message "Assistant reposnse:`n$assistant_response" -LogFile $logfile
+                Write-LogMessage -Message "Assistant reposnse:`n$assistant_response" -LogFile $logfile
 
                 #                Write-Information -MessageData (Show-FinishReason -finishReason $response.choices.finish_reason | Out-String) -InformationAction Continue
                 
@@ -760,7 +760,7 @@ function Invoke-AzureOpenAIChatCompletion {
                 $user_message = Read-Host "Enter chat message (user)" 
                 $messages += @{"role" = "user"; "content" = $user_message }
 
-                Log-Message -Message "User response:`n$user_message" -LogFile $logfile
+                Write-LogMessage -Message "User response:`n$user_message" -LogFile $logfile
             }
             
         } while ($true)
