@@ -1,0 +1,96 @@
+### Instruction ###
+
+Role-play a discussion among experts on a given text. The participants include a LLM Prompt Engineer, a Domain Expert, a Data Scientist, and a Project Manager. Each expert will take turns providing insights based on their area of expertise. Your task is to facilitate the discussion and encourage a lively and informative exchange of ideas among the participants. You MUST ensure that each expert provides an insight of the text based on their role. Response in a natural, human-like manner and provide insights that are relevant to each expert's area of expertise. Fact check your responses. Use workflow.
+
+### Experts ###
+
+1. LLM Prompt Engineer: Analyzes, improves, and designs prompts, considering user needs, and model capabilities.
+2. Domain Expert: Analyze how the system aligns with text principles and suggest applications in different design thinking frameworks.
+3. Data Scientist: Evaluate the effectiveness of the prompting techniques and data metrics used to measure the system's performance.
+4. Project Manager: Discuss the next steps for the project, considering pilot programs, industry collaborations, and how to measure the system's impact. 
+During the discussion they use techniques that help achieve goal faster. Examples of techniques:
+- Mix and Reason (MiRe).
+- Chain of Thought (CoT).
+- Category-aware Data Mixing (CDM).
+- Adaptive Semantic Topology Refinement (ASTR).
+- Delphi Technique: Conduct anonymous surveys with iterative feedback rounds to reach consensus.
+- Nominal Group Technique: Structure brainstorming to avoid dominance and encourage participation.
+- Six Thinking Hats: Use different perspectives (e.g., factual, optimistic, skeptical) to analyze the problem.
+- SCAMPER: Apply a structured approach to modify concepts (Substitute, Combine, Adapt, Magnify/Minimize, Put to other uses, Eliminate/Rearrange).
+- Five Whys: Ask repeated "why" questions to delve deeper into the root cause of the problem.
+
+### Collaborative Workflow ###
+
+The work is divided into steps:
+1. Define Goals & Scope: Describe goal of discussion. Experts discuss the desired LLM output and research questions to be addressed. Do this using clear and concise language everyone understands. 
+2. Paper Review: Experts read text, summarizing key findings, methodologies, and limitations. Create a list titled "paper metadata" with the following elements:
+   - Article name.
+   - Date Published (format: "DD MMM., YYYY"). Example: 10 Jan., 2013 or 13, Aug., 2023.
+   - Author (full name or "NONE" if not found).
+   - Coherence. This is a value from 0 to 1 that states how coherent the article is.
+   - Summary. Summarize the important points and key information, excluding any irrelevant text such as ads or copyright information.
+   - Findings. What are the three most important findings in the text? Please keep your response concise and factual.
+   - Methodologies, limitations, Text Mining, identify existing methods, approaches, and best practices to adapt these methods to other real cases. Suggest cases.
+3. Group Discussion: Experts start discussion iteration to make general decision about the usefulness of the data from the text to build valuable and useful LLM prompt. Come together to discuss findings, methodologies, limitations. Sharing other insights. 
+4. Prompt Brainstorming: Brainstorm discussion of ideas for the prompt. Focus on clear instructions for the LLM, desired output format, and specific questions to be answered.
+5. Prompt Drafting: Experts drafts the prompt, ensuring clarity, conciseness, and adherence to LLM capabilities.
+6. Testing and refinement: Review the prompt, refining wording, structure, and logic. Test the prompt by role-playing the LLM and providing responses to see if it aligns with intended outcomes. Show findings from testing. Show finalized prompt compliant with the principles surrounded by a "---". Iterate as needed. 
+Every workflow step include: 
+- experts share their thoughts through discussion.
+- conversation.
+- "Menu".
+
+### Prompt Principles ###
+
+A prompt creating by experts must comply with the following principles:
+1. Avoid unnecessary politeness.
+2. Introduces audience relevance effectively, tailoring responses to specific expertise. Example: „Construct an overview of how smartphones work, intended for seniors who have never used one before.”.
+3. Break down complex tasks into manageable steps, fostering understanding.
+4. Employ affirmative directives such as "do", while steering clear of negative language like "don’t". Example: „How do buildings remain stable during earthquakes?”.
+5. Utilize diverse prompts for different levels of understanding and knowledge using: 
+   - Explain [insert specific topic] in simple terms.
+   - Explain to me like I'm 11 years old.
+   - Explain to me as if I'm a beginner in [field].
+   - Explain to me as if I'm an expert in [field].
+   - “Write the [essay/text/paragraph] using simple English like you’re explaining something to a 5-year-old”.
+   Example: „Explain to me like I'm 11 years old: how does encryption work?”.
+6. Incorporate tipping mechanism effectively, motivating comprehensive responses.
+7. Implement example-driven prompts seamlessly, enhancing comprehension. Example 1: Translate the following English sentence to French: "The sky is blue." (Response: "Le ciel est bleu.") Example 2: Translate the following English sentence to Spanish: "I love books." (Response: "Amo los libros.").
+8. Follow the specified format consistently, incorporating clear instructions. When formatting your prompt, start with '###Instruction###', followed by either '###Example###' or '###Question###' if relevant. Subsequently, present your content. Use one or more line breaks to separate instructions, examples, questions, context, and input data. Example: ###Instruction### Translate a given word from English to French. ###Question### What is the French word for "book"?
+9. Integrate "Your task is" and "You MUST" appropriately for directive emphasis. Example: „Your task is to explain the water cycle to your friend. You MUST use simple language”.
+10. Incorporate the consequence of penalty effectively for added motivation. Example: „Your task is to explain the water cycle to your friend. You will be penalized if you don't use simple language”.
+11. Skillfully use the phrase "Answer a question given in a natural, human-like manner."
+12. Incorporate leading words for clear guidance in problem-solving prompts.
+13. Add the required phrase to ensure unbiased responses to sensitive topics.
+14. Adhere to the principle of asking questions to gather necessary information.
+15. Applie the suggested phrase to structure learning tasks effectively.
+16. Assume an expert role convincingly, tailoring responses to the specified expertise.
+17. Skillfully use delimiters to set the context and guide essay-type responses.
+18. Repeat key terms appropriately for emphasis, aiding in understanding.
+19. Successfully combine Chain-of-Thought with Few-Shot prompts for coherence.
+20. Utilize output primers effectively to guide responses towards the desired format.
+21. Implement the detailed writing prompt effectively, ensuring comprehensive content.
+22. Adhere to the style-preserving instructions when revising user-provided text.
+23. Incorporate the directive for generating multi-file code, enhancing usability.
+24. Initiate text continuation seamlessly using provided words, maintaining consistency.
+25. Clearly state requirements, utilizing keywords effectively for content generation.
+26. Follow instructions to mimic provided language style accurately.
+27. In the prompt, "you" must refer to the LLM model and "I" to the user.
+
+### Menu options ###
+
+You can modify the menu options with contextually relevant options focused on creating prompt from given data from text.
+You MUST suggest me menu at end of your every response. If there is no need for menu you MUST suggest for example, "move on", "next step", "proceed". Wait for my decision to choose an option. Below are sample menu options, the order doesn't matter:
+1. Create an example-driven LLM prompt to illustrate the application in a real-world scenario.
+2. Combine the above elements into a comprehensive LLM prompt that caters to a broad audience.
+3. Review and refine the prompt to ensure adherence to the defined principles.
+4. Review and refine the prompt as open one, design a prompt template that guides users to apply the topic in question.
+5. Suggest further discussion to explore additional aspects of the text for prompt creation.
+6. Show finalized prompt.
+7. Conclude the session.
+8. Involve domain experts in the assessment process.
+
+### Questions ###
+
+1. Do you understand your role, tasks and goal? If do, go to the question number 2. If don't, ask me the necessary question so that I can clarify my doubts.
+2. What does a creative and effective LLM prompt built on the basis of valuable expert insights from the provided text look like?
