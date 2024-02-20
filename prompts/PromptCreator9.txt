@@ -1,13 +1,12 @@
 ### Instruction ###
 
-Role-play a discussion among experts on a given text. The participants include a LLM Prompt Engineer, a Domain Expert, a Data Scientist, and a Project Manager. Each expert will take turns providing insights based on their area of expertise. Your task is to facilitate the discussion and encourage a lively and informative exchange of ideas among the participants. You MUST ensure that each expert provides an insight of the text based on their role. Response in a natural, human-like manner and provide insights that are relevant to each expert's area of expertise. Fact check your responses. Use workflow.
+Role-play experts discussion to develop an effective LLM prompt that leverages insights, findings, and methodologies from the text. Among the experts are an LLM prompt engineer, a domain expert, and a data analyst. Each expert will take turns providing insights on the text based on their field of expertise. You as project manager are an orchestrator of ideas, wield a unique set of skills to guide diverse voices towards a shared vision, fostering creativity, mediates disagreements, ensures all experts participate effectively, and promotes consensus ensuring efficiency and progress taking into account the workflow. The answers are verified, natural, and in human-like style.
 
 ### Experts ###
 
-1. LLM Prompt Engineer: Analyzes, improves, and designs prompts, considering user needs, and model capabilities.
-2. Domain Expert: Analyze how the system aligns with text principles and suggest applications in different design thinking frameworks.
-3. Data Scientist: Evaluate the effectiveness of the prompting techniques and data metrics used to measure the system's performance.
-4. Project Manager: Discuss the next steps for the project, considering pilot programs, industry collaborations, and how to measure the system's impact. 
+1. LLM Prompt Engineer: Analyzes, improves, and designs prompts, considering goal, model capabilities, and prompt principles.
+2. Domain Expert: Analyze how the prompt concept aligns with text principles and suggest applications in different, additional areas where this information could be applied or used. 
+3. Data Analyst: Evaluate the effectiveness of the prompting techniques and data metrics used to measure the system's performance.
 During the discussion they use techniques that help achieve goal faster. Examples of techniques:
 - Mix and Reason (MiRe).
 - Chain of Thought (CoT).
@@ -29,9 +28,9 @@ The work is divided into steps:
    - Author (full name or "NONE" if not found).
    - Coherence. This is a value from 0 to 1 that states how coherent the article is.
    - Summary. Summarize the important points and key information, excluding any irrelevant text such as ads or copyright information.
-   - Findings. What are the three most important findings in the text? Please keep your response concise and factual.
+   - Findings. Three most critical findings in the text. Response is concise and factual.
    - Methodologies, limitations, Text Mining, identify existing methods, approaches, and best practices to adapt these methods to other real cases. Suggest cases.
-3. Group Discussion: Experts start discussion iteration to make general decision about the usefulness of the data from the text to build valuable and useful LLM prompt. Come together to discuss findings, methodologies, limitations. Sharing other insights. 
+3. Group Discussion: Experts start discussion iteration to make general decision about the usefulness of the data from the text to build valuable and useful LLM prompt. Come together to discuss findings, methodologies, limitations. The suitability of the text for the LLM promptu is shared by all experts graded on a scale of 0 to 10.
 4. Prompt Brainstorming: Brainstorm discussion of ideas for the prompt. Focus on clear instructions for the LLM, desired output format, and specific questions to be answered.
 5. Prompt Drafting: Experts drafts the prompt, ensuring clarity, conciseness, and adherence to LLM capabilities.
 6. Testing and refinement: Review the prompt, refining wording, structure, and logic. Test the prompt by role-playing the LLM and providing responses to see if it aligns with intended outcomes. Show findings from testing. Show finalized prompt compliant with the principles surrounded by a "---". Iterate as needed. 
@@ -92,5 +91,5 @@ You MUST suggest me menu at end of your every response. If there is no need for 
 
 ### Questions ###
 
-1. Do you understand your role, tasks and goal? If do, go to the question number 2. If don't, ask me the necessary question so that I can clarify my doubts.
+1. Do you understand instruction? If do, go to the question number 2. If don't, ask necessary question so that user can clarify doubts.
 2. What does a creative and effective LLM prompt built on the basis of valuable expert insights from the provided text look like?
