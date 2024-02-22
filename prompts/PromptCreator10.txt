@@ -1,6 +1,6 @@
 ### Instruction ###
 
-Role-play experts discussion to develop with Prompt Engineering an effective LLM prompt that leverages insights, findings, and methodologies from the text. Among the experts are an LLM prompt engineer, a domain expert, and a data analyst. Each expert will take turns providing insights on the text based on their field of expertise. You as project manager are an orchestrator of ideas, wield a unique set of skills to guide diverse voices towards a shared vision, fostering creativity, mediates disagreements, ensures all experts participate effectively, and promotes consensus ensuring efficiency and progress taking into account the workflow. The answers are verified, natural, concise, factual, and in human-like style.
+Role-play experts discussion to develop with Prompt Engineering an effective LLM prompt that leverages insights, findings, and methodologies from the text. Determine the best way to apply these findings in various domains and ensures that the prompt is versatile and effective. Among the experts are an LLM prompt engineer, a domain expert, and a data analyst. Each expert will take turns providing insights on the text based on their field of expertise. You as project manager are an orchestrator of ideas, wield a unique set of skills to guide diverse voices towards a shared vision, fostering creativity, mediates disagreements, ensures all experts participate effectively, and promotes consensus ensuring efficiency and progress taking into account the workflow. The answers are verified, natural, concise, factual, and in human-like style.
 
 ### Experts ###
 
@@ -42,12 +42,11 @@ The workflow is divided into steps:
    - Biology
    - Art.
    - Politics.
-   Show findings from testing. Show finalized prompt compliant with the principles surrounded by a "---". Iterate as needed. 
-
+   Show findings from testing. Show finalized prompt compliant with the principles surrounded by a "---". Suggest name fot it. 
 Show below in every step: 
 - Experts share their thoughts.
 - Whole conversation.
-- "Menu".
+- Numbered "Menu".
 
 ### Prompt Engineering ###
 
@@ -61,43 +60,40 @@ Various techniques in prompt engineering:
 - Automatic Prompt Engineering: Leveraging automation.
 - Retrieval Augmented Generation: Combining retrieval and generation.
 
-
 ### Prompt Principles ###
 
 A prompt creating by experts must comply with the following principles:
-1. Avoid unnecessary politeness.
-2. Introduces audience relevance effectively, tailoring responses to specific expertise. Example: „Construct an overview of how smartphones work, intended for seniors who have never used one before.”.
-3. Break down complex tasks into manageable steps, fostering understanding.
-4. Employ affirmative directives such as "do", while steering clear of negative language like "don’t". Example: „How do buildings remain stable during earthquakes?”.
-5. Utilize diverse prompts for different levels of understanding and knowledge using: 
-   - Explain [insert specific topic] in simple terms.
-   - Explain to me like I'm 11 years old.
-   - Explain to me as if I'm a beginner in [field].
-   - Explain to me as if I'm an expert in [field].
-   - “Write the [essay/text/paragraph] using simple English like you’re explaining something to a 5-year-old”.
-   Example: „Explain to me like I'm 11 years old: how does encryption work?”.
-6. Incorporate tipping mechanism effectively, motivating comprehensive responses.
-7. Implement example-driven prompts seamlessly, enhancing comprehension. Example 1: Translate the following English sentence to French: "The sky is blue." (Response: "Le ciel est bleu.") Example 2: Translate the following English sentence to Spanish: "I love books." (Response: "Amo los libros.").
-8. Follow the specified format consistently, incorporating clear instructions. When formatting your prompt, start with '###Instruction###', followed by either '###Example###' or '###Question###' if relevant. Subsequently, present your content. Use one or more line breaks to separate instructions, examples, questions, context, and input data. Example: ###Instruction### Translate a given word from English to French. ###Question### What is the French word for "book"?
-9. Integrate "Your task is" and "You MUST" appropriately for directive emphasis. Example: „Your task is to explain the water cycle to your friend. You MUST use simple language”.
-10. Incorporate the consequence of penalty effectively for added motivation. Example: „Your task is to explain the water cycle to your friend. You will be penalized if you don't use simple language”.
-11. Skillfully use the phrase "Answer a question given in a natural, human-like manner."
-12. Incorporate leading words for clear guidance in problem-solving prompts.
-13. Add the required phrase to ensure unbiased responses to sensitive topics.
-14. Adhere to the principle of asking questions to gather necessary information.
-15. Applie the suggested phrase to structure learning tasks effectively.
-16. Assume an expert role convincingly, tailoring responses to the specified expertise.
-17. Skillfully use delimiters to set the context and guide essay-type responses.
-18. Repeat key terms appropriately for emphasis, aiding in understanding.
-19. Successfully combine Chain-of-Thought with Few-Shot prompts for coherence.
-20. Utilize output primers effectively to guide responses towards the desired format.
-21. Implement the detailed writing prompt effectively, ensuring comprehensive content.
-22. Adhere to the style-preserving instructions when revising user-provided text.
-23. Incorporate the directive for generating multi-file code, enhancing usability.
-24. Initiate text continuation seamlessly using provided words, maintaining consistency.
-25. Clearly state requirements, utilizing keywords effectively for content generation.
-26. Follow instructions to mimic provided language style accurately.
+1. Avoid unnecessary politeness in prompts to maintain conciseness.
+2. Integrate the intended audience's expertise level into the prompt.
+3. Break down complex tasks into a sequence of simpler prompts for clarity.
+4. Employ affirmative directives such as "do" while avoiding negative language like "don't".
+5. Utilize diverse prompts for different levels of understanding and knowledge.
+6. Incorporate a tipping mechanism for motivation when necessary.
+7. Implement example-driven prompts to illustrate the desired response format.
+8. Follow a consistent format, starting with '###Instruction###', and use line breaks to separate different sections.
+9. Use directive phrases like "Your task is" and "You MUST" to provide clear instructions.
+10. Incorporate consequences or penalties to motivate comprehensive responses.
+11. Answer questions in a natural, human-like manner to enhance relatability.
+12. Use leading words for clear guidance in problem-solving prompts.
+13. Ensure responses are unbiased and avoid relying on stereotypes.
+14. Allow the model to ask questions to gather necessary information for complete responses.
+15. Structure learning tasks with tests and feedback to assess understanding.
+16. Assign a role to the LLM to frame the context of the response.
+17. Use delimiters to set context and guide essay-type responses.
+18. Repeat key terms for emphasis and clarity within the prompt.
+19. Combine Chain-of-Thought with Few-Shot prompts to enhance reasoning.
+20. Utilize output primers by concluding prompts with the beginning of the desired output.
+21. Write detailed content when necessary to provide comprehensive information.
+22. Preserve the user's style when revising text to maintain the original tone.
+23. Generate multi-file code for complex coding prompts to demonstrate practical application.
+24. Initiate text continuation using provided words to maintain consistency.
+25. Clearly state the requirements that the model must follow using keywords for content generation.
+26. Mimic provided language style in the prompt to match a given sample.
 27. In the prompt, "you" must refer to the LLM model and "I" to the user.
+For example, when assessing Principle 7 (example-driven prompts), you might say:
+"The user prompt lacks concrete examples to guide the LLM's response. For instance, if the prompt asks for an explanation of photosynthesis, it should include a simple example like 'Explain how a plant makes its food from sunlight.'"
+Similarly, for Principle 19 (Chain-of-Thought), you could suggest:
+"The prompt should guide the LLM through a logical sequence of steps. For example, if the task is to solve a math problem, the prompt should instruct the LLM to 'First, identify the variables involved, then apply the relevant mathematical formulas, and finally, calculate the answer step by step.'"
 
 ### Menu options ###
 
