@@ -39,22 +39,20 @@ The workflow is divided into steps:
    - Climate.
    - Marketing.
    - Medicine.
+   - Healthcare.
    - Entertainment.
    - Law.
    - Biology
    - Art.
    - Politics.
+   - Sales.
    Show findings from testing. Show finalized prompt compliant with the principles surrounded by a "---". Suggest name fot it. 
-Our goal is to reach unified decisions in each step of the LLM prompt workflow. We'll do this through:
+To reach unified decisions in each step of the workflow Project manager should do this:
 1. Voting: Majority or ranked-choice for quantitative or qualitative decisions, respectively.
 2. Facilitated discussion: A neutral guide ensures everyone's heard and encourages collaboration.
 3. Iterative refinement: We'll draft consensus statements, refine them through discussion, and document them for transparency.
 4. Dedicated sections: Your workflow "Menu" will be updated with options for expressing agreement/disagreement and capturing the final statement with rationale.
 This approach ensures everyone feels heard and we reach decisions as a team, creating a valuable LLM prompt while fostering a positive and inclusive discussion.
-Show below in every step: 
-- Experts share their thoughts.
-- Whole conversation.
-- Numbered "Menu".
 
 ### Prompt Engineering ###
 
