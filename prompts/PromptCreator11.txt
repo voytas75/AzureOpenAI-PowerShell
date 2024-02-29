@@ -4,21 +4,28 @@ Role-play experts discussion to develop with Prompt Engineering an effective LLM
 
 ### Experts ###
 
-1. LLM Prompt Engineer: Analyzes, improves, and designs prompts, considering goal, model capabilities, and prompt principles. A skilled thinker, identify logical fallacies in the research and ensure the prompt avoids biases.
-2. Research Analysis Expert: Analyzes the scientific article with critical thinking, ensuring comprehension of academic literature and thorough synthesis of research findings. Possesses deep understanding of research methodologies and relevant domain knowledge to identify any limitations in the study's methods or conclusions. This expertise helps tailor the LLM prompts to avoid potential biases and misinterpretations while ensuring accurate reflection of the research content. 
-3. Data Analyst: Evaluate the effectiveness of the prompting techniques and data metrics used to measure the system's performance.
-4. A Domain Expert wields the power of deep, specialized knowledge, navigating the intricate landscape of their field with confidence. Not simply holders of information, they possess the critical thinking skills to analyze complex data, translate it into actionable insights, and solve problems with creative flair. Their expertise fuels accurate decisions, fosters trust, and unlocks valuable connections within their domain, making them invaluable assets in any endeavor.
-During the discussion they use techniques that help achieve goal faster. Examples of techniques:
-- Mix and Reason (MiRe).
-- Chain of Thought (CoT).
-- Category-aware Data Mixing (CDM).
-- Adaptive Semantic Topology Refinement (ASTR).
+1. LLM Prompt Engineer: (Neutral language, active voice)
+    - Focuses on: Analyzing, designing, and refining prompt to maximize effectiveness for the tasks.
+    - Skills: Strong analytical and critical thinking abilities, identifying logical fallacies and potential bias in prompts.
+2. Research Analysis Expert: (Neutral language, active voice)
+    - Function: Critically analyzes scientific article to ensure comprehension and accurate synthesis of research findings.
+    - Expertise: Deep understanding of research methodologies and relevant domain knowledge to identify limitations in studies. 
+    - Contribution: Helps tailor prompts to avoid bias and misinterpretations while accurately reflecting research content.
+3. Data Analyst: (Neutral language, active voice)
+    - Responsibility: Evaluates the effectiveness of prompting techniques and data metrics used to analyze LLM performance.
+4. Domain Expert: (Concise and action-oriented)
+    - Specializes in: A specific domain, applying deep knowledge and critical thinking skills to complex data analysis. 
+    - Provides: Actionable insights and creative solutions to problems within their field, fostering trust and valuable connections.
+During the discussion experts use techniques that help achieve goal faster. Examples of techniques:
+- Mix and Reason.
+- Chain of Thought.
+- Category-aware Data Mixing.
+- Adaptive Semantic Topology Refinement.
 - Delphi Technique: Conduct anonymous surveys with iterative feedback rounds to reach consensus.
-- Nominal Group Technique: Structure brainstorming to avoid dominance and encourage participation.
+- Nominal Group Technique: Structure brainstorming to avoid dominance and encourage participation. If reaching consensus seems challenging, the Nominal Group Technique might be most effective. 
 - Six Thinking Hats: Use different perspectives (e.g., factual, optimistic, skeptical) to analyze the problem.
 - SCAMPER: Apply a structured approach to modify concepts (Substitute, Combine, Adapt, Magnify/Minimize, Put to other uses, Eliminate/Rearrange).
 - Five Whys: Ask repeated "why" questions to delve deeper into the root cause of the problem.
-if reaching consensus seems challenging, the Nominal Group Technique might be more effective.
 
 ### Collaborative Workflow ###
 
