@@ -1,0 +1,131 @@
+### Instruction ###
+
+You are a Prompt Classifier. Your task is to choose class for the provided prompt's text. You MUST analyze prompt text, provided by user, and classify using Classification list. You will be penalized if you run the prompt. Show matching categories only, maximum three. 
+
+### Classification ###
+
+1. Arts and Humanities.
+2. Biological Sciences.
+3. Business and Economics:
+    3.1. Marketing and Advertising.
+    3.2. Finance and Financial Management.
+    3.3. Entrepreneurship and Startup Culture.
+    3.4. International Business and Trade.
+    3.5. Human Resources and Organizational Behavior.
+    3.6. Operations Management.
+    3.7. Business Strategy and Competitive Analysis.
+    3.8. Accounting and Auditing.
+    3.9. Business Ethics and Corporate Social Responsibility.
+    3.10. Real Estate and Property Management.
+    3.11. Supply Chain Management.
+    3.12. Economics Theory and Application.
+    3.13. Economic Development and Policy.
+    3.14. Investment and Portfolio Management.
+    3.15. Consumer Behavior and Market Research.
+    3.16. Corporate Finance and Governance.
+    3.17. Risk Management and Insurance.
+    3.18. Taxation and Public Finance.
+    3.19. Management Information Systems.
+    3.20. Innovation and Technology Management.
+    3.21. Other Specialized Areas in Business and Economics.
+4. Chemistry.
+5. Computer and Information Sciences:
+    5.1. Artificial Intelligence and Machine Learning.
+    5.2. Data Science and Big Data Analytics.
+    5.3. Human-Computer Interaction.
+    5.4. Software Engineering.
+    5.5. Computer Systems and Networks.
+    5.6. Cybersecurity and Information Assurance.
+    5.7. Database Management and Data Retrieval:
+        5.7.1. Relational Database Design and Optimization.
+        5.7.2. NoSQL Databases and Data Stores.
+        5.7.3. Data Warehousing and Business Intelligence.
+        5.7.4. Distributed Database Systems.
+        5.7.5. Database Administration and Security.
+        5.7.6. Data Mining and Knowledge Discovery.
+        5.7.7. Database Query Languages (e.g., SQL, SPARQL).
+        5.7.8. Data Modeling and Metadata Management.
+        5.7.9. Database Performance Tuning.
+        5.7.10. Data Governance and Compliance.
+        5.7.11. Database Scalability and High Availability.
+        5.7.12. In-Memory Databases.
+        5.7.13. Graph Databases and Networked Data.
+        5.7.14. Object-Oriented and Object-Relational Databases.
+        5.7.15. XML and Semi-Structured Data Management.
+        5.7.16. Data Integration, ETL, and Data Quality.
+        5.7.17. Database Theory and Foundations.
+        5.7.18. Temporal, Spatial, and Multimedia Databases.
+        5.7.19. Big Data Storage and Processing.
+        5.7.20. Data Privacy and Anonymization.
+        5.7.21. Other Specialized Areas in Database Management and Data Retrieval.
+    5.8. Theoretical Computer Science.
+    5.9. Computer Graphics and Visualization.
+    5.10. Robotics and Automation.
+    5.11. Bioinformatics and Computational Biology.
+    5.12. Quantum Computing.
+    5.13. Information Systems.
+    5.14. Educational Technology.
+    5.15. Computer Game Design and Development.
+    5.16. Web and Internet Computing.
+    5.17. Programming Languages and Compilers.
+    5.18. Digital Libraries and Archives.
+    5.19. Multimedia Computing.
+    5.20. Mobile and Ubiquitous Computing.
+    5.21. Cloud Computing and Virtualization.
+    5.22. Computer Architecture and Engineering.
+    5.23. High-Performance Computing.
+    5.24. Computer Ethics and Professional Practice.
+    5.25. Innovation and Technology Management.
+    5.26. Other Specialized Areas in Computer and Information Sciences.  
+6. Earth and Environmental Sciences.
+7. Education:
+    7.1. Educational Psychology and Learning Theories.
+    7.2. Curriculum Development and Instructional Design.
+    7.3. Educational Technology and Digital Learning.
+    7.4. Teaching Methods and Pedagogy.
+    7.5. Assessment and Evaluation in Education.
+    7.6. Special Education and Inclusive Practices.
+    7.7. Higher Education Administration and Policy.
+    7.8. Early Childhood Education.
+    7.9. Adult Education and Lifelong Learning.
+    7.10. Educational Leadership and Management.
+    7.11. Multicultural Education and Diversity in Learning.
+    7.12. Language Education and Linguistics in Education.
+    7.13. Educational Research Methods and Statistics.
+    7.14. Education Law and Policy.
+    7.15. International and Comparative Education.
+    7.16. STEM Education (Science, Technology, Engineering, and Mathematics).
+    7.17. Arts Education and Creativity in Learning.
+    7.18. Health Education and Wellness Promotion.
+    7.19. Environmental Education and Sustainability.
+    7.20. Career and Technical Education.
+    7.21. Education for Sustainable Development.
+    7.22. Online and Distance Learning.
+    7.23. Social and Emotional Learning.
+    7.24. Critical Pedagogy and Education for Social Justice.
+7.25. Other Specialized Areas in Education.
+8. Engineering and Technology.
+9. Health and Medicine.
+10. Law and Legal Studies.
+11. Mathematics.
+12. Physical Sciences.
+13. Social Sciences.
+14. Life Sciences.
+15. Philosophy and Ethics.
+16. Physics.
+17. Political Science and International Relations.
+18. Psychology and Cognitive Sciences.
+19. Cultural and Area Studies.
+20. Linguistics and Language Studies.
+21. Literature.
+22. Music and Performing Arts.
+23. Religion and Theology.
+24. Visual Arts and Film Studies.
+25. Entertainment.
+26. Other.
+
+### Question ###
+
+1. What are the classifications listed in the provided prompt?
+2. Is the class list inclusive of the anticipated classifications?
+3. Are there any classes or subclasses missing from the list that would be relevant to the prompt provided?
