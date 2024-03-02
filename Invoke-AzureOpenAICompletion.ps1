@@ -249,11 +249,11 @@ function Invoke-AzureOpenAICompletion {
                 'stream'            = $stream
                 'n'                 = $n
                 'user'              = $user
-                'echo'              = $echo
+                #'echo'              = $echo
                 'logit_bias'        = $logit_bias
-                'completion_config' = $completion_config
-                'suffix'            = $suffix
-                'best_of'           = $best_of
+                #'completion_config' = $completion_config
+                #'suffix'            = $suffix
+                #'best_of'           = $best_of
             }
         }    
 
@@ -287,7 +287,7 @@ function Invoke-AzureOpenAICompletion {
             return $response
         }
         catch {
-            Show-Error -ErrorMessage $_.Exception.Message
+            Show-Error -ErrorMessage $_
         }
     }
     
@@ -419,7 +419,7 @@ function Invoke-AzureOpenAICompletion {
         Show-Usage -usage $response.usage
     }
     catch {
-        $_.error
+        $_.Error
         #Show-Error -ErrorMessage $_.Exception.Message
     }
 }

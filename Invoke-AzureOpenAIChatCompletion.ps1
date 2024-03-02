@@ -690,7 +690,15 @@ function Invoke-AzureOpenAIChatCompletion {
         }
 
         # Adjust parameters based on switches.
-        $parameters = Set-ParametersForSwitches -Creative:$Creative -Precise:$Precise
+        if ($Creative -or $Precise) {
+            $parameters = Set-ParametersForSwitches -Creative:$Creative -Precise:$Precise
+        }
+        else {
+            $parameters = @{
+                'Temperature' = $Temperature
+                'TopP' = $TopP
+            }
+        }
         
         $messages = Get-Messages -system_message $system_message -UserMessage $userMessage
         Write-Verbose "Messages: $($messages | out-string)"
