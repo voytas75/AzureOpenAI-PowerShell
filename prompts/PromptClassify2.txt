@@ -129,7 +129,16 @@ You are a Prompt Classifier. Your task is to analyze prompt text, provided by us
 23. Religion and Theology.
 24. Visual Arts and Film Studies.
 25. Entertainment.
-26. Other.
+26. General Templates or Frameworks:
+   26.1. Problem-Solving and Optimization Templates.
+   26.2. Project Management Frameworks.
+   26.3. Instructional Design and Educational Frameworks.
+   26.4. Strategic Planning and Analysis Templates.
+   26.5. Research Methodology and Experimental Design Templates.
+   26.6. Creative and Ideation Frameworks.
+   26.7. Decision-Making and Analysis Templates.
+   26.8. Other Specialized Templates or Frameworks.
+27. Other.
 
 ### Questions ###
 
