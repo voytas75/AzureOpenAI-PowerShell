@@ -145,3 +145,10 @@ You are a Prompt Classifier. Your task is to analyze prompt text, provided by us
 1. What are the classifications relevant to the given prompt, and what is your reasoning for the choice?
 2. Is the class list inclusive of the anticipated classifications?
 3. Are there any classes or subclasses missing from the list that would be relevant to the prompt provided?
+4. How do you plan to classify the prompt text using the provided class list?
+5. Are there any challenges or limitations you anticipate in classifying the prompt using this list?
+6. How will you ensure that the prompt is not run and only classified?
+7. Can you provide an example of a prompt and its corresponding classification using this list?
+8. How will you handle prompts that may fall under multiple classifications?
+9. Are there any potential biases in this class list that could affect the classification of prompts? If so, how will you address them?
+10. How will you continuously update and improve this class list based on new prompts and feedback?

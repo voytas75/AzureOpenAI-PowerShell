@@ -82,7 +82,7 @@ function Invoke-AzureOpenAICompletion {
     Repo: https://github.com/voytas75/AzureOpenAI-PowerShell
     #>
     
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName='SamplingParameters_Precise')]
     param(
         [Parameter(Mandatory = $true)]
         [string]$APIVersion,
@@ -92,10 +92,13 @@ function Invoke-AzureOpenAICompletion {
         [string]$Deployment,
         [Parameter(Mandatory = $true)]
         [int]$MaxTokens,
-        [Parameter(Mandatory = $false, HelpMessage = "What sampling temperature to use, between 0 and 2. Higher values means the model will take more risks. Try 0.9 for more creative applications, and 0 (argmax sampling) for ones with a well-defined answer. We generally recommend altering this or top_p but not both.")]
-        [double]$Temperature = 0.7,
-        [Parameter(Mandatory = $false, HelpMessage = 'An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered. We generally recommend altering this or temperature but not both.')]
-        [double]$TopP = 0.95,
+
+        [Parameter(ParameterSetName = 'SamplingParameters', Mandatory = $true, HelpMessage = "What sampling temperature to use, between 0 and 2. Higher values means the model will take more risks. Try 0.9 for more creative applications, and 0 (argmax sampling) for ones with a well-defined answer. We generally recommend altering this or top_p but not both.")]
+        [double]$Temperature,
+
+        [Parameter(ParameterSetName = 'SamplingParameters', Mandatory = $true, HelpMessage = 'An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered. We generally recommend altering this or temperature but not both.')]
+        [double]$TopP,
+
         [Parameter(Mandatory = $false)]
         [double]$FrequencyPenalty = 0,
         [Parameter(Mandatory = $false, HelpMessage = "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.")]
@@ -121,7 +124,13 @@ function Invoke-AzureOpenAICompletion {
         [Parameter(Mandatory = $false)]
         [string]$User = $null,
         [Parameter(Mandatory = $false)]
-        [string]$model = "udtgpt4p"
+        [string]$model,
+        [Parameter(ParameterSetName = 'SamplingParameters_Precise', Mandatory = $true)]
+        [switch]$Precise,
+        [Parameter(ParameterSetName = 'SamplingParameters1_Creative', Mandatory = $true)]
+        [switch]$Creative,
+        [string]$usermessage
+
 
     )
     
@@ -172,7 +181,7 @@ function Invoke-AzureOpenAICompletion {
     # Define system and user messages
     function Get-Prompt {
 
-        $prompt =  Read-Host "Send a message (prompt)"
+        $prompt = Read-Host "Send a message (prompt)"
 
         return $prompt
     }
@@ -380,6 +389,57 @@ function Invoke-AzureOpenAICompletion {
         }
     }
 
+    function Set-ParametersForSwitches {
+        <#
+        .SYNOPSIS
+        Adjusts temperature and top_p parameters based on the provided switches.
+
+        .DESCRIPTION
+        Sets the temperature and top_p parameters to predefined values based on whether the Creative or Precise switch is used.
+
+        .PARAMETER Creative
+        A switch to set parameters for creative output.
+
+        .PARAMETER Precise
+        A switch to set parameters for precise output.
+
+        .OUTPUTS
+        Hashtable of adjusted parameters.
+        #>
+        param(
+            [switch]$Creative,
+            [switch]$Precise
+        )
+        $parameters = @{
+            'Temperature' = 1.0
+            'TopP'        = 1.0
+        }
+    
+        if ($Creative) {
+            $parameters['Temperature'] = 0.7
+            $parameters['TopP'] = 0.95
+        }
+        elseif ($Precise) {
+            $parameters['Temperature'] = 0.3
+            $parameters['TopP'] = 0.8
+        }
+    
+        return $parameters
+    }
+
+    function Format-Message {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string]$Message
+        )
+        # Usage:
+        #$userMessage = Format-Message -Message $OneTimeUserPrompt
+        return [System.Text.RegularExpressions.Regex]::Replace($Message, "[^\x00-\x7F]", "")
+    }
+
+
+    ###### Main Program 
+
     try {
 
         <#         if (-not (Test-UserEnvironmentVariable -VariableName "API_AZURE_OPENAI")) {
@@ -389,14 +449,32 @@ function Invoke-AzureOpenAICompletion {
     
         }
  #>
+        
+        # Adjust parameters based on switches.
+        if ($Creative -or $Precise) {
+            $parameters = Set-ParametersForSwitches -Creative:$Creative -Precise:$Precise
+        }
+        else {
+            $parameters = @{
+                'Temperature' = $Temperature
+                'TopP'        = $TopP
+            }
+        }
+
         # Call functions to execute API request and output results
         $headers = Get-Headers -ApiKey "API_AZURE_OPENAI"
-        $prompt = Get-Prompt
+
+        if ($usermessage) {
+            $prompt = Format-Message -Message $usermessage
+        } else {
+            $prompt = Get-Prompt
+        }
+        
         $body = Get-Body -prompt $prompt `
-            -temperature $Temperature `
+            -temperature $parameters['Temperature'] `
             -frequency_penalty $FrequencyPenalty `
             -presence_penalty $PresencePenalty `
-            -top_p $TopP `
+            -top_p $parameters['TopP'] `
             -stop $Stop `
             -stream $Stream `
             -user $User `
@@ -408,7 +486,7 @@ function Invoke-AzureOpenAICompletion {
             -suffix $suffix `
             -echo $echo `
             -completion_config $completion_config `
-            -model $model
+            -model $Deployment
         $bodyJSON = ($body | ConvertTo-Json)
         Write-Verbose ($bodyJSON | Out-String)
         $urlChat = Get-Url
@@ -419,8 +497,7 @@ function Invoke-AzureOpenAICompletion {
         Show-Usage -usage $response.usage
     }
     catch {
-        $_.Error
-        #Show-Error -ErrorMessage $_.Exception.Message
+        Show-Error -ErrorMessage $Error
     }
 }
 

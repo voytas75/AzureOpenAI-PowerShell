@@ -656,6 +656,7 @@ function Invoke-AzureOpenAIChatCompletion {
         return [System.Text.RegularExpressions.Regex]::Replace($Message, "[^\x00-\x7F]", "")
     }
    
+    ##### Main program 
 
     try {
 
