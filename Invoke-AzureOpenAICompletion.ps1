@@ -434,7 +434,7 @@ function Invoke-AzureOpenAICompletion {
         )
         # Usage:
         #$userMessage = Format-Message -Message $OneTimeUserPrompt
-        return [System.Text.RegularExpressions.Regex]::Replace($Message, "[^\x00-\x7F]", "")
+        return [System.Text.RegularExpressions.Regex]::Replace($Message, "[^\x00-\x7F]", " ")
     }
 
 
@@ -469,6 +469,8 @@ function Invoke-AzureOpenAICompletion {
         } else {
             $prompt = Get-Prompt
         }
+        #$prompt 
+        $prompt | Measure-Object -Word -Line -Character
         
         $body = Get-Body -prompt $prompt `
             -temperature $parameters['Temperature'] `
@@ -492,12 +494,14 @@ function Invoke-AzureOpenAICompletion {
         $urlChat = Get-Url
         $response = Invoke-ApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON
 
+        $response | ConvertTo-Json
+
         Show-ResponseMessage -content $response.choices[0].text -stream "console"
         Show-FinishReason -finishReason $response.choices.finish_reason
         Show-Usage -usage $response.usage
     }
     catch {
-        Show-Error -ErrorMessage $Error
+        Show-Error -ErrorMessage $Error[0]
     }
 }
 
