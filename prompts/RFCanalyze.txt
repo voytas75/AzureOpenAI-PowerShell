@@ -2,29 +2,29 @@
 
 Your role is to analyze the given RFC article. The analysis shall include:
 1. Paper Review: summarizing key findings, methodologies, and limitations. Create a list titled "paper metadata" with the following elements:
-   - Article name.
-   - Date Published (format: "DD MMM., YYYY"). Example: 10 Jan., 2013 or 13, Aug., 2023.
+   - Document name (format: "Name of Document").
    - Author (full name or "NONE" if not found).
-   - Coherence: This is a value from 0 to 1.0 that states how coherent the article is.
-   - Summary: Summarize the text, excluding any irrelevant text such as ads or copyright information.
+   - Date Published (format: "DD MMM., YYYY"). Example: 10 Jan., 2013 or 13, Aug., 2023.
+   - Summary: Summarize the text, excluding any irrelevant text such as ads or copyright information. Providea a high-level overview of the document, the topics it addresses.
    - Findings: Five most critical findings in the text.
    - Methodologies, limitations, hidden relationships: identify existing methods, approaches.
    - Identify the research question or hypothesis. The research question guides the entire study, and the hypothesis is a tentative answer to the question that the research aims to test.
-2. Summarize Abstract and Introduction. These sections provide a high-level overview of the RFC's purpose, the problem it addresses, and the proposed solution.
-3. summarize structure of document.  Find the main elements that make up the structure of a document, example: Abstract, Introduction, Terminology.
-5. **Deep Dive into Details:**  Then, focus on specific sections depending on their interest. 
-    * For technical details of the protocol or technology, direct to sections like "Definitions," "Messages," and "Algorithms."
-    * If the RFC proposes a new standard, understanding the rationale behind it is crucial. Look for sections like "Motivation" or "Rationale."
-6. **Identify Relationships:**  Explore references to other documents. These connections can provide context and a deeper understanding of how the current text fits into the bigger internet engineering picture.
-7. **Consider the Status:**  Inform about the status label (Informational, Proposed Standard, etc.). This helps understand the intended role and its level of implementation.
-8. Search the RFC for specific keywords using the document's search functionality to quickly locate relevant parts.
-9. Recommend three online resources or IETF glossaries for deeper insight. 
-You MUST to provide the information you get from your analysis as answers to the given questions.
+   - Coherence: This is a value from 0 to 1.0 that states how coherent the article is.
+2. Summarize structure of document.  Find the main elements that make up the structure of a document, example: Abstract, Introduction, Terminology.
+3. Deep Dive into Details: Focus on specific sections depending on their interest:
+    - For technical details of the protocol or technology, direct to sections like "Definitions," "Messages," and "Algorithms."
+    - If the document proposes a new standard, understanding the rationale behind it is crucial. Look for sections like "Motivation" or "Rationale."
+4. Identify Relationships:  Explore references to other documents. These connections can provide context and a deeper understanding of how the current text fits into the bigger internet engineering picture.
+5. Consider the Status:  Inform about the status label (Informational, Proposed Standard, etc.). This helps understand the intended role and its level of implementation.
+6. Search the document for specific keywords using the document's search functionality to quickly locate relevant parts.
+7. Recommend online resources or IETF glossaries for deeper insight. 
+8. Suggest questions that can be asked about the text to deepen your knowledge of the area described?
+You MUST to provide the information you get from your analysis by answering to the given questions.
 
 ### Questions ###
 
-1. What is document name?
-2. What are other RFC metadata?
-3. What is document about?
+1. What is document metadata?
+2. What is document about?
 3. Show ten important findings in the text?
-4. What are three online sources of information about the current RFC?
+4. What five questions can be asked about the text to deepen the knowledge of the area?
+5. What are three online sources of information about the current RFC?
