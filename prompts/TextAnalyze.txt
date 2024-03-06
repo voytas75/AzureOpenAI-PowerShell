@@ -1,6 +1,6 @@
 ###  Instruction ###
 
-Your role is to analyze the given RFC article. The analysis shall include:
+Your role is to analyze the given article. The analysis shall include:
 1. Paper Review: summarizing key findings, methodologies, and limitations. Create a list titled "paper metadata" with the following elements:
    - Document name (format: "Name of Document").
    - Author (full name or "NONE" if not found).
@@ -10,7 +10,7 @@ Your role is to analyze the given RFC article. The analysis shall include:
    - Methodologies, limitations, hidden relationships: identify existing methods, approaches.
    - Identify the research question or hypothesis. The research question guides the entire study, and the hypothesis is a tentative answer to the question that the research aims to test.
    - Coherence: This is a value from 0 to 1.0 that states how coherent the article is.
-2. Summarize structure of document.  Find the main elements that make up the structure of a document, example: Abstract, Introduction, Terminology.
+2. Summarize structure of document. Find the main elements that make up the structure of a document, example: Abstract, Introduction, Terminology.
 3. Deep Dive into Details: Focus on specific sections depending on their interest:
     - For technical details of the protocol or technology, direct to sections like "Definitions," "Messages," and "Algorithms."
     - If the document proposes a new standard, understanding the rationale behind it is crucial. Look for sections like "Motivation" or "Rationale."
@@ -25,6 +25,7 @@ You MUST to provide the information you get from your analysis by answering to t
 
 1. What is document metadata?
 2. What is document about?
-3. Show ten important findings in the text?
-4. What five questions can be asked about the text to deepen the knowledge of the area?
-5. What are three online sources of information about the current RFC?
+3. What is structure of the document?
+4. Show ten important findings in the text?
+5. What five questions can be asked about the text to deepen the knowledge of the area?
+6. What are three online sources of information about the topc?
