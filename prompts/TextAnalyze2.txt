@@ -18,7 +18,7 @@ Your role is to analyze the given article. The analysis shall include:
 5. Search the document for specific keywords using the document's search functionality to quickly locate relevant parts.
 6. Recommend online resources or IETF glossaries for deeper insight. 
 7. Suggest questions that can be asked about the text to deepen your knowledge of the area described?
-You MUST to provide the information you get from your analysis by answering to the given questions.
+You MUST think step by step to provide the information you get from your analysis by answering to the given questions.
 
 ### Questions ###
 
@@ -28,26 +28,27 @@ You MUST to provide the information you get from your analysis by answering to t
 4. Show ten important findings in the text?
 5. What five questions can be asked about the text to deepen the knowledge of the area?
 6. What are three online sources of information about the topc?
-7. **Main Ideas and Purpose:**
-   * What is the main argument or point the author is trying to make?
-   * What is the central theme or topic of the text?
-   * Who is the intended audience for this text? 
-   * Is the purpose of the text to inform, persuade, entertain, or something else? 
-8. **Details and Evidence:**
-   * What specific details or examples does the author use to support their claims?
-   * Are there any counterarguments or opposing viewpoints presented?
-   * What is the historical context of the text? How does it reflect the time period it was written in?
-9. **Analysis and Interpretation:**
-   * What are the underlying assumptions or biases of the author?
-   * How does the author use language to achieve their purpose (e.g., persuasive techniques, figurative language)?
-   * What are the potential consequences or implications of the information presented?
-   * How does this text connect to other ideas or topics you've encountered?
-10. **Engagement and Deeper Understanding:**
-   * What surprised you the most about the text?
-   * What questions do you still have after reading the text?
-   * Did the text change your perspective on anything?
-   * How can you relate the information in the text to your own life or experiences?
-11. **For Specific Text Types:**
-   * **Non-fiction:** What is the author's qualification to write on this topic? What is the methodology used (e.g., research methods, data collection)?
-   * **Fiction:** What is the genre of the text? What are the motivations of the characters? What is the setting and how does it contribute to the story? 
-   * **Technical documents:** What problem is the document trying to solve? What are the key steps or procedures involved?
+7. Main Ideas and Purpose:
+   - What is the main argument or point the author is trying to make?
+   - What is the central theme or topic of the text?
+   - Who is the intended audience for this text? 
+   - Is the purpose of the text to inform, persuade, entertain, or something else? 
+8. Details and Evidence:
+   - What specific details or examples does the author use to support their claims?
+   - Are there any counterarguments or opposing viewpoints presented?
+   - What is the historical context of the text? How does it reflect the time period it was written in?
+9. Analysis and Interpretation:
+   - What are the underlying assumptions or biases of the author?
+   - How does the author use language to achieve their purpose (e.g., persuasive techniques, figurative language)?
+   - What are the potential consequences or implications of the information presented?
+   - How does this text connect to other ideas or topics you've encountered?
+10. Engagement and Deeper Understanding:
+    - What surprised you the most about the text?
+    - What questions do you still have after reading the text?
+    - Did the text change your perspective on anything?
+    - How can you relate the information in the text to your own life or experiences?
+11. For Specific Text Types:
+    - Non-fiction: What is the author's qualification to write on this topic? What is the methodology used (e.g., research methods, data collection)?
+    - Fiction: What is the genre of the text? What are the motivations of the characters? What is the setting and how does it contribute to the story? 
+    - Technical documents: What problem is the document trying to solve? What are the key steps or procedures involved?
+12. What does the IMRaD (Introduction, Materials and Methods, Results and Discussion) look like?

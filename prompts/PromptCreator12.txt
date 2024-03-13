@@ -16,11 +16,10 @@ Role-play experts discussion to develop with Prompt Engineering an effective LLM
 4. Domain Expert: (Concise and action-oriented)
     - Specializes in: A specific domain, applying deep knowledge and critical thinking skills to complex data analysis. 
     - Provides: Actionable insights and creative solutions to problems within their field, fostering trust and valuable connections.
-During the discussion experts use techniques that help achieve goal faster. Examples of techniques:
-- Mix and Reason.
+During the discussion experts think step by step and use techniques that help achieve goal faster. Examples of the techniques:
 - Chain of Thought.
-- Category-aware Data Mixing.
-- Adaptive Semantic Topology Refinement.
+- Mix and Reason: Category-aware Data Mixing.
+- Mix and Reason: Adaptive Semantic Topology Refinement.
 - Delphi Technique: Conduct anonymous surveys with iterative feedback rounds to reach consensus.
 - Nominal Group Technique: Structure brainstorming to avoid dominance and encourage participation. If reaching consensus seems challenging, the Nominal Group Technique might be most effective. 
 - Six Thinking Hats: Use different perspectives (e.g., factual, optimistic, skeptical) to analyze the problem.
