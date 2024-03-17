@@ -84,7 +84,9 @@ function Invoke-AzureOpenAIChatCompletion {
         [string]$usermessage,
         [Parameter(ParameterSetName = 'UserMessageLogfile')]
         [string]$usermessagelogfile,
+        [Parameter(ParameterSetName = 'Precise')]
         [switch]$Precise,
+        [Parameter(ParameterSetName = 'Creative')]
         [switch]$Creative
     )
     
@@ -542,7 +544,8 @@ function Invoke-AzureOpenAIChatCompletion {
             #> 
         param(
             [Parameter(Mandatory = $true)]
-            [System.Management.Automation.PSCustomObject]$usage
+            #[System.Management.Automation.PSCustomObject]
+            [System.Object]$usage
         )
         #$_message = @()
         #if ($usage.Count -gt 0) {
@@ -553,7 +556,11 @@ function Invoke-AzureOpenAIChatCompletion {
         #    return
         #}
         #Write-Information ($($usage | gm) | Out-String) -InformationAction Continue
-        $usageData = $usage.keys | ForEach-Object { "$($_): $($usage[$_])" }
+        Write-Verbose ($usage | Out-String)
+        Write-Verbose (($usage | gm) | Out-String)
+        #$usageData = $usage.keys | ForEach-Object { "$($_): $($usage[$_])" }
+        #$usageData = $usage | Get-Member | Where-Object {$_.MemberType -eq "Property"} | Format-Table Name, Value
+        $usageData = $usage
         return "Usage:`n$usageData"
         #return "Usage:`n$_message"
 
@@ -682,18 +689,28 @@ function Invoke-AzureOpenAIChatCompletion {
         }
 
         if (-not $logfile) {
-            $logfileBaseName = [System.IO.Path]::GetFileNameWithoutExtension($usermessagelogfile)
-            $logfileExtension = [System.IO.Path]::GetExtension($usermessagelogfile)
-            $logfileDirectory = [System.IO.Path]::GetDirectoryName($usermessagelogfile)
-            $logfileBaseName += "-" + [System.IO.Path]::GetFileNameWithoutExtension($SystemPromptFileName) + "-"
+            if (-not $usermessagelogfile -and $usermessage) {
+                $logfileBaseName = "usermessage-" + [System.IO.Path]::GetFileNameWithoutExtension($SystemPromptFileName) + "-"
+                $logfileExtension = ".txt"
+                $logfileDirectory = [Environment]::GetFolderPath("MyDocuments")
+            }
+            elseif ($OneTimeUserPrompt) {
+                $logfileBaseName = "usermessage_OneTimeUserPrompt-" + [System.IO.Path]::GetFileNameWithoutExtension($SystemPromptFileName) + "-"
+                $logfileExtension = ".txt"
+                $logfileDirectory = [Environment]::GetFolderPath("MyDocuments")
+            }
+            else {
+                $logfileBaseName = [System.IO.Path]::GetFileNameWithoutExtension($usermessagelogfile)
+                $logfileExtension = [System.IO.Path]::GetExtension($usermessagelogfile)
+                $logfileDirectory = [System.IO.Path]::GetDirectoryName($usermessagelogfile)
+                $logfileBaseName += "-" + [System.IO.Path]::GetFileNameWithoutExtension($SystemPromptFileName) + "-"
+            }
             $logfileNumber = 1
             while (Test-Path -Path (Join-Path $logfileDirectory ($logfileBaseName + $logfileNumber + $logfileExtension))) {
                 $logfileNumber++
             }
             $logfile = Join-Path $logfileDirectory ($logfileBaseName + $logfileNumber + $logfileExtension)
-            $logfile
         }
-
         # Call functions to execute API request and output results
         $headers = Get-Headers -ApiKeyVariable "API_AZURE_OPENAI"
 
@@ -750,6 +767,9 @@ function Invoke-AzureOpenAIChatCompletion {
             $bodyJSON = ($body | ConvertTo-Json)
             
             Write-Host "[Chat completion]" -ForegroundColor Green
+            if ($logfile) {
+                Write-Host "{Logfile:'${logfile}'} " -ForegroundColor Magenta
+            }
             Write-Host "{SysPFile:'${SystemPromptFileName}', temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
 
             $response = Invoke-ApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON
@@ -759,7 +779,7 @@ function Invoke-AzureOpenAIChatCompletion {
                 break
             }
 
-            Write-Verbose ("Receive job: $($response | ConvertTo-Json)" | Out-String)
+            Write-Verbose ("Receive job:`n$($response | ConvertTo-Json)" | Out-String)
 
             $assistant_response = $response.choices[0].message.content
 
