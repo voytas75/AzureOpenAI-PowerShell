@@ -51,11 +51,11 @@ function Invoke-AzureOpenAIChatCompletion {
     
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $false)]
         [string]$APIVersion,
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $false)]
         [string]$Endpoint,
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $false)]
         [string]$Deployment,
         [Parameter(Mandatory = $false)]
         [string]$User = "",
@@ -78,8 +78,12 @@ function Invoke-AzureOpenAIChatCompletion {
         [Parameter(Mandatory = $false, ValueFromPipeline = $true)]
         [ValidateNotNullOrEmpty()]
         [string]$OneTimeUserPrompt,
+        [Parameter(Mandatory = $false)]
         [string]$logfile,
+        [Parameter(ParameterSetName = 'UserMessage')]
         [string]$usermessage,
+        [Parameter(ParameterSetName = 'UserMessageLogfile')]
+        [string]$usermessagelogfile,
         [switch]$Precise,
         [switch]$Creative
     )
@@ -230,7 +234,7 @@ function Invoke-AzureOpenAIChatCompletion {
             [string]$stop,
             [Parameter(Mandatory = $true)]
             [bool]$stream,
-            [Parameter(Mandatory = $true)]
+            [Parameter(Mandatory = $false)]
             [string]$user
         )
     
@@ -660,6 +664,36 @@ function Invoke-AzureOpenAIChatCompletion {
 
     try {
 
+        # If parameters are empty, get them from the user environment
+        if (-not $APIVersion) {
+            $APIVersion = [System.Environment]::GetEnvironmentVariable("API_AZURE_OPENAI_APIVersion", "User")
+        }
+        if (-not $Endpoint) {
+            $Endpoint = [System.Environment]::GetEnvironmentVariable("API_AZURE_OPENAI_Endpoint", "User")
+        }
+        if (-not $Deployment) {
+            $Deployment = [System.Environment]::GetEnvironmentVariable("API_AZURE_OPENAI_Deployment", "User")
+        }
+
+        # Check if usermessage is not set and usermessagelogfile is set
+        if (-not $usermessage -and $usermessagelogfile) {
+            # If so, read the content of usermessagelogfile and assign it to usermessage
+            $usermessage = (get-content $usermessagelogfile | out-string)
+        }
+
+        if (-not $logfile) {
+            $logfileBaseName = [System.IO.Path]::GetFileNameWithoutExtension($usermessagelogfile)
+            $logfileExtension = [System.IO.Path]::GetExtension($usermessagelogfile)
+            $logfileDirectory = [System.IO.Path]::GetDirectoryName($usermessagelogfile)
+            $logfileBaseName += "-" + [System.IO.Path]::GetFileNameWithoutExtension($SystemPromptFileName) + "-"
+            $logfileNumber = 1
+            while (Test-Path -Path (Join-Path $logfileDirectory ($logfileBaseName + $logfileNumber + $logfileExtension))) {
+                $logfileNumber++
+            }
+            $logfile = Join-Path $logfileDirectory ($logfileBaseName + $logfileNumber + $logfileExtension)
+            $logfile
+        }
+
         # Call functions to execute API request and output results
         $headers = Get-Headers -ApiKeyVariable "API_AZURE_OPENAI"
 
@@ -697,7 +731,7 @@ function Invoke-AzureOpenAIChatCompletion {
         else {
             $parameters = @{
                 'Temperature' = $Temperature
-                'TopP' = $TopP
+                'TopP'        = $TopP
             }
         }
         
