@@ -49,7 +49,7 @@ function Invoke-AzureOpenAIChatCompletion {
     Date:   2023-06-27
     #>
     
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName)]
     param(
         [Parameter(Mandatory = $false)]
         [string]$APIVersion,
@@ -73,8 +73,10 @@ function Invoke-AzureOpenAIChatCompletion {
         [string]$Stop = $null,
         [Parameter(Mandatory = $false)]
         [bool]$Stream = $false,
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $false)]
         [string]$SystemPromptFileName,
+        [Parameter(Mandatory = $false)]
+        [string]$SystemPrompt,
         [Parameter(Mandatory = $false, ValueFromPipeline = $true)]
         [ValidateNotNullOrEmpty()]
         [string]$OneTimeUserPrompt,
@@ -689,15 +691,21 @@ function Invoke-AzureOpenAIChatCompletion {
         }
 
         if (-not $logfile) {
-            if (-not $usermessagelogfile -and $usermessage) {
+            if (-not $usermessagelogfile -and $usermessage -and $SystemPromptFileName) {
                 $logfileBaseName = "usermessage-" + [System.IO.Path]::GetFileNameWithoutExtension($SystemPromptFileName) + "-"
                 $logfileExtension = ".txt"
                 $logfileDirectory = [Environment]::GetFolderPath("MyDocuments")
             }
-            elseif ($OneTimeUserPrompt) {
+            elseif ($OneTimeUserPrompt -and $SystemPromptFileName) {
                 $logfileBaseName = "usermessage_OneTimeUserPrompt-" + [System.IO.Path]::GetFileNameWithoutExtension($SystemPromptFileName) + "-"
                 $logfileExtension = ".txt"
                 $logfileDirectory = [Environment]::GetFolderPath("MyDocuments")
+            }
+            elseif ($SystemPrompt) {
+                $logfileBaseName = "SystemPrompt"
+                $logfileExtension = ".txt"
+                $logfileDirectory = [Environment]::GetFolderPath("MyDocuments")
+                <# Action when this condition is true #>
             }
             else {
                 $logfileBaseName = [System.IO.Path]::GetFileNameWithoutExtension($usermessagelogfile)
@@ -715,7 +723,12 @@ function Invoke-AzureOpenAIChatCompletion {
         $headers = Get-Headers -ApiKeyVariable "API_AZURE_OPENAI"
 
         # system prompt
-        $system_message = get-content -path (Join-Path $PSScriptRoot "prompts\$SystemPromptFileName") -Encoding UTF8 -Raw 
+        if ($SystemPromptFileName) {
+            $system_message = get-content -path (Join-Path $PSScriptRoot "prompts\$SystemPromptFileName") -Encoding UTF8 -Raw 
+        }
+        else {
+            $system_message = $SystemPrompt
+        }
         
         # cleaning system prompt
         $system_message = [System.Text.RegularExpressions.Regex]::Replace($system_message, "[^\x00-\x7F]", "")        
@@ -770,8 +783,12 @@ function Invoke-AzureOpenAIChatCompletion {
             if ($logfile) {
                 Write-Host "{Logfile:'${logfile}'} " -ForegroundColor Magenta
             }
-            Write-Host "{SysPFile:'${SystemPromptFileName}', temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
-
+            if ($SystemPromptFileName) {
+                Write-Host "{SysPFile:'${SystemPromptFileName}', temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
+            }
+            else {
+                Write-Host "{SysPrompt, temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
+            }
             $response = Invoke-ApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON
             
             if ($null -eq $response) {
