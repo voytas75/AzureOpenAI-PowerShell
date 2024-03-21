@@ -5,30 +5,20 @@ function Invoke-AICopilot {
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
         [object]$InputObject,
 
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true, Position = 0)]
         [string]$NaturalLanguageQuery
     )
-    begin { . .\Invoke-AzureOpenAIChatCompletion.ps1 }
-    process {
-        # Convert the input object to a string
-        $inputString = $InputObject | Out-String
+    . $PSScriptRoot\Invoke-AzureOpenAIChatCompletion.ps1 
+    # Convert the input object to a string
+    $inputString = $InputObject | Out-String
 
-        # Log the input object and natural language query
-        LogData -InputString $inputString -NaturalLanguageQuery $NaturalLanguageQuery
+    # Log the input object and natural language query
+    LogData -InputString $inputString -NaturalLanguageQuery $NaturalLanguageQuery
 
-        # Call a function to interpret the input using a language model and the user's query
-        $interpretedResponse = InterpretUsingLLM -InputString $inputString -NaturalLanguageQuery $NaturalLanguageQuery
+    Write-Verbose ($inputString)
+    # Call a function to interpret the input using a language model and the user's query
+    Invoke-AzureOpenAIChatCompletion -SystemPrompt $NaturalLanguageQuery -OneTimeUserPrompt $inputString -Precise -simpleresponse
 
-        # Analyze the interpreted response
-        if ($interpretedResponse -contains "actionable command") {
-            # Execute the actionable command
-            ExecuteCommand -Command $interpretedResponse
-        }
-        else {
-            # Output the original input object
-            Write-Output $InputObject
-        }
-    }
 }
 
 # Define the LogData function
@@ -75,4 +65,4 @@ function ExecuteCommand {
 }
 
 # Call the cmdlet you want to pipe to AI_LLM
-Get-Process | Invoke-AICopilot -NaturalLanguageQuery "Show only processes using more than 500MB of memory"
+#Get-Process | Invoke-AICopilot -NaturalLanguageQuery "Show only processes using more than 500MB of memory"

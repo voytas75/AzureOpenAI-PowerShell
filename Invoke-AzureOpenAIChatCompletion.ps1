@@ -1,54 +1,80 @@
 function Invoke-AzureOpenAIChatCompletion {
     <#
     .SYNOPSIS
-    This script makes an API request to an AZURE OpenAI chatbot and outputs the response message.
-    
+    This function interacts with an Azure OpenAI chatbot by sending an API request and retrieving the chatbot's response.
+
     .DESCRIPTION
-    This script defines functions to make an API request to an AZURE OpenAI chatbot and output the response message. The user can input their own messages and specify various parameters such as temperature and frequency penalty.
-    
+    Invoke-AzureOpenAIChatCompletion is a function that communicates with an Azure OpenAI chatbot by sending an API request and receiving the chatbot's response. It allows users to customize their messages and adjust parameters such as temperature, frequency penalty, and others to influence the chatbot's responses.
+
     .PARAMETER APIVersion
-    The version of the AZURE OpenAI API to use.
-    
+    Specifies the version of the Azure OpenAI API to be used.
+
     .PARAMETER Endpoint
-    The endpoint URL for the AZURE OpenAI API.
-    
+    Defines the endpoint URL for the Azure OpenAI API.
+
     .PARAMETER Deployment
-    The name of the OpenAI deployment to use.
-    
+    Indicates the name of the OpenAI deployment to be used.
+
     .PARAMETER User
-    The name of the user making the API request.
-    
+    Specifies the user initiating the API request.
+
     .PARAMETER Temperature
-    The temperature parameter for the API request.
-    
+    Modifies the temperature parameter for the API request, influencing the randomness of the chatbot's responses.
+
     .PARAMETER N
-    The number of messages to generate for the API request.
-    
+    Determines the number of messages to be generated for the API request.
+
     .PARAMETER FrequencyPenalty
-    The frequency penalty parameter for the API request.
-    
+    Modifies the frequency penalty parameter for the API request, influencing the chatbot's preference for less common words.
+
     .PARAMETER PresencePenalty
-    The presence penalty parameter for the API request.
-    
+    Modifies the presence penalty parameter for the API request, influencing the chatbot's preference for contextually appropriate words.
+
     .PARAMETER TopP
-    The top-p parameter for the API request.
-    
+    Modifies the top-p parameter for the API request, influencing the variety of the chatbot's responses.
+
     .PARAMETER Stop
-    The stop parameter for the API request.
-    
+    Defines the stop parameter for the API request, indicating when the chatbot should stop generating a response.
+
     .PARAMETER Stream
-    The stream parameter for the API request.
-    
+    Modifies the stream parameter for the API request, determining whether the chatbot should stream its responses.
+
+    .PARAMETER SystemPromptFileName
+    Specifies the file name of the system prompt.
+
+    .PARAMETER SystemPrompt
+    Specifies the system prompt.
+
+    .PARAMETER OneTimeUserPrompt
+    Specifies a one-time user prompt.
+
+    .PARAMETER logfile
+    Specifies the log file.
+
+    .PARAMETER usermessage
+    Specifies the user message.
+
+    .PARAMETER usermessagelogfile
+    Specifies the user message log file.
+
+    .PARAMETER Precise
+    Specifies whether the precise parameter is set.
+
+    .PARAMETER Creative
+    Specifies whether the creative parameter is set.
+
+    .PARAMETER simpleresponse
+    Specifies whether the simpleresponse parameter is set.
+
     .EXAMPLE
     PS C:\> Invoke-AzureOpenAIChatCompletion -APIVersion "2023-06-01-preview" -Endpoint "https://example.openai.azure.com" -Deployment "example_model_gpt35_!" -User "BobbyK" -Temperature 0.6 -N 1 -FrequencyPenalty 0 -PresencePenalty 0 -TopP 0 -Stop $null -Stream $false
-    
-    This example makes an API request to an AZURE OpenAI chatbot and outputs the response message.
-    
+
+    This example demonstrates how to send an API request to an Azure OpenAI chatbot and receive the response message.
+
     .NOTES
     Author: Wojciech Napierala
     Date:   2023-06-27
     #>
-    
     [CmdletBinding(DefaultParameterSetName)]
     param(
         [Parameter(Mandatory = $false)]
@@ -89,29 +115,29 @@ function Invoke-AzureOpenAIChatCompletion {
         [Parameter(ParameterSetName = 'Precise')]
         [switch]$Precise,
         [Parameter(ParameterSetName = 'Creative')]
-        [switch]$Creative
+        [switch]$Creative,
+        [switch]$simpleresponse
     )
-    
     # Function to generate the headers for the API request.
     function Get-Headers {
         <#
         .SYNOPSIS
-        Retrieves headers for API request.
+        Retrieves headers for API request to Azure OpenAI.
         
         .DESCRIPTION
-        The function retrieves the headers required to make an API request to Azure OpenAI Text Analytics API.
+        This function retrieves the headers required to make an API request to Azure OpenAI. It uses the API key provided as a parameter to authenticate the request.
         
         .PARAMETER ApiKeyVariable
-        The API key used to authenticate the request. This parameter is mandatory.
+        The name of the environment variable where the API key is stored. This parameter is mandatory.
         
         .EXAMPLE
-        GetHeaders -ApiKey "0123456789abcdef"
+        Get-Headers -ApiKeyVariable "OPENAI_API_KEY"
         
         .OUTPUTS
-        Hashtable of headers to use in API request.
+        Hashtable of headers to use in API request. The headers include "Content-Type" set to "application/json" and "api-key" set to the value of the API key retrieved from the environment variable.
         
         .NOTES
-        Ensure API key is stored and retrieved securely.        
+        Ensure the API key is stored securely in an environment variable. The function will return an error if the API key is not found in the specified environment variable.        
         #>
         [CmdletBinding()]
         param (
@@ -138,7 +164,6 @@ function Invoke-AzureOpenAIChatCompletion {
         }
                
     }
-    
     # Function to get the system and user messages
     function Get-Messages {
         <#
@@ -146,13 +171,16 @@ function Invoke-AzureOpenAIChatCompletion {
         Retrieves the system and user messages.
         
         .DESCRIPTION
-        This function prompts the user for a chat message and returns an array that contains the system and user messages.
+        This function takes in a system message and a user message as parameters and returns an array that contains both messages.
         
         .PARAMETER system_message
         The system message to be used for the chat. This parameter is mandatory.
         
+        .PARAMETER UserMessage
+        The user message to be used for the chat. This parameter is mandatory.
+        
         .EXAMPLE
-        Get-Messages -system_message "Hello, how can I assist you today?"
+        Get-Messages -system_message "Hello, how can I assist you today?" -UserMessage "I need help with my code."
         
         .OUTPUTS
         Array of system and user messages.
@@ -174,46 +202,45 @@ function Invoke-AzureOpenAIChatCompletion {
             },
             @{
                 "role"    = "user"
-                "content" = $userMessage
+                "content" = $UserMessage
             }
         )
     }
-    
     # Function to generate the body for the API request
     function Get-Body {
         <#
         .SYNOPSIS
-        Generates the body for the API request.
+        Constructs the body for the API request.
         
         .DESCRIPTION
-        This function creates the request body for the API request. It includes parameters like messages, temperature, frequency_penalty, presence_penalty, top_p, stop, stream, and user.
+        This function builds the body for the API request. It includes parameters such as messages, temperature, frequency_penalty, presence_penalty, top_p, stop, stream, and user.
         
         .PARAMETER messages
-        The array of messages to be used in the API request. This parameter is mandatory.
+        An array of messages to be included in the API request. This parameter is required.
         
         .PARAMETER temperature
-        The temperature parameter for the API request. This parameter is mandatory.
+        The temperature parameter for the API request, influencing the randomness of the chatbot's responses. This parameter is required.
         
         .PARAMETER n
-        The number of messages to generate for the API request. This parameter is mandatory.
+        The number of messages to generate for the API request. This parameter is required.
         
         .PARAMETER frequency_penalty
-        The frequency penalty parameter for the API request. This parameter is mandatory.
+        The frequency penalty parameter for the API request, controlling how much the model should avoid using frequent tokens. This parameter is required.
         
         .PARAMETER presence_penalty
-        The presence penalty parameter for the API request. This parameter is mandatory.
+        The presence penalty parameter for the API request, controlling how much the model should favor tokens that are already present. This parameter is required.
         
         .PARAMETER top_p
-        The top-p parameter for the API request. This parameter is mandatory.
+        The top-p parameter for the API request, controlling the nucleus sampling, a method of random sampling in the model. This parameter is required.
         
         .PARAMETER stop
-        The stop parameter for the API request.
+        The stop parameter for the API request, defining any tokens that should signal the end of a text generation.
         
         .PARAMETER stream
-        The stream parameter for the API request. This parameter is mandatory.
+        The stream parameter for the API request, indicating whether the API should return intermediate results. This parameter is required.
         
         .PARAMETER user
-        The user parameter for the API request. This parameter is mandatory.
+        The user parameter for the API request, representing the user initiating the request.
         
         .EXAMPLE
         Get-Body -messages $messages -temperature 0.5 -n 1 -frequency_penalty 0 -presence_penalty 0 -top_p 1 -stop null -stream $false -user "JohnDoe"
@@ -254,30 +281,40 @@ function Invoke-AzureOpenAIChatCompletion {
             'user'              = $user
         }
     }
-    
     # Function to generate the URL for the API request
     function Get-Url {
         param (
-            $Endpoint,
-            $Deployment,
-            $APIVersion
+            [Parameter(Mandatory = $true)]
+            [string]$Endpoint,
+            [Parameter(Mandatory = $true)]
+            [string]$Deployment,
+            [Parameter(Mandatory = $true)]
+            [string]$APIVersion
         )
         <#
         .SYNOPSIS
-        Generates the URL for the API request.
+        Generates the URL for the Azure OpenAI API request.
         
         .DESCRIPTION
-        This function constructs the URL used for the API request.
+        This function constructs the URL used for the Azure OpenAI API request using the provided endpoint, deployment, and API version.
+        
+        .PARAMETER Endpoint
+        The endpoint URL for the Azure OpenAI API. This parameter is mandatory.
+        
+        .PARAMETER Deployment
+        The name of the OpenAI deployment to be used. This parameter is mandatory.
+        
+        .PARAMETER APIVersion
+        The version of the Azure OpenAI API to be used. This parameter is mandatory.
         
         .EXAMPLE
-        Get-Url
+        Get-Url -Endpoint "https://api.openai.com" -Deployment "myDeployment" -APIVersion "v1"
         
         .OUTPUTS
-        String of the URL for the API request.
+        String of the URL for the Azure OpenAI API request.
         #> 
         return "${Endpoint}/openai/deployments/${Deployment}/chat/completions?api-version=${APIVersion}"
     }
-    
     # Function to make the API request and store the response
     function Invoke-ApiRequest {
         <#
@@ -779,15 +816,17 @@ function Invoke-AzureOpenAIChatCompletion {
 
             $bodyJSON = ($body | ConvertTo-Json)
             
-            Write-Host "[Chat completion]" -ForegroundColor Green
-            if ($logfile) {
-                Write-Host "{Logfile:'${logfile}'} " -ForegroundColor Magenta
-            }
-            if ($SystemPromptFileName) {
-                Write-Host "{SysPFile:'${SystemPromptFileName}', temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
-            }
-            else {
-                Write-Host "{SysPrompt, temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
+            if (-not $simpleresponse) {
+                Write-Host "[Chat completion]" -ForegroundColor Green
+                if ($logfile) {
+                    Write-Host "{Logfile:'${logfile}'} " -ForegroundColor Magenta
+                }
+                if ($SystemPromptFileName) {
+                    Write-Host "{SysPFile:'${SystemPromptFileName}', temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
+                }
+                else {
+                    Write-Host "{SysPrompt, temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
+                }
             }
             $response = Invoke-ApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON
             
@@ -805,14 +844,14 @@ function Invoke-AzureOpenAIChatCompletion {
 
             if ($OneTimeUserPrompt) {
                 Write-Verbose "OneTimeUserPrompt output with return"
-
-                Write-Verbose "Show-FinishReason"
-                Write-Information -MessageData (Show-FinishReason -finishReason $response.choices.finish_reason | Out-String) -InformationAction Continue
-                Write-Verbose "Show-PromptFilterResults"
-                Write-Information -MessageData (Show-PromptFilterResults -response $response | Out-String) -InformationAction Continue
-                Write-Verbose "Show-Usage"
-                Write-Information -MessageData (Show-Usage -usage $response.usage | Out-String) -InformationAction Continue
-
+                if (-not $simpleresponse) {
+                    Write-Verbose "Show-FinishReason"
+                    Write-Information -MessageData (Show-FinishReason -finishReason $response.choices.finish_reason | Out-String) -InformationAction Continue
+                    Write-Verbose "Show-PromptFilterResults"
+                    Write-Information -MessageData (Show-PromptFilterResults -response $response | Out-String) -InformationAction Continue
+                    Write-Verbose "Show-Usage"
+                    Write-Information -MessageData (Show-Usage -usage $response.usage | Out-String) -InformationAction Continue
+                }
                 Write-Verbose "Show-ResponseMessage - return"
                 $responseText = (Show-ResponseMessage -content $assistant_response -stream "assistant" | Out-String)
 
