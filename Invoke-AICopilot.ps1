@@ -109,7 +109,7 @@ function Invoke-AICopilot {
 #"You MUST suggest ten LLM prompts in a numbered style to analyze issues based on Windows events."
 
 $prompt_one = @'
-###Instruction### Produce a list of ten prompts in powershell JSON format designed to analyze issues based on Windows events. The prompts should be numbered and focus on various aspects of event analysis, such potential root causes, understand its impact on the system's performance and stability, and propose solutions or further actions to resolve the problem. Responce MUSt have JSON only, no code block syntax. Example:
+###Instruction### Suggest a list of ten prompts in JSON powershell format designed to analyze issues based on Windows events. The prompts MUST be focused on various aspects of event analysis, such potential root causes, understand its impact on the system's performance and stability, and propose solutions or further actions to resolve the problem. Responce MUST be as JSON only, no code block syntax. Example:
 [
   {
     "promptNumber": 1,
@@ -147,15 +147,20 @@ $prompt_one = @'
 # cleaning system prompt
 $prompt_one = [System.Text.RegularExpressions.Regex]::Replace($prompt_one, "[^\x00-\x7F]", " ")        
 
-$data_to_analyze = get-WinEvent -LogName Microsoft-Windows-Security-Mitigations/KernelMode -MaxEvents 5 | Select-Object *
+#$data_to_analyze = get-WinEvent -LogName Microsoft-Windows-Security-Mitigations/KernelMode -MaxEvents 100 | Select-Object *
+$data_to_analyze = Get-WinEvent -maxEvents 100 | Select-Object * 
+$data_to_analyze = Get-WinEvent -LogName Microsoft-Windows-Windows Defender/Operational -MaxEvents 100 | Select-Object * 
 
-#Get-WinEvent -maxEvents 10 | select * | Invoke-AICopilot2 -NaturalLanguageQuery $prompt_one
 $json_data = $data_to_analyze | Invoke-AICopilot -NaturalLanguageQuery $prompt_one
 
 $object_prompt = ($json_data | ConvertFrom-Json ) 
 
 $object_prompt | Format-List promptNumber, prompt, analysisActions
 
-$choose_prompt = Read-Host "Choose the number of prompt to analyze events (1-10)"
+$choose_prompt_number = Read-Host "Choose the number of prompt to analyze events (1-10)"
 
-$data_to_analyze | Invoke-AICopilot -NaturalLanguageQuery $object_prompt[$choose_prompt].prompt
+$choose_prompt = $($object_prompt[$choose_prompt_number].prompt + " " + $q[1].analysisActions -join " ")
+
+Write-Host "Prompt: '$choose_prompt'"
+
+$data_to_analyze | Invoke-AICopilot -NaturalLanguageQuery $choose_prompt
