@@ -404,14 +404,18 @@ function Invoke-AzureOpenAIChatCompletion {
             [Parameter(Mandatory = $true)]
             [string]$content,
             [Parameter(Mandatory = $true)]
-            [string]$stream
+            [string]$stream,
+            [switch]$simpleresponse
         )
     
         #Write-Host ""
         #Write-Host "Response assistant ($stream):"
         #Write-Host $content
-
-        return ("Response assistant ($stream):`n${content}")
+        if (-not $simpleresponse) {
+            return ("Response assistant ($stream):`n${content}")
+        } else {
+            return $content
+        }
     }
     
     # Function to output the finish reason
@@ -853,7 +857,8 @@ function Invoke-AzureOpenAIChatCompletion {
                     Write-Information -MessageData (Show-Usage -usage $response.usage | Out-String) -InformationAction Continue
                 }
                 Write-Verbose "Show-ResponseMessage - return"
-                $responseText = (Show-ResponseMessage -content $assistant_response -stream "assistant" | Out-String)
+
+                $responseText = (Show-ResponseMessage -content $assistant_response -stream "assistant" -simpleresponse:$simpleresponse | Out-String)
 
                 Write-LogMessage -Message "OneTimeUserPrompt:`n$OneTimeUserPrompt" -LogFile $logfile
                 Write-LogMessage -Message "ResponseText:`n$responseText" -LogFile $logfile
@@ -863,7 +868,7 @@ function Invoke-AzureOpenAIChatCompletion {
             else {
                 Write-Verbose "NO OneTimeUserPrompt"
 
-                Show-ResponseMessage -content $assistant_response -stream "assistant"
+                Show-ResponseMessage -content $assistant_response -stream "assistant" -simpleresponse:$simpleresponse
             
                 Write-LogMessage -Message "Assistant reposnse:`n$assistant_response" -LogFile $logfile
 
