@@ -484,8 +484,7 @@ function Invoke-AzureOpenAIChatCompletion {
             $contentFilterObject
         }
     }
- 
-    
+     
     # Function to handle errors
     function Show-Error {
         <#
@@ -692,7 +691,6 @@ function Invoke-AzureOpenAIChatCompletion {
         Add-Content -Path $LogFile -Value $logEntry -Force
     }
    
-
     function Format-Error {
         param(
             [System.Management.Automation.ErrorRecord]$ErrorVar
@@ -863,7 +861,7 @@ function Invoke-AzureOpenAIChatCompletion {
                 Write-LogMessage -Message "OneTimeUserPrompt:`n$OneTimeUserPrompt" -LogFile $logfile
                 Write-LogMessage -Message "ResponseText:`n$responseText" -LogFile $logfile
 
-                return ($responseText)
+                return $responseText
             }
             else {
                 Write-Verbose "NO OneTimeUserPrompt"

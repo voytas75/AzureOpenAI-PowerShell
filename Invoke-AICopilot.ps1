@@ -99,9 +99,8 @@ function Invoke-AICopilot {
         # Rest of your code...
         $responce = Invoke-AzureOpenAIChatCompletion -SystemPrompt $NaturalLanguageQuery -OneTimeUserPrompt $inputString -Precise -simpleresponse
 
-        Write-Host "start"
-        $responce  | ConvertFrom-Json
-        Write-Host "stop"
+        return $responce 
+        
         #$inputString | Out-String
     }
 }
@@ -128,24 +127,35 @@ $prompt_one = @'
     ]
   },
   {
-    "promptNumber": 2,
-    "prompt": "Determine if the system time change by W32time service is expected behavior and if it aligns with the configured time synchronization settings.",
-    "eventType": "W32time Service Event",
-    "eventID": 261,
-    "eventLevel": "Information",
-    "eventMessage": "W32time service has set the system time",
-    "eventTime": "2024-03-22T19:02:09.603Z",
-    "previousTime": "2024-03-22T19:02:09.602Z",
+    "promptNumber": 3,
+    "prompt": "Examine the security implications of Acrobat's AcroCEF.exe being blocked from making system calls to Win32k.sys and suggest measures to mitigate potential risks.",
+    "eventType": "Security Mitigation",
+    "eventID": 10,
+    "eventLevel": "Warning",
+    "eventMessage": "The process AcroCEF.exe was prevented from making system calls to the Win32k.sys library.",
+    "eventTime": "2024-03-16T22:26:05Z",
+    "eventProcessID": 22432,
     "analysisActions": [
-      "Check time synchronization settings.",
-      "Ensure the time source is reliable and accessible.",
-      "Review if there are any network connectivity issues."
+      "Ensure that Adobe Acrobat is running the latest version.",
+      "Review Adobe Acrobat's security settings and permissions.",
+      "Check for any related security advisories from Adobe."
     ]
   }
 ]
 '@
 
-#>
+# cleaning system prompt
+$prompt_one = [System.Text.RegularExpressions.Regex]::Replace($prompt_one, "[^\x00-\x7F]", " ")        
 
+$data_to_analyze = get-WinEvent -LogName Microsoft-Windows-Security-Mitigations/KernelMode -MaxEvents 5 | Select-Object *
 
-Get-WinEvent -maxEvents 10 | select * | Invoke-AICopilot2 -NaturalLanguageQuery $prompt_one
+#Get-WinEvent -maxEvents 10 | select * | Invoke-AICopilot2 -NaturalLanguageQuery $prompt_one
+$json_data = $data_to_analyze | Invoke-AICopilot -NaturalLanguageQuery $prompt_one
+
+$object_prompt = ($json_data | ConvertFrom-Json ) 
+
+$object_prompt | Format-List promptNumber, prompt, analysisActions
+
+$choose_prompt = Read-Host "Choose the number of prompt to analyze events (1-10)"
+
+$data_to_analyze | Invoke-AICopilot -NaturalLanguageQuery $object_prompt[$choose_prompt].prompt
