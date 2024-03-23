@@ -47,7 +47,7 @@ This parameter accepts the natural language query to interpret the input object.
 .EXAMPLE
 Invoke-AICopilot -InputObject $InputObject -NaturalLanguageQuery "Show only processes using more than 500MB of memory"
 #>
-function Invoke-AICopilot {
+function Invoke-AIEventAnalyzer {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
@@ -177,7 +177,7 @@ $chosenLogNameNewest = Read-Host "Please enter newes record count (1-$logRecordC
 $data_to_analyze = Get-WinEvent -LogName $chosenLogName -MaxEvents $chosenLogNameNewest | Select-Object Message, Level, ProviderName, ProviderId, LogName, TimeCreated 
 
 # Invoke the AI model with the prompt and the data to analyze
-$json_data = $data_to_analyze | Invoke-AICopilot -NaturalLanguageQuery $prompt_one
+$json_data = $data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $prompt_one
 
 # Clean the returned JSON data
 $json_data = Clear-LLMDataJSON -data $json_data
@@ -207,5 +207,5 @@ while ($true) {
     Write-Host "Prompt: '$choose_prompt'"
 
     # Invoke the AI model with the chosen prompt and the data to analyze
-    $data_to_analyze | Invoke-AICopilot -NaturalLanguageQuery $choose_prompt
+    $data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $choose_prompt
 }
