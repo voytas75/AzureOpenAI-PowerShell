@@ -152,8 +152,14 @@ function Get-EventSeverity {
     }
 }
 
-# Define the prompt for the AI model
-$prompt_one = @'
+function Start-AIEventAnalyzer {
+    [CmdletBinding()]
+    param (
+        
+    )
+
+    # Define the prompt for the AI model
+    $prompt_one = @'
 ###Instruction### 
 
 You act as data analyst. Your task is to suggest a list of prompts designed to analyze issues based on the provided data. The prompts MUST be focused on potential root causes, understand its impact on the system's performance and stability, and propose detailed step-by-step solutions or further actions to resolve the problem. Responce MUST be as JSON format only. Audience is IT Proffesional. 
@@ -193,115 +199,116 @@ Example of JSON with two records:
 ]
 '@
 
-# Clean the system prompt by removing non-ASCII characters
-$prompt_one = [System.Text.RegularExpressions.Regex]::Replace($prompt_one, "[^\x00-\x7F]", " ")        
+    # Clean the system prompt by removing non-ASCII characters
+    $prompt_one = [System.Text.RegularExpressions.Regex]::Replace($prompt_one, "[^\x00-\x7F]", " ")        
 
-# Get a list of all Windows event logs, sort them by record count in descending order, and select the top 25 logs
-$logs = Get-WinEvent -ListLog * -ErrorAction SilentlyContinue | Sort-Object RecordCount -Descending | Select-Object LogName, RecordCount
+    # Get a list of all Windows event logs, sort them by record count in descending order, and select the top 25 logs
+    $logs = Get-WinEvent -ListLog * -ErrorAction SilentlyContinue | Sort-Object RecordCount -Descending | Select-Object LogName, RecordCount
 
-# Display the name and record count of each log
-#$logs | ForEach-Object {Write-Host "$($_.LogName) - $($_.RecordCount) records"}
-try {
-    $logs.where{ $_.RecordCount -gt 0 }  | Out-Host -Paging -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
-}
-catch [System.Management.Automation.HaltCommandException] {
-    # Handle termination here (e.g., write message)
-    Write-Host "Command stopped by user (Quit)"
-}
-
-# Ask the user to input the name of the log they want to analyze
-$chosenLogName = Read-Host "Please enter the LogName from the list above to analyze events (default: $($logs[0].LogName))"
-
-
-# Check if the chosen log name is empty or null. If it is, set it to the first log name in the logs list
-if ([string]::IsNullOrEmpty($chosenLogName)) {
-    $chosenLogName = $logs[0].LogName
-}
-
-# Get the record count for the chosen log name
-$logRecordCount = ($logs | Where-Object { $_.logname -eq "$chosenLogName" }).Recordcount
-# Display the record count for the chosen log name
-Write-Host "The log '$chosenLogName' has $logRecordCount events of all severity levels."
-
-# Loop until a valid severity level is entered
-do {
-    # Ask the user to enter the severity level
-    Write-Host "Please enter the severity level of the events you want to analyze. Options are: Critical, Error, Warning, Information, Verbose, or All."
-    $chosenSeverityLevel = Read-Host "Enter the severity level (default: All)"
-    # If the entered severity level is valid, get the events for that severity level
-    if ($chosenSeverityLevel -in @("Critical", "Error", "Warning", "Information", "Verbose")) {
-        $filterXPath = "*[System[(Level=$(Get-EventSeverity -Severity $chosenSeverityLevel))]]"
-        $data_to_analyze = Get-WinEvent -LogName $chosenLogName -FilterXPath $filterXPath -ErrorAction SilentlyContinue | Select-Object Message, Level, ProviderName, ProviderId, LogName, TimeCreated 
-        $logRecordServerityCount = $data_to_analyze.Count
+    # Display the name and record count of each log
+    #$logs | ForEach-Object {Write-Host "$($_.LogName) - $($_.RecordCount) records"}
+    try {
+        $logs.where{ $_.RecordCount -gt 0 }  | Out-Host -Paging
     }
-    # If the entered severity level is empty or null, set it to "All" and get all events
-    elseif ([string]::IsNullOrEmpty($chosenSeverityLevel)) {
-        $chosenSeverityLevel = "All"
-        $logRecordServerityCount = $logRecordCount
+    catch [System.Management.Automation.HaltCommandException] {
+        # Handle termination here (e.g., write message)
+        Write-Host "Command stopped by user (Quit)"
     }
-    # If the entered severity level is invalid, set it to "All" and get all events
+
+    # Ask the user to input the name of the log they want to analyze
+    $chosenLogName = Read-Host "Please enter the LogName from the list above to analyze events (default: $($logs[0].LogName))"
+
+
+    # Check if the chosen log name is empty or null. If it is, set it to the first log name in the logs list
+    if ([string]::IsNullOrEmpty($chosenLogName)) {
+        $chosenLogName = $logs[0].LogName
+    }
+
+    # Get the record count for the chosen log name
+    $logRecordCount = ($logs | Where-Object { $_.logname -eq "$chosenLogName" }).Recordcount
+    # Display the record count for the chosen log name
+    Write-Host "The log '$chosenLogName' has $logRecordCount events of all severity levels."
+
+    # Loop until a valid severity level is entered
+    do {
+        # Ask the user to enter the severity level
+        Write-Host "Please enter the severity level of the events you want to analyze. Options are: Critical, Error, Warning, Information, Verbose, or All."
+        $chosenSeverityLevel = Read-Host "Enter the severity level (default: All)"
+        # If the entered severity level is valid, get the events for that severity level
+        if ($chosenSeverityLevel -in @("Critical", "Error", "Warning", "Information", "Verbose")) {
+            $filterXPath = "*[System[(Level=$(Get-EventSeverity -Severity $chosenSeverityLevel))]]"
+            $data_to_analyze = Get-WinEvent -LogName $chosenLogName -FilterXPath $filterXPath -ErrorAction SilentlyContinue | Select-Object Message, Level, ProviderName, ProviderId, LogName, TimeCreated 
+            $logRecordServerityCount = $data_to_analyze.Count
+        }
+        # If the entered severity level is empty or null, set it to "All" and get all events
+        elseif ([string]::IsNullOrEmpty($chosenSeverityLevel)) {
+            $chosenSeverityLevel = "All"
+            $logRecordServerityCount = $logRecordCount
+        }
+        # If the entered severity level is invalid, set it to "All" and get all events
+        else {
+            $chosenSeverityLevel = "All"
+            $logRecordServerityCount = $logRecordCount
+        }
+    } until ([int]$logRecordServerityCount -gt 0)
+
+    # Ask the user to enter the number of most recent events they want to analyze
+    $chosenLogNameNewest = Read-Host "Please enter the number of most recent '$chosenLogName' for '$chosenSeverityLevel' serverity events you want to analyze (1-$logRecordServerityCount) (default: 10)"
+    # If the entered number is empty or null, set it to 10
+    if ([string]::IsNullOrEmpty($chosenLogNameNewest)) {
+        $chosenLogNameNewest = 10
+    }
+    # If the chosen severity level is not valid, get the most recent events up to the entered number
+    if ($chosenSeverityLevel -notin @("Critical", "Error", "Warning", "Information", "Verbose")) {
+        $data_to_analyze = Get-WinEvent -LogName $chosenLogName -MaxEvents $chosenLogNameNewest | Select-Object Message, Level, ProviderName, ProviderId, LogName, TimeCreated 
+    }
     else {
-        $chosenSeverityLevel = "All"
-        $logRecordServerityCount = $logRecordCount
+        $data_to_analyze = $data_to_analyze | Select-Object -First $chosenLogNameNewest
     }
-} until ([int]$logRecordServerityCount -gt 0)
+    $logRecordServerityCount = $data_to_analyze.Count
 
-# Ask the user to enter the number of most recent events they want to analyze
-$chosenLogNameNewest = Read-Host "Please enter the number of most recent '$chosenLogName' for '$chosenSeverityLevel' serverity events you want to analyze (1-$logRecordServerityCount) (default: 10)"
-# If the entered number is empty or null, set it to 10
-if ([string]::IsNullOrEmpty($chosenLogNameNewest)) {
-    $chosenLogNameNewest = 10
-}
-# If the chosen severity level is not valid, get the most recent events up to the entered number
-if ($chosenSeverityLevel -notin @("Critical", "Error", "Warning", "Information", "Verbose")) {
-    $data_to_analyze = Get-WinEvent -LogName $chosenLogName -MaxEvents $chosenLogNameNewest | Select-Object Message, Level, ProviderName, ProviderId, LogName, TimeCreated 
-}
-else {
-    $data_to_analyze = $data_to_analyze | Select-Object -First $chosenLogNameNewest
-}
-$logRecordServerityCount = $data_to_analyze.Count
+    # Display the chosen log name, severity level, and event count
+    Write-Host "LogName: $chosenLogName"
+    Write-Host "Level: $chosenSeverityLevel"
+    Write-Host "Event count: $logRecordServerityCount"
 
-# Display the chosen log name, severity level, and event count
-Write-Host "LogName: $chosenLogName"
-Write-Host "Level: $chosenSeverityLevel"
-Write-Host "Event count: $logRecordServerityCount"
+    # Invoke the AI model with the prompt and the data to analyze
+    $json_data = $data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $prompt_one
 
-# Invoke the AI model with the prompt and the data to analyze
-$json_data = $data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $prompt_one
+    # Clean the returned JSON data
+    $json_data = Clear-LLMDataJSON -data $json_data
 
-# Clean the returned JSON data
-$json_data = Clear-LLMDataJSON -data $json_data
+    # Convert the cleaned JSON data to a PowerShell object
+    $object_prompt = ($json_data | ConvertFrom-Json ) 
 
-# Convert the cleaned JSON data to a PowerShell object
-$object_prompt = ($json_data | ConvertFrom-Json ) 
-
-# Loop until the user chooses to quit
-while ($true) {
-    # Display the prompt number and prompt
+    # Loop until the user chooses to quit
+    while ($true) {
+        # Display the prompt number and prompt
     ($object_prompt | Format-List promptNumber, prompt) | Out-Host -Paging
-    # Inform the user that they can quit the script at any time
-    Write-Host "Enter 'Q' and ENTER to quit the script at any time."
+        # Inform the user that they can quit the script at any time
+        Write-Host "Enter 'Q' and ENTER to quit the script at any time."
 
-    # Ask the user to choose a prompt number to analyze events
-    $prompt_count = $object_prompt.Count
-    $choose_prompt_number = Read-Host "Choose the number of prompt to analyze events (1-$prompt_count)"
+        # Ask the user to choose a prompt number to analyze events
+        $prompt_count = $object_prompt.Count
+        $choose_prompt_number = Read-Host "Choose the number of prompt to analyze events (1-$prompt_count)"
 
-    # If the user chooses to quit, end the script
-    if ($choose_prompt_number -eq 'q' -or $choose_prompt_number -eq 'Q') {
-        Write-Host "Ending script..."
-        break
-    }
+        # If the user chooses to quit, end the script
+        if ($choose_prompt_number -eq 'q' -or $choose_prompt_number -eq 'Q') {
+            Write-Host "Ending script..."
+            break
+        }
 
-    # Construct the chosen prompt
-    $choose_prompt = $($object_prompt[($choose_prompt_number - 1)].prompt)
+        # Construct the chosen prompt
+        $choose_prompt = $($object_prompt[($choose_prompt_number - 1)].prompt)
 
-    # Display the chosen prompt
-    Write-Host "Prompt: '$choose_prompt'"
+        # Display the chosen prompt
+        Write-Host "Prompt: '$choose_prompt'"
 
-    # Invoke the AI model with the chosen prompt and the data to analyze
+        # Invoke the AI model with the chosen prompt and the data to analyze
     ($data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $choose_prompt) | Out-Host -Paging
 
-    # Ask the user to press any key to continue
-    Write-Host "Press any key to continue ..."
-    $null = [Console]::ReadKey($true)
+        # Ask the user to press any key to continue
+        Write-Host "Press any key to continue ..."
+        $null = [Console]::ReadKey($true)
+    }
 }
