@@ -148,10 +148,17 @@ $prompt_one = @'
 $prompt_one = [System.Text.RegularExpressions.Regex]::Replace($prompt_one, "[^\x00-\x7F]", " ")        
 
 #$data_to_analyze = get-WinEvent -LogName Microsoft-Windows-Security-Mitigations/KernelMode -MaxEvents 100 | Select-Object *
-$data_to_analyze = Get-WinEvent -maxEvents 100 | Select-Object * 
-$data_to_analyze = Get-WinEvent -LogName Microsoft-Windows-Windows Defender/Operational -MaxEvents 100 | Select-Object * 
+#$data_to_analyze = Get-WinEvent -maxEvents 100 | Select-Object * 
+$data_to_analyze = Get-WinEvent -LogName "Microsoft-Windows-Windows Defender/Operational" -MaxEvents 100 | Select-Object * 
 
 $json_data = $data_to_analyze | Invoke-AICopilot -NaturalLanguageQuery $prompt_one
+
+$json_data
+
+$json_data = $json_data.Substring($json_data.IndexOf('['))
+$json_data = $json_data.Substring(0, $json_data.LastIndexOf(']') + 1)
+
+$json_data
 
 $object_prompt = ($json_data | ConvertFrom-Json ) 
 
