@@ -1,46 +1,3 @@
-# Define the AI_LLM function
-<#
-.SYNOPSIS
-This function uses Azure OpenAI to interpret the input using a language model and the user's query.
-
-.DESCRIPTION
-The Invoke-AICopilot_old1 function takes an input object and a natural language query as parameters. 
-It converts the input object to a string and logs the input object and natural language query. 
-Then it calls the Invoke-AzureOpenAIChatCompletion function to interpret the input using a language model and the user's query.
-
-.PARAMETER InputObject
-This parameter accepts the input object that needs to be interpreted.
-
-.PARAMETER NaturalLanguageQuery
-This parameter accepts the natural language query to interpret the input object.
-
-.EXAMPLE
-Invoke-AICopilot_old1 -InputObject $InputObject -NaturalLanguageQuery "Show only processes using more than 500MB of memory"
-#>
-function Invoke-AICopilot_old1 {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-        [object]$InputObject,
-
-        [Parameter(Mandatory = $true, Position = 0)]
-        [string]$NaturalLanguageQuery
-    )
-    # Load the Invoke-AzureOpenAIChatCompletion script
-    . $PSScriptRoot\Invoke-AzureOpenAIChatCompletion.ps1 
-
-    # Convert the input object to a string
-    $inputString = $InputObject | Out-String
-
-    # Log the input object and natural language query
-    LogData -InputString $inputString -NaturalLanguageQuery $NaturalLanguageQuery
-
-    # Write the input string to the verbose output stream
-    Write-Verbose ($inputString)
-
-    # Call the Invoke-AzureOpenAIChatCompletion function to interpret the input using a language model and the user's query
-    Invoke-AzureOpenAIChatCompletion -SystemPrompt $NaturalLanguageQuery -OneTimeUserPrompt $inputString -Precise -simpleresponse
-}
 <#
 .SYNOPSIS
 This function logs the input string and natural language query.
@@ -147,7 +104,7 @@ function Clear-LLMDataJSON {
     # Define the parameters for the function
     param (
         # The data parameter is mandatory and should be a string
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$data
     )
     # Find the first occurrence of '[' and remove everything before it
@@ -160,7 +117,11 @@ function Clear-LLMDataJSON {
 
 # Define the prompt for the AI model
 $prompt_one = @'
-###Instruction### Suggest a list of two prompts in JSON powershell format designed to analyze issues based on Windows events. The prompts MUST be focused on various aspects of event analysis, such potential root causes, understand its impact on the system's performance and stability, and propose solutions or further actions to resolve the problem. Responce MUST be as JSON only, no code block syntax. Example:
+###Instruction### 
+
+You act as data analyst. Your task is to suggest a list of prompts designed to analyze issues based on the provided data. The prompts MUST be focused on potential root causes, understand its impact on the system's performance and stability, and propose detailed step-by-step solutions or further actions to resolve the problem. Responce MUST be as JSON format only. Audience is IT Proffesional. 
+
+Example of JSON with two records:
 [
   {
     "promptNumber": 1,
@@ -198,8 +159,22 @@ $prompt_one = @'
 # Clean the system prompt by removing non-ASCII characters
 $prompt_one = [System.Text.RegularExpressions.Regex]::Replace($prompt_one, "[^\x00-\x7F]", " ")        
 
+# Get a list of all Windows event logs, sort them by record count in descending order, and select the top 25 logs
+$logs = Get-WinEvent -ListLog * -ErrorAction SilentlyContinue | Sort-Object RecordCount -Descending| Select-Object LogName, RecordCount -First 25
+
+# Display the name and record count of each log
+#$logs | ForEach-Object {Write-Host "$($_.LogName) - $($_.RecordCount) records"}
+$logs | FT *
+
+# Ask the user to input the name of the log they want to analyze
+$chosenLogName = Read-Host "Please enter the LogName from the list above to analyze events"
+
+$logRecordCount = ($logs | Where-Object {$_.logname -eq "$chosenLogName"}).Recordcount
+
+$chosenLogNameNewest = Read-Host "Please enter newes record count (1-$logRecordCount)"
+
 # Fetch the Windows events to analyze
-$data_to_analyze = Get-WinEvent -LogName "Microsoft-Windows-Windows Defender/Operational" -MaxEvents 10 | Select-Object Message, Level, ProviderName, ProviderId, LogName, TimeCreated 
+$data_to_analyze = Get-WinEvent -LogName $chosenLogName -MaxEvents $chosenLogNameNewest | Select-Object Message, Level, ProviderName, ProviderId, LogName, TimeCreated 
 
 # Invoke the AI model with the prompt and the data to analyze
 $json_data = $data_to_analyze | Invoke-AICopilot -NaturalLanguageQuery $prompt_one
@@ -210,18 +185,27 @@ $json_data = Clear-LLMDataJSON -data $json_data
 # Convert the cleaned JSON data to a PowerShell object
 $object_prompt = ($json_data | ConvertFrom-Json ) 
 
-# Display the prompt number, prompt, and analysis actions from the object
-$object_prompt | Format-List promptNumber, prompt, analysisActions
+while ($true) {
+    # Display the prompt number, prompt, and analysis actions from the object
+    $object_prompt | Format-List promptNumber, prompt, analysisActions
 
-# Ask the user to choose a prompt number to analyze events
-$prompt_count = $object_prompt.Count
-$choose_prompt_number = Read-Host "Choose the number of prompt to analyze events (1-$prompt_count)"
+    Write-Host "Enter 'q' to quit the script at any time."
 
-# Construct the chosen prompt
-$choose_prompt = $($object_prompt[$choose_prompt_number].prompt + " " + $object_prompt[$choose_prompt_number].analysisActions -join " ")
+    # Ask the user to choose a prompt number to analyze events
+    $prompt_count = $object_prompt.Count
+    $choose_prompt_number = Read-Host "Choose the number of prompt to analyze events (1-$prompt_count)"
 
-# Display the chosen prompt
-Write-Host "Prompt: '$choose_prompt'"
+    if ($choose_prompt_number -eq 'q') {
+        Write-Host "Ending script..."
+        break
+    }
 
-# Invoke the AI model with the chosen prompt and the data to analyze
-$data_to_analyze | Invoke-AICopilot -NaturalLanguageQuery $choose_prompt
+    # Construct the chosen prompt
+    $choose_prompt = $($object_prompt[($choose_prompt_number - 1)].prompt + " " + $object_prompt[($choose_prompt_number - 1)].analysisActions -join " ")
+
+    # Display the chosen prompt
+    Write-Host "Prompt: '$choose_prompt'"
+
+    # Invoke the AI model with the chosen prompt and the data to analyze
+    $data_to_analyze | Invoke-AICopilot -NaturalLanguageQuery $choose_prompt
+}
