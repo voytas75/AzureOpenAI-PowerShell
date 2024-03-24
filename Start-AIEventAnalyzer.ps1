@@ -171,6 +171,26 @@ function Get-EventSeverity {
     }
 }
 
+function Get-LogFileDetails {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$LogFolder,
+        [Parameter(Mandatory = $true)]
+        [string]$logFileName
+    )
+    $logFile = Join-Path -Path $LogFolder -ChildPath $logFileName
+    if (Test-Path -Path $logFile) {
+        $logFileDetails = Get-Item -Path $logFile
+        Write-Host "Log File Details:"
+        Write-Host "-----------------"
+        Write-Host "Full Path: $($logFileDetails.FullName)"
+        Write-Host "Size: $($logFileDetails.Length) bytes"
+        Write-Host "Last Modified: $($logFileDetails.LastWriteTime)"
+    } else {
+        Write-Host "Log file does not exist."
+    }
+}
+
 function Format-ContinuousText {
     # Define the parameters for the function
     param (
@@ -179,13 +199,14 @@ function Format-ContinuousText {
         [string]$text
     )
 
-    # This function replaces newline characters with a space to format the text as a continuous string
-    # It takes a string as input and returns a string where all newline characters are replaced with a space
+    # This function is designed to transform any text into a continuous string by replacing newline characters with a space.
+    # It accepts a string as input and returns a string where all newline characters (`r`n) and (`n`) are replaced with a space (" ").
 
-    # The `-replace` operator is used to replace all newline characters (`r`n) with a space (" ")
-    # The result is returned as the output of the function
+    # The `-replace` operator is used to replace all newline characters with a space.
+    # The result is returned as the output of the function.
 
-    return $text -replace "`r`n"," "
+    $text = $text -replace "`r`n", " " # Replace carriage return and newline characters
+    return $text -replace "`n", " " # Replace newline characters
 }
 
 function Start-AIEventAnalyzer {
@@ -396,7 +417,7 @@ Example of JSON with two records:
         "LogName"    = $chosenLogName
         "Level"      = $chosenSeverityLevel
         "EventCount" = $logRecordServerityCount
-        "Prompt"     = $prompt_one
+        "Prompt"     = (Format-ContinuousText -text $prompt_one)
     }
     foreach ($key in $data_to_file.Keys) {
         LogData -LogFolder $LogFolder -FileName $logFileName -Data "$key : $($data_to_file[$key])" -Type "user"
@@ -408,13 +429,17 @@ Example of JSON with two records:
     # Clean the returned JSON data
     $json_data = Clear-LLMDataJSON -data $json_data
 
+    LogData -LogFolder $LogFolder -FileName $logFileName -Data ($json_data | ConvertTo-Json -Depth 100) -Type "system"
+
     # Convert the cleaned JSON data to a PowerShell object
     $object_prompt = ($json_data | ConvertFrom-Json ) 
 
     # Loop until the user chooses to quit
     while ($true) {
         # Display the prompt number and prompt
-    ($object_prompt | Format-List promptNumber, prompt) | Out-Host -Paging
+        $SubPrompts = $object_prompt
+        #LogData -LogFolder $LogFolder -FileName $logFileName -Data "All Sub-Prompts: $(Format-ContinuousText -text $($SubPrompts | Out-String))" -Type "system"
+        $SubPrompts | Format-List promptNumber, prompt | Out-Host -Paging
         # Inform the user that they can quit the script at any time
         Write-Host "Enter 'Q' and ENTER to quit the script at any time."
 
@@ -434,11 +459,17 @@ Example of JSON with two records:
         # Display the chosen prompt
         Write-Host "Prompt: '$choose_prompt'"
 
+        LogData -LogFolder $LogFolder -FileName $logFileName -Data "Chosen Sub-Prompt: $(Format-ContinuousText -text $choose_prompt)" -Type "user"
+        
         # Invoke the AI model with the chosen prompt and the data to analyze
-    ($data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $choose_prompt) | Out-Host -Paging
+        $dataSubpromptResponse = ($data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $choose_prompt)
+        LogData -LogFolder $LogFolder -FileName $logFileName -Data "Sub-Prompt response: $(Format-ContinuousText -text ($dataSubpromptResponse | out-string))" -Type "system"
+        $dataSubpromptResponse | Out-Host -Paging
 
         # Ask the user to press any key to continue
         Write-Host "Press any key to continue ..."
         $null = [Console]::ReadKey($true)
+
+        Get-LogFileDetails -LogFolder $LogFolder -logFileName $logFileName
     }
 }
