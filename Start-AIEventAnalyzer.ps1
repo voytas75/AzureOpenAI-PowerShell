@@ -45,7 +45,7 @@ function LogData {
 
     # Log the data, date, time, and type to the specified file in the specified folder
     $logFilePath = Join-Path -Path $LogFolder -ChildPath $FileName
-    $logEntry = "{0} - {1} - {2} - {3}" -f (Get-Date), $Type, $Data
+    $logEntry = "{0}; {1}; {2}; {3}; {4}; {5}" -f (Get-Date), $Type, $Data, $null, $null, $null
     Add-Content -Path $logFilePath -Value $logEntry
 }
 
@@ -171,11 +171,28 @@ function Get-EventSeverity {
     }
 }
 
+function Format-ContinuousText {
+    # Define the parameters for the function
+    param (
+        # The text parameter is mandatory and should be a string
+        [Parameter(Mandatory = $true)]
+        [string]$text
+    )
+
+    # This function replaces newline characters with a space to format the text as a continuous string
+    # It takes a string as input and returns a string where all newline characters are replaced with a space
+
+    # The `-replace` operator is used to replace all newline characters (`r`n) with a space (" ")
+    # The result is returned as the output of the function
+
+    return $text -replace "`r`n"," "
+}
+
 function Start-AIEventAnalyzer {
     [CmdletBinding()]
     param (
-    [Parameter()]
-    [string]$LogFolder
+        [Parameter()]
+        [string]$LogFolder
     )
 
     if ([string]::IsNullOrEmpty($LogFolder)) {
@@ -256,7 +273,7 @@ Example of JSON with two records:
 ]
 '@
 
-$promptDocumentation = @'
+    $promptDocumentation = @'
 As a documentarian, your responsibility is to compile comprehensive documentation about Windows events for reference and analysis. Craft prompts to guide users in gathering pertinent information from Windows events to include in documentation. These prompts should focus on capturing key details such as event types, event IDs, timestamps, event messages, and any associated actions taken. Ensure that the documentation provides a clear and concise overview of the events and their significance. Responses must strictly adhere to JSON format to maintain consistency and facilitate easy reference.
 
 Example of JSON with two records:
@@ -287,18 +304,16 @@ Example of JSON with two records:
     $actions = @("Analyze", "Troubleshoot", "Correlate", "Predict", "Optimize", "Audit", "Automate", "Educate", "Documentation")
     $prompts = @($promptAnalyze, $promptTroubleshoot, $promptCorrelate, $promptPredict, $promptOptimize, $promptAudit, $promptAutomate, $promptEducate, $promptDocumentation)
     Write-Host "Please choose an action from the following list:"
-    for ($i=0; $i -lt $actions.Length; $i++) {
+    for ($i = 0; $i -lt $actions.Length; $i++) {
         Write-Host "$($i+1). $($actions[$i])"
     }
     $chosenActionIndex = Read-Host "Enter the number of your chosen action (default: 1 - Analyze)"
     if ([string]::IsNullOrEmpty($chosenActionIndex) -or $chosenActionIndex -lt 1 -or $chosenActionIndex -gt $actions.Length) {
         $chosenActionIndex = 1
     }
-    $chosenAction = $actions[$chosenActionIndex-1]
-    $prompt_one = $prompts[$chosenActionIndex-1]
+    $chosenAction = $actions[$chosenActionIndex - 1]
+    $prompt_one = $prompts[$chosenActionIndex - 1]
     Write-Host "You have chosen to: $chosenAction"
-
-
 
     # Clean the system prompt by removing non-ASCII characters
     $prompt_one = [System.Text.RegularExpressions.Regex]::Replace($prompt_one, "[^\x00-\x7F]", " ")        
@@ -373,6 +388,19 @@ Example of JSON with two records:
     Write-Host "LogName: $chosenLogName"
     Write-Host "Level: $chosenSeverityLevel"
     Write-Host "Event count: $logRecordServerityCount"
+
+    $currentDateTime = Get-Date -Format "yyyyMMdd-HHmmss"
+    $logFileName = "$chosenAction-$chosenLogName-$chosenSeverityLevel-$currentDateTime.txt"
+    $data_to_file = [ordered]@{
+        "Action"     = $chosenAction
+        "LogName"    = $chosenLogName
+        "Level"      = $chosenSeverityLevel
+        "EventCount" = $logRecordServerityCount
+        "Prompt"     = $prompt_one
+    }
+    foreach ($key in $data_to_file.Keys) {
+        LogData -LogFolder $LogFolder -FileName $logFileName -Data "$key : $($data_to_file[$key])" -Type "user"
+    }
 
     # Invoke the AI model with the prompt and the data to analyze
     $json_data = $data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $prompt_one
