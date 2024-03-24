@@ -541,14 +541,14 @@ Example of JSON with two records:
     $promptSummarize = @'
 ###Instruction###
 
-As a Prompt Creator, your task is to distill key insights and findings from Windows event data into concise summaries for easy reference and analysis. Develop prompts to guide users in summarizing the most critical aspects of the Windows events, including notable patterns, significant anomalies, identified root causes, and recommended actions. These prompts should enable users to effectively communicate the essence of the data analysis process and its implications in a clear and succinct manner. Responses must strictly adhere to JSON format to maintain consistency and facilitate easy reference.
+As a prompt creator, it's your job to develop prompts that help users summarize the most critical aspects of Windows events, including notable patterns, significant anomalies, identified root causes, and recommended actions. You need to extract key insights and insights from your Windows event data in concise summaries for easy referencing and analysis.  These prompts should enable users to effectively communicate the essence of the data analysis process and its implications in a clear and concise manner. Responses must strictly follow JSON to maintain consistency and facilitate easy referencing.
 
 Example of JSON with two records:
 [
   {
     "promptNumber": 1,
     "prompt": "Did you encounter any high-severity events (e.g., errors, warnings)? If so, briefly describe them and note the timestamps for potential reference.",
-    "action": "Educate",
+    "action": "Summarize",
     "analysisActions": [
         "Classify the high-severity events by event type (e.g., security errors, application crashes).",
         "Evaluate the potential impact of each high-severity event on system stability, security, or functionality.",
@@ -560,7 +560,7 @@ Example of JSON with two records:
   {
     "promptNumber": 2,
     "prompt": "Considering your findings, what specific actions are recommended to address identified problems or improve system health?",
-    "action": "Educate",
+    "action": "Summarize",
     "analysisActions": [
         "Prioritize recommendations based on their potential impact on mitigating risks or enhancing system performance.",
         "Align recommendations with the identified root causes of problems to ensure they address the underlying issues.",
@@ -649,10 +649,10 @@ Example of JSON with two records:
     } until ([int]$logRecordServerityCount -gt 0)
 
     # Ask the user to enter the number of most recent events they want to analyze
-    $chosenLogNameNewest = Read-Host "Please enter the number of most recent '$chosenLogName' for '$chosenSeverityLevel' serverity events you want to analyze (1-$logRecordServerityCount) (default: 10)"
+    $chosenLogNameNewest = Read-Host "Please enter the number of most recent '$chosenLogName' for '$chosenSeverityLevel' serverity events you want to analyze (1-$logRecordServerityCount) (default: 50)"
     # If the entered number is empty or null, set it to 10
     if ([string]::IsNullOrEmpty($chosenLogNameNewest)) {
-        $chosenLogNameNewest = 10
+        $chosenLogNameNewest = 50
     }
     # If the chosen severity level is not valid, get the most recent events up to the entered number
     if ($chosenSeverityLevel -notin @("Critical", "Error", "Warning", "Information", "Verbose")) {
