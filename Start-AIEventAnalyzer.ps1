@@ -1,33 +1,52 @@
 <#
 .SYNOPSIS
-This function logs the input string and natural language query.
+This function logs the data into a specified file in a specified folder.
 
 .DESCRIPTION
-The LogData function takes an input string and a natural language query as parameters. 
-It logs these parameters to a file or other logging mechanism. 
+The LogData function takes a log folder, filename, data, and type as parameters. 
+It logs these parameters to a file in the specified folder. Each logged line includes the date, time, and type.
 
-.PARAMETER InputString
-This parameter accepts the input string that needs to be logged.
+.PARAMETER LogFolder
+This parameter accepts the folder where the log file will be stored.
 
-.PARAMETER NaturalLanguageQuery
-This parameter accepts the natural language query that needs to be logged.
+.PARAMETER FileName
+This parameter accepts the name of the file where the data will be logged.
+
+.PARAMETER Data
+This parameter accepts the data that needs to be logged.
+
+.PARAMETER Type
+This parameter accepts the type of the data that needs to be logged. The type can be "user", "system", or "other".
 
 .EXAMPLE
-LogData -InputString $inputString -NaturalLanguageQuery "Show only processes using more than 500MB of memory"
+LogData -LogFolder "C:\Logs" -FileName "log.txt" -Data "Some data to log" -Type "user"
 #>
 function LogData {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
-        [string]$InputString,
+        [string]$LogFolder,
 
         [Parameter(Mandatory = $true)]
-        [string]$NaturalLanguageQuery
+        [string]$FileName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Data,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("user", "system", "other")]
+        [string]$Type
     )
 
-    # Log the input string and natural language query to a file or other logging mechanism
-    # This could be a file, a database, a logging service, etc.
-    # Example: Write-Output "$InputString | $NaturalLanguageQuery" >> log.txt
+    # Create the log folder if it doesn't exist
+    if (!(Test-Path $LogFolder)) {
+        New-Item -ItemType Directory -Force -Path $LogFolder
+    }
+
+    # Log the data, date, time, and type to the specified file in the specified folder
+    $logFilePath = Join-Path -Path $LogFolder -ChildPath $FileName
+    $logEntry = "{0} - {1} - {2} - {3}" -f (Get-Date), $Type, $Data
+    Add-Content -Path $logFilePath -Value $logEntry
 }
 
 <#
@@ -155,8 +174,16 @@ function Get-EventSeverity {
 function Start-AIEventAnalyzer {
     [CmdletBinding()]
     param (
-        
+    [Parameter()]
+    [string]$LogFolder
     )
+
+    if ([string]::IsNullOrEmpty($LogFolder)) {
+        $LogFolder = Join-Path -Path ([Environment]::GetFolderPath("MyDocuments")) -ChildPath "AIEventAnalyzer"
+        if (-not (Test-Path -Path $LogFolder)) {
+            New-Item -ItemType Directory -Path $LogFolder | Out-Null
+        }
+    }
 
     # Define the prompt for the AI model
     $prompt_one = @'
@@ -198,6 +225,80 @@ Example of JSON with two records:
   }
 ]
 '@
+
+    $promptAnalyze = @'
+###Instruction### 
+
+As a data analyst, your role is crucial in dissecting Windows event data to uncover patterns, anomalies, and insights that shed light on system performance, stability, and security. Craft a series of prompts designed to guide the analysis process, focusing on identifying root causes, understanding their impact, and proposing actionable solutions or further investigative steps. Responses must strictly adhere to JSON format, ensuring clarity and consistency in the analysis process.
+
+Example of JSON with two records:
+[
+  {
+    "promptNumber": 1,
+    "prompt": "Analyze the root cause of the W32time service stopping and assess if it is a regular behavior or an indication of an underlying issue.",
+    "action": "Aznalyze",
+    "analysisActions": [
+      "Check if the service is configured to stop at scheduled times.",
+      "Review system logs for any related errors or warnings.",
+      "Verify if there was a system shutdown or restart."
+    ]
+  },
+  {
+    "promptNumber": 3,
+    "prompt": "Analyze the pattern of package installations and removals, and determine if there are any inconsistencies or issues with the update process.",
+    "action": "Aznalyze",
+    "analysisActions": [
+      "Ensure that Adobe Acrobat is running the latest version.",
+      "Review Adobe Acrobat's security settings and permissions.",
+      "Check for any related security advisories from Adobe."
+    ]
+  }
+]
+'@
+
+$promptDocumentation = @'
+As a documentarian, your responsibility is to compile comprehensive documentation about Windows events for reference and analysis. Craft prompts to guide users in gathering pertinent information from Windows events to include in documentation. These prompts should focus on capturing key details such as event types, event IDs, timestamps, event messages, and any associated actions taken. Ensure that the documentation provides a clear and concise overview of the events and their significance. Responses must strictly adhere to JSON format to maintain consistency and facilitate easy reference.
+
+Example of JSON with two records:
+[
+  {
+    "promptNumber": 1,
+    "prompt": "Analyze the root cause of the W32time service stopping and assess if it is a regular behavior or an indication of an underlying issue.",
+    "action": "Documentation",
+    "analysisActions": [
+      "Check if the service is configured to stop at scheduled times.",
+      "Review system logs for any related errors or warnings.",
+      "Verify if there was a system shutdown or restart."
+    ]
+  },
+  {
+    "promptNumber": 3,
+    "prompt": "Examine the security implications of Acrobat's AcroCEF.exe being blocked from making system calls to Win32k.sys and suggest measures to mitigate potential risks.",
+    "action": "Documentation",
+    "analysisActions": [
+      "Ensure that Adobe Acrobat is running the latest version.",
+      "Review Adobe Acrobat's security settings and permissions.",
+      "Check for any related security advisories from Adobe."
+    ]
+  }
+]
+'@
+
+    $actions = @("Analyze", "Troubleshoot", "Correlate", "Predict", "Optimize", "Audit", "Automate", "Educate", "Documentation")
+    $prompts = @($promptAnalyze, $promptTroubleshoot, $promptCorrelate, $promptPredict, $promptOptimize, $promptAudit, $promptAutomate, $promptEducate, $promptDocumentation)
+    Write-Host "Please choose an action from the following list:"
+    for ($i=0; $i -lt $actions.Length; $i++) {
+        Write-Host "$($i+1). $($actions[$i])"
+    }
+    $chosenActionIndex = Read-Host "Enter the number of your chosen action (default: 1 - Analyze)"
+    if ([string]::IsNullOrEmpty($chosenActionIndex) -or $chosenActionIndex -lt 1 -or $chosenActionIndex -gt $actions.Length) {
+        $chosenActionIndex = 1
+    }
+    $chosenAction = $actions[$chosenActionIndex-1]
+    $prompt_one = $prompts[$chosenActionIndex-1]
+    Write-Host "You have chosen to: $chosenAction"
+
+
 
     # Clean the system prompt by removing non-ASCII characters
     $prompt_one = [System.Text.RegularExpressions.Regex]::Replace($prompt_one, "[^\x00-\x7F]", " ")        
@@ -268,6 +369,7 @@ Example of JSON with two records:
     $logRecordServerityCount = $data_to_analyze.Count
 
     # Display the chosen log name, severity level, and event count
+    Write-Host "Action: $chosenAction"
     Write-Host "LogName: $chosenLogName"
     Write-Host "Level: $chosenSeverityLevel"
     Write-Host "Event count: $logRecordServerityCount"
