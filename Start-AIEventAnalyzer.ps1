@@ -186,7 +186,8 @@ function Get-LogFileDetails {
         Write-Host "Full Path: $($logFileDetails.FullName)"
         Write-Host "Size: $($logFileDetails.Length) bytes"
         Write-Host "Last Modified: $($logFileDetails.LastWriteTime)"
-    } else {
+    }
+    else {
         Write-Host "Log file does not exist."
     }
 }
@@ -247,7 +248,7 @@ Example of JSON with two records:
     ]
   },
   {
-    "promptNumber": 3,
+    "promptNumber": 2,
     "prompt": "Examine the security implications of Acrobat's AcroCEF.exe being blocked from making system calls to Win32k.sys and suggest measures to mitigate potential risks.",
     "eventType": "Security Mitigation",
     "eventID": 10,
@@ -265,7 +266,7 @@ Example of JSON with two records:
 '@
 
     $promptAnalyze = @'
-###Instruction### 
+###Instruction###
 
 As a data analyst, your role is crucial in dissecting Windows event data to uncover patterns, anomalies, and insights that shed light on system performance, stability, and security. Craft a series of prompts designed to guide the analysis process, focusing on identifying root causes, understanding their impact, and proposing actionable solutions or further investigative steps. Responses must strictly adhere to JSON format, ensuring clarity and consistency in the analysis process.
 
@@ -282,7 +283,7 @@ Example of JSON with two records:
     ]
   },
   {
-    "promptNumber": 3,
+    "promptNumber": 2,
     "prompt": "Analyze the pattern of package installations and removals, and determine if there are any inconsistencies or issues with the update process.",
     "action": "Aznalyze",
     "analysisActions": [
@@ -294,36 +295,286 @@ Example of JSON with two records:
 ]
 '@
 
-    $promptDocumentation = @'
-As a documentarian, your responsibility is to compile comprehensive documentation about Windows events for reference and analysis. Craft prompts to guide users in gathering pertinent information from Windows events to include in documentation. These prompts should focus on capturing key details such as event types, event IDs, timestamps, event messages, and any associated actions taken. Ensure that the documentation provides a clear and concise overview of the events and their significance. Responses must strictly adhere to JSON format to maintain consistency and facilitate easy reference.
+    $promptTroubleshoot = @'
+###Instruction###
+
+As an IT troubleshooter, your mission is to resolve specific issues identified within Windows event data that impact system performance, reliability, or security. Develop a set of prompts aimed at diagnosing the root causes of these issues, proposing targeted solutions, and verifying their effectiveness. These prompts should guide users through a systematic troubleshooting process, ensuring comprehensive analysis and resolution of identified issues. Responses must conform strictly to JSON format.
 
 Example of JSON with two records:
 [
   {
     "promptNumber": 1,
-    "prompt": "Analyze the root cause of the W32time service stopping and assess if it is a regular behavior or an indication of an underlying issue.",
-    "action": "Documentation",
+    "prompt": "Investigate the reason behind the change in the startup type of the Background Intelligent Transfer Service (BITS) and whether it aligns with system policies or user actions.",
+    "action": "Troubleshoot",
     "analysisActions": [
-      "Check if the service is configured to stop at scheduled times.",
-      "Review system logs for any related errors or warnings.",
-      "Verify if there was a system shutdown or restart."
+      "Review recent administrative actions or group policies that might have changed the BITS configuration.",
+      "Check if any software installations or updates require BITS to change its startup type.",
+      "Ensure that the change does not affect any critical system updates or operations."
     ]
   },
   {
-    "promptNumber": 3,
-    "prompt": "Examine the security implications of Acrobat's AcroCEF.exe being blocked from making system calls to Win32k.sys and suggest measures to mitigate potential risks.",
-    "action": "Documentation",
+    "promptNumber": 2,
+    "prompt": "Analyze the implications of system session moves indicated by 'Kernel-Power' events and determine if they are expected transitions based on user interactions or system policies.",
+    "action": "Troubleshoot",
     "analysisActions": [
-      "Ensure that Adobe Acrobat is running the latest version.",
-      "Review Adobe Acrobat's security settings and permissions.",
-      "Check for any related security advisories from Adobe."
+      "Correlate the session moves with user login, unlock, or input events to confirm if they are user-initiated.",
+      "Check for any power settings or scripts that might automate session state changes",
+      "Ensure that these session changes do not indicate any instability or security concerns."
     ]
   }
 ]
 '@
 
-    $actions = @("Analyze", "Troubleshoot", "Correlate", "Predict", "Optimize", "Audit", "Automate", "Educate", "Documentation")
-    $prompts = @($promptAnalyze, $promptTroubleshoot, $promptCorrelate, $promptPredict, $promptOptimize, $promptAudit, $promptAutomate, $promptEducate, $promptDocumentation)
+    $promptDocumentation = @'
+###Instruction###
+
+As a documentarian, your responsibility is to compile comprehensive documentation about Windows events for reference and analysis. Craft prompts to guide users in gathering pertinent information from Windows events to include in documentation. These prompts should focus on capturing key details such as event types, event IDs, timestamps, event messages, and any associated actions taken. Ensure that the documentation provides a clear and concise overview of the events and their significance. Responses must strictly adhere to JSON format to maintain consistency and facilitate easy reference.
+
+Example of JSON with two records:
+[
+    {
+        "promptNumber": 1,
+        "prompt": "A program has crashed. Identify the program name and any error code displayed (if applicable).",
+        "action": "Documentation",
+        "analysisActions": [
+            "Identify if the crashing program is essential for system operation.",
+            "Search for known issues or solutions related to the program name and error code (if available).",
+            "Review application logs for additional details about the crash.",
+            "Consider monitoring program performance to identify potential causes (e.g., resource exhaustion).",
+            "If the program is critical, investigate potential workarounds or mitigation strategies."
+        ]
+    },
+    {
+        "promptNumber": 2,
+        "prompt": "Are there any additional details or logs associated with the event?",
+        "action": "Documentation",
+        "analysisActions": [
+            "Additional logs may provide more context about the event."
+        ]
+    }
+]
+'@
+
+    $promptCorrelate = @'
+###Instruction###
+
+In your role as a data correlator, you're tasked with uncovering relationships, dependencies, and causal factors within Windows event data to gain deeper insights into system behavior and performance. Generate a series of prompts focused on identifying correlations between events, determining their significance, and deriving actionable insights to improve system management and troubleshooting processes. Responses must strictly adhere to JSON format, facilitating structured analysis and interpretation of correlated data.
+
+Example of JSON with two records:
+[
+    {
+        "promptNumber": 1,
+        "prompt": "Identify events occurring immediately before or after a specific event type (e.g., system errors). Analyze the timestamps and event messages to determine potential cause-and-effect relationships.",
+        "action": "Correlate",
+        "analysisActions": [
+            "Consider the logical sequence of events to identify potential dependencies.",
+            "Focus on frequently occurring patterns of pre- and post-crash events to pinpoint potential root causes.",
+            "Prioritize investigation based on the severity of the correlated event (e.g., high-impact errors)."
+        ]
+    },
+    {
+        "promptNumber": 2,
+        "prompt": "Analyze trends in specific event types (e.g., security warnings) over time. Look for spikes or recurring patterns that might indicate ongoing issues or potential security threats.",
+        "action": "Correlate",
+        "analysisActions": [
+            "Correlate event trends with system activities or configuration changes.",
+            "Evaluate the potential impact of identified trends on system stability and security.",
+            "Prioritize troubleshooting efforts based on the severity and frequency of the trending event type."
+        ]
+    }
+]
+'@
+
+    $promptPredict = @'
+###Instruction###
+
+In your capacity as a data predictor, your goal is to forecast future system events or trends based on historical Windows event data, enabling proactive decision-making and resource allocation. Create prompts aimed at selecting appropriate predictive analytics techniques, training predictive models, and interpreting predictive insights to anticipate system behavior. These prompts should empower users to leverage predictive analytics to optimize system performance and mitigate potential risks. Responses must conform strictly to JSON format.
+
+Example of JSON with two records:
+[
+  {
+    "promptNumber": 1,
+    "prompt": "Identify historical event patterns that might be indicative of future occurrences (e.g., cyclical resource usage spikes). Select appropriate predictive modeling techniques (e.g., time series forecasting) based on the identified patterns and desired outcome.",
+    "action": "Predict",
+    "analysisActions": [
+      "Consider the volume and frequency of historical events for choosing suitable modeling techniques.",
+      "Evaluate the desired prediction timeframe (short-term vs. long-term) when selecting a model.",
+      "Prioritize techniques that align with system performance metrics you aim to predict (e.g., resource utilization, application response times)."
+    ]
+  },
+  {
+    "promptNumber": 2,
+    "prompt": "Train and validate a predictive model using historical event data. Analyze the model's performance metrics (e.g., accuracy, precision) to assess its reliability for forecasting future events. Interpret the model's predictions in the context of system behavior and resource allocation.",
+    "action": "Predict",
+    "analysisActions": [
+      "Fine-tune model parameters for optimal predictive performance.",
+      "Monitor the model's predictions over time and retrain it if significant deviations occur.",
+      "Use the model's insights to proactively allocate resources and mitigate potential performance bottlenecks.",
+      "Evaluate the cost-benefit of implementing the predictive model based on its accuracy and impact on system management."
+    ]
+  }
+]
+'@
+
+    $promptOptimize = @'
+###Instruction###
+
+As a system optimizer, your mission is to improve system performance, resource utilization, and security posture based on insights derived from Windows event data analysis. Generate prompts aimed at identifying optimization opportunities, implementing optimization strategies, and measuring the impact of optimization efforts on system performance. These prompts should guide users through a systematic optimization process, ensuring continuous improvement and efficiency gains. Responses must strictly adhere to JSON format.
+
+Example of JSON with two records:
+[
+  {
+    "promptNumber": 1,
+    "prompt": "Analyze event data to identify bottlenecks or recurring issues that are impacting system performance or resource utilization (e.g., frequent disk I/O delays, high memory usage by specific applications).",
+    "action": "Optimize",
+    "analysisActions": [
+      "Prioritize optimization efforts based on the severity and impact of identified bottlenecks.",
+      "Consider potential solutions based on the nature of the issue (e.g., hardware upgrades, software configuration changes).",
+      "Evaluate the cost-effectiveness of potential solutions before implementing them."
+    ]
+  },
+  {
+    "promptNumber": 2,
+    "prompt": "Implement and monitor the effectiveness of chosen optimization strategies. Analyze system performance metrics (e.g., CPU utilization, application response times) before and after optimization to measure the impact.",
+    "action": "Optimize",
+    "analysisActions": [
+      "Correlate changes in event data with performance improvements after optimization.",
+      "Continuously monitor system performance to identify new optimization opportunities.",
+      "Refine or adjust optimization strategies based on ongoing analysis and performance metrics."
+    ]
+  }
+]
+'@
+
+    $promptAudit = @'
+###Instruction###
+
+As an IT auditor, your role is to conduct audits of Windows event logs to ensure compliance with regulatory requirements, organizational policies, and security best practices. Develop prompts aimed at defining audit criteria, conducting audit reviews, and documenting audit findings. These prompts should facilitate comprehensive audit processes, ensuring that users can effectively assess system compliance and identify areas for improvement. Responses must conform strictly to JSON format.
+
+Example of JSON with two records:
+[
+  {
+    "promptNumber": 1,
+    "prompt": "Define specific audit criteria based on relevant regulations, organizational policies, and security best practices. Identify specific event types, user activities, or access attempts that require scrutiny during the audit.",
+    "action": "Audit",
+    "analysisActions": [
+      "Consider the sensitivity of data and systems to determine appropriate audit criteria.",
+      "Prioritize audit criteria based on the potential security risks and regulatory compliance requirements.",
+      "Reference industry standards or security frameworks to ensure comprehensive audit coverage."
+    ]
+  },
+  {
+    "promptNumber": 2,
+    "prompt": "Conduct a thorough review of Windows event logs based on the defined criteria. Analyze identified events for potential security violations, policy breaches, or unauthorized access attempts. Document all audit findings, including timestamps, event details, and any remediation actions taken.",
+    "action": "Audit",
+    "analysisActions": [
+      "Correlate events with user activity logs for additional context.",
+      "Evaluate the potential impact of identified security events on system integrity and data confidentiality.",
+      "Recommend appropriate corrective actions based on the audit findings (e.g., user account suspension, policy adjustments).",
+      "Maintain clear and concise audit reports for future reference and regulatory compliance purposes."
+    ]
+  }
+]
+'@
+
+    $promptAutomate = @'
+###Instruction###
+
+In your role as an IT automator, your objective is to streamline and optimize processes based on analysis of Windows event data, enabling efficient and reliable operation of IT systems. Create prompts aimed at identifying automation opportunities, designing automated workflows, and implementing automation solutions. These prompts should empower users to automate routine tasks, reduce manual effort, and improve overall operational efficiency. Responses must strictly adhere to JSON format.
+
+Example of JSON with two records:
+[
+  {
+    "promptNumber": 1,
+    "prompt": "Identify repetitive tasks or manual interventions triggered by specific Windows events (e.g., restarting a service after a crash, applying security updates). Analyze the frequency and impact of these tasks to determine their suitability for automation.",
+    "action": "Automate",
+    "analysisActions": [
+      "Prioritize automation efforts based on the time saved and potential for human error reduction.",
+      "Consider the complexity of the task and the availability of suitable automation tools.",
+      "Evaluate the potential impact of automation failures and develop mitigation strategies."
+    ]
+  },
+  {
+    "promptNumber": 2,
+    "prompt": "Design an automated workflow that replicates the identified manual task using scripting languages or automation tools. Integrate event triggers and appropriate actions based on the analyzed event data. Test and refine the automation solution to ensure its reliability and effectiveness.",
+    "action": "Automate",
+    "analysisActions": [
+      "Document the automation workflow clearly for future reference and maintenance.",
+      "Schedule regular testing and monitoring of automated tasks to ensure ongoing functionality.",
+      "Establish procedures for handling errors or unexpected events within the automated workflow.",
+      "Continuously evaluate the effectiveness of automation and identify opportunities for further optimization."
+    ]
+  }
+]
+'@
+
+    $promptEducate = @'
+###Instruction###
+
+As an IT educator, your mission is to disseminate knowledge and empower others with insights gained from analysis of Windows event data. Develop prompts aimed at creating educational materials, conducting training sessions, or facilitating knowledge-sharing activities based on analysis findings. These prompts should ensure that users can effectively communicate key concepts, best practices, and actionable insights to enhance IT staff's understanding and proficiency. Responses must conform strictly to JSON format.
+
+Example of JSON with two records:
+[
+  {
+    "promptNumber": 1,
+    "prompt": "Identify key themes or recurring issues revealed by your event data analysis. Consider common challenges faced by IT staff and areas where knowledge gaps might exist.",
+    "action": "Educate",
+    "analysisActions": [
+      "Prioritize educational topics based on their potential impact on IT staff efficiency and system security.",
+      "Tailor content to the specific needs and technical expertise of your audience.",
+      "Incorporate real-world examples from your event analysis to illustrate key points and best practices."
+    ]
+  },
+  {
+    "promptNumber": 2,
+    "prompt": "Choose an appropriate educational format (e.g., training manuals, interactive workshops, knowledge-sharing sessions) that aligns with the identified content and target audience. Develop clear and concise learning objectives for your chosen format.",
+    "action": "Educate",
+    "analysisActions": [
+      "Incorporate interactive elements or hands-on activities to enhance engagement and knowledge retention.",
+      "Encourage discussions and knowledge sharing to foster collaboration among IT staff.",
+      "Provide opportunities for feedback and evaluation to ensure the effectiveness of your educational materials."
+    ]
+  }
+]
+'@
+
+    $promptSummarize = @'
+###Instruction###
+
+As a Prompt Creator, your task is to distill key insights and findings from Windows event data into concise summaries for easy reference and analysis. Develop prompts to guide users in summarizing the most critical aspects of the Windows events, including notable patterns, significant anomalies, identified root causes, and recommended actions. These prompts should enable users to effectively communicate the essence of the data analysis process and its implications in a clear and succinct manner. Responses must strictly adhere to JSON format to maintain consistency and facilitate easy reference.
+
+Example of JSON with two records:
+[
+  {
+    "promptNumber": 1,
+    "prompt": "Did you encounter any high-severity events (e.g., errors, warnings)? If so, briefly describe them and note the timestamps for potential reference.",
+    "action": "Educate",
+    "analysisActions": [
+        "Classify the high-severity events by event type (e.g., security errors, application crashes).",
+        "Evaluate the potential impact of each high-severity event on system stability, security, or functionality.",
+        "Correlate high-severity events with other relevant events to identify potential root causes or contributing factors.",
+        "Prioritize investigation and remediation efforts based on the severity and potential impact of the events.",
+        "Consider referring to knowledge bases or vendor documentation for troubleshooting guidance specific to the identified high-severity events."
+    ]
+  },
+  {
+    "promptNumber": 2,
+    "prompt": "Considering your findings, what specific actions are recommended to address identified problems or improve system health?",
+    "action": "Educate",
+    "analysisActions": [
+        "Prioritize recommendations based on their potential impact on mitigating risks or enhancing system performance.",
+        "Align recommendations with the identified root causes of problems to ensure they address the underlying issues.",
+        "Consider the feasibility and potential resource requirements for implementing each recommendation.",
+        "Formulate clear and actionable steps for each recommendation, including specific configuration changes, security updates, or troubleshooting procedures.",
+        "Estimate the expected timeframe for implementing the recommendations and their potential impact on system downtime (if applicable).",
+        "Develop a plan for monitoring the effectiveness of implemented recommendations and identify the need for further adjustments."
+    ]
+  }
+]
+'@
+
+    $actions = @("Analyze", "Troubleshoot", "Correlate", "Predict", "Optimize", "Audit", "Automate", "Educate", "Documentation", "Summarize")
+    $prompts = @($promptAnalyze, $promptTroubleshoot, $promptCorrelate, $promptPredict, $promptOptimize, $promptAudit, $promptAutomate, $promptEducate, $promptDocumentation, $promptSummarize)
     Write-Host "Please choose an action from the following list:"
     for ($i = 0; $i -lt $actions.Length; $i++) {
         Write-Host "$($i+1). $($actions[$i])"
@@ -336,16 +587,24 @@ Example of JSON with two records:
     $prompt_one = $prompts[$chosenActionIndex - 1]
     Write-Host "You have chosen to: $chosenAction"
 
+    
     # Clean the system prompt by removing non-ASCII characters
     $prompt_one = [System.Text.RegularExpressions.Regex]::Replace($prompt_one, "[^\x00-\x7F]", " ")        
 
     # Get a list of all Windows event logs, sort them by record count in descending order, and select the top 25 logs
     $logs = Get-WinEvent -ListLog * -ErrorAction SilentlyContinue | Sort-Object RecordCount -Descending | Select-Object LogName, RecordCount
 
+    Write-Host "Please enter the minimum number of events a log should have to be shown in the list."
+    $minEventCount = Read-Host "Enter the minimum event count (default: 2200)"
+    if ([string]::IsNullOrEmpty($minEventCount) -or $minEventCount -lt 0) {
+        $minEventCount = 2200
+    }
+    $logs = $logs | Where-Object { $_.RecordCount -ge $minEventCount }
+
     # Display the name and record count of each log
     #$logs | ForEach-Object {Write-Host "$($_.LogName) - $($_.RecordCount) records"}
     try {
-        $logs.where{ $_.RecordCount -gt 0 }  | Out-Host -Paging
+        $logs.where{ $_.RecordCount -gt $minEventCount }  | Out-Host -Paging
     }
     catch [System.Management.Automation.HaltCommandException] {
         # Handle termination here (e.g., write message)
@@ -411,6 +670,7 @@ Example of JSON with two records:
     Write-Host "Event count: $logRecordServerityCount"
 
     $currentDateTime = Get-Date -Format "yyyyMMdd-HHmmss"
+    $chosenLogName = $chosenLogName -replace '[\\/:*?"<>|]', '_'
     $logFileName = "$chosenAction-$chosenLogName-$chosenSeverityLevel-$currentDateTime.txt"
     $data_to_file = [ordered]@{
         "Action"     = $chosenAction
@@ -449,7 +709,9 @@ Example of JSON with two records:
 
         # If the user chooses to quit, end the script
         if ($choose_prompt_number -eq 'q' -or $choose_prompt_number -eq 'Q') {
-            Write-Host "Ending script..."
+            Write-Host "Quiting..."
+            LogData -LogFolder $LogFolder -FileName $logFileName -Data "Quiting" -Type "user"
+            Get-LogFileDetails -LogFolder $LogFolder -logFileName $logFileName
             break
         }
 
@@ -463,13 +725,12 @@ Example of JSON with two records:
         
         # Invoke the AI model with the chosen prompt and the data to analyze
         $dataSubpromptResponse = ($data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $choose_prompt)
-        LogData -LogFolder $LogFolder -FileName $logFileName -Data "Sub-Prompt response: $(Format-ContinuousText -text ($dataSubpromptResponse | out-string))" -Type "system"
+        LogData -LogFolder $LogFolder -FileName $logFileName -Data "Sub-Prompt response: $(Format-ContinuousText -text $dataSubpromptResponse)" -Type "system"
         $dataSubpromptResponse | Out-Host -Paging
 
         # Ask the user to press any key to continue
         Write-Host "Press any key to continue ..."
         $null = [Console]::ReadKey($true)
 
-        Get-LogFileDetails -LogFolder $LogFolder -logFileName $logFileName
     }
 }
