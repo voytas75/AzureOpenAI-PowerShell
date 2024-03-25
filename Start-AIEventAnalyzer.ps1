@@ -297,8 +297,11 @@ function Get-SummarizeSession {
   Write-Host "Total System Responses: $systemResponsesCount"
   Write-Host ""
 
+  Write-Host "Wait for more..." -ForegroundColor Magenta
+  Write-Host ""
+
   # Summarize the session log data using AI
-  $summary = $logData | Invoke-AIEventAnalyzer -NaturalLanguageQuery "summarize log data to show user what was done. At the end add something nice to the user."
+  $summary = $logData | Invoke-AIEventAnalyzer -NaturalLanguageQuery "Summarize the log data in a single paragraph to show the user what was done. Use a cheerful style. Finally, add something nice for the user."
   Write-Host ""
   # Print the summary
   Write-Host "AI Summary:" -ForegroundColor Green
@@ -930,8 +933,14 @@ function Show-Banner {
        prompts to guide the user through the process, and the results are displayed in a user-friendly format. The tool is 
        particularly useful for system administrators and IT professionals who need to analyze large amounts of log data quickly 
        and efficiently.
-
+       
 "@ -ForegroundColor Blue
+
+  Write-Host @"
+       You never know what you're gonna get with an AI, just like a box of chocolates. You might get a whiz-bang algorithm that 
+       writes you a symphony in five minutes flat, or you might get a dud that can't tell a cat from a couch. But hey, that's 
+       the beauty of it all, you keep feedin' it data and see what kind of miraculous contraption it spits out next.
+"@ -ForegroundColor DarkYellow
 
   Write-Host @"
        To start type 'Start-AIEventAnalyzer'
