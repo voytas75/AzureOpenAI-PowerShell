@@ -287,8 +287,8 @@ function Get-SummarizeSession {
   $systemResponsesCount = 0
 
   # Count the occurrences of ";user" and ";system" in the log file
-  $userActionsCount = ($logData -match ";user").Count
-  $systemResponsesCount = ($logData -match ";system").Count
+  $userActionsCount = ($logData -match "; user;").Count
+  $systemResponsesCount = ($logData -match "; system;").Count
   
 
   # Print the summary
