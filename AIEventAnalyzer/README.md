@@ -39,4 +39,4 @@ The output file contains the following information:
 
 The script also displays the chosen action, log name, severity level, and event count in the console.
 
-![image](.\images\AiEventAnalyzer.gif)
+![image](../images/AIEventAnalyzer.gif)
