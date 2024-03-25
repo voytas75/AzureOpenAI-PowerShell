@@ -224,47 +224,7 @@ function Start-AIEventAnalyzer {
         }
     }
 
-    # Define the prompt for the AI model
-    $prompt_one = @'
-###Instruction### 
-
-You act as data analyst. Your task is to suggest a list of prompts designed to analyze issues based on the provided data. The prompts MUST be focused on potential root causes, understand its impact on the system's performance and stability, and propose detailed step-by-step solutions or further actions to resolve the problem. Responce MUST be as JSON format only. Audience is IT Proffesional. 
-
-Example of JSON with two records:
-[
-  {
-    "promptNumber": 1,
-    "prompt": "Analyze the root cause of the W32time service stopping and assess if it is a regular behavior or an indication of an underlying issue.",
-    "eventType": "W32time Service Event",
-    "eventID": 258,
-    "eventLevel": "Information",
-    "eventMessage": "W32time service is stopping",
-    "eventTime": "2024-03-22T19:02:09.605Z",
-    "eventReturnCode": "0x00000000",
-    "analysisActions": [
-      "Check if the service is configured to stop at scheduled times.",
-      "Review system logs for any related errors or warnings.",
-      "Verify if there was a system shutdown or restart."
-    ]
-  },
-  {
-    "promptNumber": 2,
-    "prompt": "Examine the security implications of Acrobat's AcroCEF.exe being blocked from making system calls to Win32k.sys and suggest measures to mitigate potential risks.",
-    "eventType": "Security Mitigation",
-    "eventID": 10,
-    "eventLevel": "Warning",
-    "eventMessage": "The process AcroCEF.exe was prevented from making system calls to the Win32k.sys library.",
-    "eventTime": "2024-03-16T22:26:05Z",
-    "eventProcessID": 22432,
-    "analysisActions": [
-      "Ensure that Adobe Acrobat is running the latest version.",
-      "Review Adobe Acrobat's security settings and permissions.",
-      "Check for any related security advisories from Adobe."
-    ]
-  }
-]
-'@
-
+    # Define the prompts for the AI model
     $promptAnalyze = @'
 ###Instruction###
 
@@ -734,3 +694,5 @@ Example of JSON with two records:
 
     }
 }
+
+Start-AIEventAnalyzer
