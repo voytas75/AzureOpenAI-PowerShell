@@ -276,7 +276,7 @@ function Get-SummarizeSession {
   )
 
   Write-Host "Wait for summary..." -ForegroundColor Magenta
-  Write-Host "it isn't logged" -ForegroundColor Gray
+  Write-Host "it isn't logged" -ForegroundColor DarkGray
   Write-Host ""
 
   # Read the log file
