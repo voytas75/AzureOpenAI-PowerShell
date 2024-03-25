@@ -210,6 +210,43 @@ function Format-ContinuousText {
     return $text -replace "`n", " " # Replace newline characters
 }
 
+<#
+.SYNOPSIS
+This function updates a given prompt with additional instructions for both experienced and less experienced professionals.
+
+.DESCRIPTION
+The Update-PromptData function takes an input prompt and appends additional instructions to it. These instructions are tailored for both experienced and less experienced professionals. The function returns the updated prompt.
+
+.PARAMETER inputPrompt
+The input prompt that needs to be updated. This parameter is mandatory.
+
+.EXAMPLE
+$promptAnalyze = Update-PromptData -inputPrompt $promptAnalyze
+This example updates the $promptAnalyze variable.
+
+.EXAMPLE
+$promptTroubleshoot = Update-PromptData -inputPrompt $promptTroubleshoot
+This example updates the $promptTroubleshoot variable.
+#>
+function Update-PromptData {
+  param (
+      [Parameter(Mandatory = $true)]
+      [string]$inputPrompt
+  )
+
+  # Text for experienced professionals
+  $experiencedProfessionalsText = "Ensure that the analysis is comprehensive and detailed, providing in-depth insights and actionable recommendations."
+  
+  # Text for less experienced professionals
+  $lessExperiencedProfessionalsText = "Make sure the analysis is easy to understand, with clear explanations and step-by-step instructions."
+
+  # Combine the input prompt with the additional instructions
+  $updatedPrompt = $inputPrompt + " " + $experiencedProfessionalsText
+
+  # Return the updated prompt
+  return $updatedPrompt
+}
+
 function Start-AIEventAnalyzer {
     [CmdletBinding()]
     param (
@@ -223,14 +260,14 @@ function Start-AIEventAnalyzer {
             New-Item -ItemType Directory -Path $LogFolder | Out-Null
         }
     }
-
+        
     # Define the prompts for the AI model
     $promptAnalyze = @'
 ###Instruction###
 
-As a data analyst, your role is crucial in dissecting Windows event data to uncover patterns, anomalies, and insights that shed light on system performance, stability, and security. Craft a series of prompts designed to guide the analysis process, focusing on identifying root causes, understanding their impact, and proposing actionable solutions or further investigative steps. Responses must strictly adhere to JSON format, ensuring clarity and consistency in the analysis process.
+Your role as a prompt maker is to develop a series of prompts designed to guide the incident analysis process, focusing on identifying root causes, understanding their impact, and proposing practical solutions or further investigative steps. It is critical in analyzing Windows event data to uncover patterns, anomalies, and insights that shed light on system performance, stability, and security. Responses must strictly follow the JSON format, ensuring clarity and consistency in the analysis process.
 
-Example of JSON with two records:
+Example of a JSON response with two records:
 [
   {
     "promptNumber": 1,
@@ -258,9 +295,9 @@ Example of JSON with two records:
     $promptTroubleshoot = @'
 ###Instruction###
 
-As an IT troubleshooter, your mission is to resolve specific issues identified within Windows event data that impact system performance, reliability, or security. Develop a set of prompts aimed at diagnosing the root causes of these issues, proposing targeted solutions, and verifying their effectiveness. These prompts should guide users through a systematic troubleshooting process, ensuring comprehensive analysis and resolution of identified issues. Responses must conform strictly to JSON format.
+Your job as a prompt creator is to develop a set of prompts based on the Windows event database to diagnose the root causes of problems that affect the performance, reliability or security of the system, propose targeted solutions and verify their effectiveness. These prompts MUST guide user through a systematic troubleshooting process, providing comprehensive analysis and resolution of identified issues. Responses must strictly follow the JSON format.
 
-Example of JSON with two records:
+Example of a JSON response with two records:
 [
   {
     "promptNumber": 1,

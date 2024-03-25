@@ -49,6 +49,7 @@ By providing the API key through the `ApiKeyVariable` parameter when invoking th
 - [x] Embedding - Function [`Invoke-AzureOpenAIEmbedding`](#function-invoke-azureopenaiembedding)
 - [x] DALL-E 3 - Function [`Invoke-AzureOpenAIDalle3`](#function-invoke-azureopenaidalle3)
 - [x] Helper function for displaying information about request parameters - Function [`Invoke-APICall`](#function-invoke-apicall)
+- [x] AI Event Analyzer - Function [`Start-AIEventAnalyzer`](#start-aieventanalyzer)
 
 ### Function: `Invoke-AzureOpenAICompletion`
 
@@ -203,7 +204,7 @@ The function retrieves the specification REST API for AZURE OpenAI version '2023
 
 Other versions:<https://github.com/Azure/azure-rest-api-specs/tree/main/specification/cognitiveservices/data-plane/AzureOpenAI/inference>.
 
-### Start-AIEventAnalyzer.ps1
+### Start-AIEventAnalyzer
 
 This PowerShell script, `Start-AIEventAnalyzer.ps1`, is designed to analyze Windows event logs using AI. It prompts the user to select an action, a log to analyze, the severity level of the events, and the number of most recent events to analyze. The script then invokes an AI model to analyze the selected events and logs the results.
 
@@ -232,7 +233,9 @@ The script will then prompt the user for the required inputs.
 
 #### Output
 
-The script outputs the results of the AI analysis to a text file in the `LogFolder` directory. The file name is in the format `Action-LogName-SeverityLevel-DateTime.txt`.
+The script outputs the results of the AI analysis to a text file in the `LogFolder` directory.  The file name is in the format `Action-LogName-SeverityLevel-DateTime.txt`.
+
+- **LogFolder** (Optional): Specifies the directory where the output log files will be stored. If not provided, the script will create and use a directory named "AIEventAnalyzer" in the user's "MyDocuments" folder.
 
 The output file contains the following information:
 
