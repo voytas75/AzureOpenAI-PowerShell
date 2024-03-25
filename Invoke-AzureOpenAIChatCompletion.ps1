@@ -413,7 +413,8 @@ function Invoke-AzureOpenAIChatCompletion {
         #Write-Host $content
         if (-not $simpleresponse) {
             return ("Response assistant ($stream):`n${content}")
-        } else {
+        }
+        else {
             return $content
         }
     }
@@ -707,22 +708,20 @@ function Invoke-AzureOpenAIChatCompletion {
         #$userMessage = Format-Message -Message $OneTimeUserPrompt
         return [System.Text.RegularExpressions.Regex]::Replace($Message, "[^\x00-\x7F]", "")
     }
-   
+
+    
     ##### Main program 
-
+    $API_AZURE_OPENAI_APIVERSION = "API_AZURE_OPENAI_APIVERSION"
+    $API_AZURE_OPENAI_ENDPOINT = "API_AZURE_OPENAI_ENDPOINT"
+    $API_AZURE_OPENAI_DEPLOYMENT = "API_AZURE_OPENAI_DEPLOYMENT"
+    $API_AZURE_OPENAI_KEY = "API_AZURE_OPENAI_KEY"
+    
+    $APIVersion = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API version"
+    $Endpoint = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"
+    $Deployment = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment"
+    $ApiKey = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key"
+    
     try {
-
-        # If parameters are empty, get them from the user environment
-        if (-not $APIVersion) {
-            $APIVersion = [System.Environment]::GetEnvironmentVariable("API_AZURE_OPENAI_APIVersion", "User")
-        }
-        if (-not $Endpoint) {
-            $Endpoint = [System.Environment]::GetEnvironmentVariable("API_AZURE_OPENAI_Endpoint", "User")
-        }
-        if (-not $Deployment) {
-            $Deployment = [System.Environment]::GetEnvironmentVariable("API_AZURE_OPENAI_Deployment", "User")
-        }
-
         # Check if usermessage is not set and usermessagelogfile is set
         if (-not $usermessage -and $usermessagelogfile) {
             # If so, read the content of usermessagelogfile and assign it to usermessage
@@ -759,7 +758,7 @@ function Invoke-AzureOpenAIChatCompletion {
             $logfile = Join-Path $logfileDirectory ($logfileBaseName + $logfileNumber + $logfileExtension)
         }
         # Call functions to execute API request and output results
-        $headers = Get-Headers -ApiKeyVariable "API_AZURE_OPENAI"
+        $headers = Get-Headers -ApiKeyVariable "API_AZURE_OPENAI_KEY"
 
         # system prompt
         if ($SystemPromptFileName) {
@@ -892,4 +891,52 @@ function Invoke-AzureOpenAIChatCompletion {
     }
 
 }
-    
+
+function Get-EnvironmentVariable {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$VariableName,
+        [Parameter(Mandatory = $true)]
+        [string]$PromptMessage
+    )
+    $VariableValue = [System.Environment]::GetEnvironmentVariable($VariableName, "User")
+    if ([string]::IsNullOrEmpty($VariableValue)) {
+        $VariableValue = Read-Host -Prompt $PromptMessage
+        try {
+            [System.Environment]::SetEnvironmentVariable($VariableName, $VariableValue, "User")
+            if ([System.Environment]::GetEnvironmentVariable($VariableName, "User") -eq $VariableValue) {
+                Write-Host "Environment variable $VariableName was set successfully."
+            }
+        }
+        catch {
+            Write-Host "Failed to set environment variable $VariableName."
+        }
+    }
+    return $VariableValue
+}
+
+function Clear-AzureOpenAIAPIEnv {
+    param()
+    try {
+        [System.Environment]::SetEnvironmentVariable("API_AZURE_OPENAI_APIVERSION", "", "User")
+        [System.Environment]::SetEnvironmentVariable("API_AZURE_OPENAI_DEPLOYMENT", "", "User")
+        [System.Environment]::SetEnvironmentVariable("API_AZURE_OPENAI_KEY", "", "User")
+        [System.Environment]::SetEnvironmentVariable("API_AZURE_OPENAI_Endpoint", "", "User")
+        Write-Host "Environment variables for Azure API have been deleted successfully."
+    }
+    catch {
+        Write-Host "An error occurred while trying to delete Azure API environment variables. Please check your permissions and try again."
+    }
+}
+
+
+$API_AZURE_OPENAI_APIVERSION = "API_AZURE_OPENAI_APIVERSION"
+$API_AZURE_OPENAI_ENDPOINT = "API_AZURE_OPENAI_ENDPOINT"
+$API_AZURE_OPENAI_DEPLOYMENT = "API_AZURE_OPENAI_DEPLOYMENT"
+$API_AZURE_OPENAI_KEY = "API_AZURE_OPENAI_KEY"
+
+$APIVersion = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API version"
+$Endpoint = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"
+$Deployment = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment"
+$ApiKey = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key"

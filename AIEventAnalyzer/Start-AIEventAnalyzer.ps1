@@ -80,8 +80,6 @@ function Invoke-AIEventAnalyzer {
   )
 
   begin {
-    # Load the Invoke-AzureOpenAIChatCompletion script
-    . $PSScriptRoot\Invoke-AzureOpenAIChatCompletion.ps1 
 
     # This block runs once before any input is processed
     # Initialize an array to store the input objects
@@ -315,6 +313,7 @@ function Start-AIEventAnalyzer {
     [Parameter()]
     [string]$LogFolder
   )
+
 
   if ([string]::IsNullOrEmpty($LogFolder)) {
     $LogFolder = Join-Path -Path ([Environment]::GetFolderPath("MyDocuments")) -ChildPath "AIEventAnalyzer"
@@ -817,6 +816,13 @@ Example of a JSON response with two records:
   # Invoke the AI model with the prompt and the data to analyze
   $json_data = $data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $prompt_one -LogFile $logFileNameEventData -Verbose:$false
 
+  $json_data
+  
+  if ([string]::IsNullOrEmpty($json_data)) {
+    Write-Host "No data to analyze. Exiting script..." -ForegroundColor Red
+    return
+  }
+
   # Clean the returned JSON data
   $json_data = Clear-LLMDataJSON -data $json_data
 
@@ -952,6 +958,10 @@ function Show-Banner {
 
 "@ -ForegroundColor White
 }
+
+
+# Load the Invoke-AzureOpenAIChatCompletion script
+. $PSScriptRoot\Invoke-AzureOpenAIChatCompletion.ps1 
 
 Clear-Host
 Show-Banner
