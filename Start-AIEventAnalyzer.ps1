@@ -235,7 +235,7 @@ function Update-PromptData {
   )
 
   # Text for experienced professionals
-  $experiencedProfessionalsText = "Ensure that the analysis is comprehensive and detailed, providing in-depth insights and actionable recommendations."
+  $experiencedProfessionalsText = "Ensure that the response is comprehensive and detailed, providing in-depth insights."
   
   # Text for less experienced professionals
   $lessExperiencedProfessionalsText = "Make sure the analysis is easy to understand, with clear explanations and step-by-step instructions."
@@ -715,9 +715,16 @@ Example of JSON with two records:
         # Construct the chosen prompt
         $choose_prompt = $($object_prompt[($choose_prompt_number - 1)].prompt)
 
-        # Display the chosen prompt
+        # Display the chosen prompt to the console
         Write-Host "Prompt: '$choose_prompt'"
+        # Log the chosen prompt
+        LogData -LogFolder $LogFolder -FileName $logFileName -Data "Chosen Sub-Prompt: $(Format-ContinuousText -text $choose_prompt)" -Type "user"
 
+        # Update the chosen prompt using the Update-PromptData function
+        $choose_prompt = Update-PromptData -inputPrompt $choose_prompt
+        # Display the updated prompt to the console
+        Write-Host "Enriched Prompt: '$choose_prompt'"
+        # Log the updated prompt
         LogData -LogFolder $LogFolder -FileName $logFileName -Data "Chosen Sub-Prompt: $(Format-ContinuousText -text $choose_prompt)" -Type "user"
         
         # Invoke the AI model with the chosen prompt and the data to analyze
