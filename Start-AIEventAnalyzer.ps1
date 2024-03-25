@@ -267,6 +267,45 @@ function Update-PromptData {
   return $updatedPrompt
 }
 
+function Get-SummarizeSession {
+  param (
+    [Parameter(Mandatory = $true)]
+    [string]$LogFolder,
+    [Parameter(Mandatory = $true)]
+    [string]$logFileName
+  )
+
+  Write-Host "Wait for summary..." -ForegroundColor Magenta
+  Write-Host "it isn't logged" -ForegroundColor Gray
+  Write-Host ""
+
+  # Read the log file
+  $logData = Get-Content -Path (Join-Path -Path $LogFolder -ChildPath $logFileName)
+
+  # Initialize counters
+  $userActionsCount = 0
+  $systemResponsesCount = 0
+
+  # Count the occurrences of ";user" and ";system" in the log file
+  $userActionsCount = ($logData -match ";user").Count
+  $systemResponsesCount = ($logData -match ";system").Count
+  
+
+  # Print the summary
+  Write-Host "Session Summary:"
+  Write-Host "Total User Actions: $userActionsCount"
+  Write-Host "Total System Responses: $systemResponsesCount"
+  Write-Host ""
+
+  # Summarize the session log data using AI
+  $summary = $logData | Invoke-AIEventAnalyzer -NaturalLanguageQuery "summarize log data to show user what was done. At the end add something nice to the user."
+  Write-Host ""
+  # Print the summary
+  Write-Host "AI Summary:" -ForegroundColor Green
+  Write-Host $summary -ForegroundColor White
+}
+
+
 function Start-AIEventAnalyzer {
   [CmdletBinding()]
   param (
@@ -280,7 +319,7 @@ function Start-AIEventAnalyzer {
       New-Item -ItemType Directory -Path $LogFolder | Out-Null
     }
   }
-  Write-Host "[Info] The logs will be saved in the following folder: $LogFolder"
+  Write-Host "[Info] The logs will be saved in the following folder: $LogFolder" -ForegroundColor DarkGray
   Write-Host ""
         
   # Define the prompts for the AI model
@@ -770,7 +809,7 @@ Example of a JSON response with two records:
 
   Write-Verbose "Log with event data: $logFileNameEventData"
 
-  Write-Host "Generating prompt for action $chosenAction..." -ForegroundColor Green
+  Write-Host "Generating prompts for '$chosenAction' action..." -ForegroundColor Green
 
   # Invoke the AI model with the prompt and the data to analyze
   $json_data = $data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $prompt_one -LogFile $logFileNameEventData -Verbose:$false
@@ -798,7 +837,7 @@ Example of a JSON response with two records:
     Write-Host ""
 
     # Inform the user that they can quit the script at any time
-    Write-Host "Enter 'Q' and ENTER to quit the script at any time." -ForegroundColor DarkBlue
+    Write-Host "Enter 'Q' and ENTER to quit the script ( AI will do summarize of session )." -ForegroundColor DarkBlue
     Write-Host ""
 
     # Get the total number of prompts
@@ -827,6 +866,8 @@ Example of a JSON response with two records:
         Get-LogFileDetails -LogFolder $LogFolder -logFileName $logFileName -LogEventDataFileName $logFileNameEventData
         Write-Host ""
 
+        Get-SummarizeSession -LogFolder $LogFolder -logFileName $logFileName
+        Write-Host ""
         # Break the loop to end the script
         # break
         return
@@ -849,10 +890,14 @@ Example of a JSON response with two records:
     Write-Host ""
     # Log the updated prompt
     LogData -LogFolder $LogFolder -FileName $logFileName -Data "Chosen Sub-Prompt (updated): $(Format-ContinuousText -text $choose_prompt)" -Type "user"
-        
+    
+    Write-Host "Generating response for the chosen prompt..." -ForegroundColor Cyan
     # Invoke the AI model with the chosen prompt and the data to analyze
     $dataSubpromptResponse = ($data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $choose_prompt -LogFile $logFileNameEventData -Verbose:$false)
     LogData -LogFolder $LogFolder -FileName $logFileName -Data "Sub-Prompt response: $(Format-ContinuousText -text $dataSubpromptResponse)" -Type "system"
+    Write-Host ""
+    
+    # Output the response data with paging
     $dataSubpromptResponse | Out-Host -Paging
 
     # Ask the user to press any key to continue
@@ -863,7 +908,9 @@ Example of a JSON response with two records:
 }
 
 function Show-Banner {
-  Write-Host @"
+  Write-Host @'
+
+  Welcome to the
                  _____ ______               _                        _                    
            /\   |_   _|  ____|             | |     /\               | |                   
           /  \    | | | |____   _____ _ __ | |_   /  \   _ __   __ _| |_   _ _______ _ __ 
@@ -876,10 +923,23 @@ function Show-Banner {
        
        voytas75; https://github.com/voytas75/AzureOpenAI-PowerShell
 
+'@
+Write-Host @"
+       This PowerShell script, Start-AIEventAnalyzer.ps1, is a tool designed to analyze Windows Event Logs using Azure's OpenAI. 
+       It allows users to select a specific log and severity level, and then uses AI to analyze the events. The script provides 
+       prompts to guide the user through the process, and the results are displayed in a user-friendly format. The tool is 
+       particularly useful for system administrators and IT professionals who need to analyze large amounts of log data quickly 
+       and efficiently.
 
+"@ -ForegroundColor Blue
+
+Write-Host @"
        To start type 'Start-AIEventAnalyzer'
 
-"@
-}
 
+"@ -ForegroundColor White
+
+
+}
+cls;
 Show-Banner
