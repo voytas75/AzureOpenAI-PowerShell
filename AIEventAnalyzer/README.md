@@ -43,7 +43,7 @@ The script does not take any parameters. Instead, it prompts the user for the fo
 PS C:\>. .\Start-AIEventAnalyzer.ps1; Start-AIEventAnalyzer
 ```
 
-The script will then prompt the user for the required inputs.
+The script will then prompt the user for the required inputs, including the API Azure OPENAI variable values described in the Environment Variables section above.
 
 ## Output
 
