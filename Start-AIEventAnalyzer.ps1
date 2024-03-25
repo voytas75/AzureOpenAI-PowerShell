@@ -937,9 +937,13 @@ function Show-Banner {
 "@ -ForegroundColor Blue
 
   Write-Host @"
-       You never know what you're gonna get with an AI, just like a box of chocolates. You might get a whiz-bang algorithm that 
+       "You never know what you're gonna get with an AI, just like a box of chocolates. You might get a whiz-bang algorithm that 
        writes you a symphony in five minutes flat, or you might get a dud that can't tell a cat from a couch. But hey, that's 
-       the beauty of it all, you keep feedin' it data and see what kind of miraculous contraption it spits out next.
+       the beauty of it all, you keep feedin' it data and see what kind of miraculous contraption it spits out next."
+                    
+                                                                   ~ Who said that? You never know with these AIs these days... 
+                                                                    ...maybe it was Skynet or maybe it was just your toaster :)
+
 "@ -ForegroundColor DarkYellow
 
   Write-Host @"
@@ -947,8 +951,7 @@ function Show-Banner {
 
 
 "@ -ForegroundColor White
-
-
 }
-cls;
+
+Clear-Host
 Show-Banner
