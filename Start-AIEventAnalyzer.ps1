@@ -587,12 +587,18 @@ Example of JSON with two records:
     # Validate the user's input
     if ([string]::IsNullOrEmpty($chosenActionIndex) -or $chosenActionIndex -lt 1 -or $chosenActionIndex -gt $actions.Length) {
         $chosenActionIndex = 1
+        Write-Verbose "No valid user's input when choosing an action. Index = 1"
+        Write-Verbose "IsNullOrEmpty: $([string]::IsNullOrEmpty($chosenActionIndex) | out-string)"
+        Write-Verbose "Less then 1: $($chosenActionIndex -lt 1 | out-string)"
+        Write-Verbose "Greater then $($actions.Length): $($chosenActionIndex -gt $actions.Length | out-string)"
     }
     
     # Get the chosen action and corresponding prompt
     $chosenAction = $actions[$chosenActionIndex - 1]
+    Write-Verbose $chosenAction 
     $prompt_one = $prompts[$chosenActionIndex - 1]
-    
+    Write-Verbose $prompt_one
+
     # Display the chosen action to the user
     Write-Host "You have chosen to: $chosenAction"
     
@@ -750,4 +756,4 @@ Example of JSON with two records:
     }
 }
 
-Start-AIEventAnalyzer
+Start-AIEventAnalyzer -Verbose
