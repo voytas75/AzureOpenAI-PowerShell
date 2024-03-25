@@ -1,11 +1,14 @@
 # Start-AIEventAnalyzer
 
+> You never know what you're gonna get with an AI, just like a box of chocolates. You might get a whiz-bang algorithm that writes you a symphony in five minutes flat, or you might get a dud that can't tell a cat from a couch. But hey, that's the beauty of it all, you keep feedin' it data and see what kind of miraculous contraption it spits out next.
+
 This PowerShell script, `Start-AIEventAnalyzer.ps1`, is designed to analyze Windows event logs using AI. It prompts the user to select an action, a log to analyze, the severity level of the events, and the number of most recent events to analyze. The script then invokes an AI model to analyze the selected events and logs the results.
+This script utilizes the `Invoke-AzureOpenAIChatCompletion.ps1` file, which contains several functions that are essential for the operation of the AIEventAnalyzer.
 
 ## Syntax
 
 ```powershell
-.\Start-AIEventAnalyzer.ps1
+. .\Start-AIEventAnalyzer.ps1
 ```
 
 ## Parameters
@@ -20,7 +23,7 @@ The script does not take any parameters. Instead, it prompts the user for the fo
 ## Example
 
 ```powershell
-PS C:\> .\Start-AIEventAnalyzer.ps1
+PS C:\>. .\Start-AIEventAnalyzer.ps1; Start-AIEventAnalyzer
 ```
 
 The script will then prompt the user for the required inputs.
