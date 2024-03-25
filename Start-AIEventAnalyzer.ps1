@@ -179,7 +179,10 @@ function Get-LogFileDetails {
     [Parameter(Mandatory = $true)]
     [string]$LogFolder,
     [Parameter(Mandatory = $true)]
-    [string]$logFileName
+    [string]$logFileName,
+    [Parameter(Mandatory = $true)]
+    [string]$LogEventDataFileName
+    
   )
   $logFile = Join-Path -Path $LogFolder -ChildPath $logFileName
   if (Test-Path -Path $logFile) {
@@ -193,6 +196,20 @@ function Get-LogFileDetails {
   else {
     Write-Host "Log file does not exist."
   }
+  Write-Host ""
+  if (Test-Path -Path $LogEventDataFileName) {
+    $logFileEventDetails = Get-Item -Path $LogEventDataFileName
+    Write-Host "Log File Event Details:"
+    Write-Host "-----------------"
+    Write-Host "Full Path: $($logFileEventDetails.FullName)"
+    Write-Host "Size: $($logFileEventDetails.Length) bytes"
+    Write-Host "Last Modified: $($logFileEventDetails.LastWriteTime)"
+  }
+  else {
+    Write-Host "Log file does not exist."
+  }
+
+
 }
 
 function Format-ContinuousText {
@@ -807,7 +824,7 @@ Example of a JSON response with two records:
         LogData -LogFolder $LogFolder -FileName $logFileName -Data "Quiting" -Type "user"
 
         # Get the details of the log file
-        Get-LogFileDetails -LogFolder $LogFolder -logFileName $logFileName
+        Get-LogFileDetails -LogFolder $LogFolder -logFileName $logFileName -LogEventDataFileName $logFileNameEventData
         Write-Host ""
 
         # Break the loop to end the script
@@ -855,7 +872,7 @@ function Show-Banner {
        /_/    \_\_____|______\_/ \___|_| |_|\__/_/    \_\_| |_|\__,_|_|\__, /___\___|_|   
                                                                         __/ |             
                                                                        |___/              
-                                                                   powered by AZURE OpenAI
+                                                                  powered by AZURE OpenAI
        
        voytas75; https://github.com/voytas75/AzureOpenAI-PowerShell
 
