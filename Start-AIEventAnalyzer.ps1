@@ -73,7 +73,10 @@ function Invoke-AIEventAnalyzer {
     [object]$InputObject,
 
     [Parameter(Mandatory = $true, Position = 0)]
-    [string]$NaturalLanguageQuery
+    [string]$NaturalLanguageQuery,
+
+    [Parameter(Mandatory = $false)]
+    [string]$LogFile
   )
 
   begin {
@@ -97,7 +100,7 @@ function Invoke-AIEventAnalyzer {
     $inputString = $inputObjects | Out-String
 
     # Call the Invoke-AzureOpenAIChatCompletion function to interpret the input using a language model and the user's query
-    $response = Invoke-AzureOpenAIChatCompletion -SystemPrompt $NaturalLanguageQuery -OneTimeUserPrompt $inputString -Precise -simpleresponse
+    $response = Invoke-AzureOpenAIChatCompletion -SystemPrompt $NaturalLanguageQuery -OneTimeUserPrompt $inputString -Precise -simpleresponse -LogFile $LogFile
 
     # Return the response from the Azure OpenAI Chat Completion function
     return $response 
@@ -387,9 +390,9 @@ Example of a JSON response with two records:
   $promptPredict = @'
 ###Instruction###
 
-In your capacity as a data predictor, your goal is to forecast future system events or trends based on historical Windows event data, enabling proactive decision-making and resource allocation. Create prompts aimed at selecting appropriate predictive analytics techniques, training predictive models, and interpreting predictive insights to anticipate system behavior. These prompts should empower users to leverage predictive analytics to optimize system performance and mitigate potential risks. Responses must conform strictly to JSON format.
+Your goal as a prompt maker is to create prompts to select appropriate predictive analytics techniques, train predictive models, and interpret predictive insights to predict the behavior of the system. These prompts should allow users to use predictive analytics to optimize system performance and mitigate potential risks. Responses must strictly follow the JSON format.
 
-Example of JSON with two records:
+Example of a JSON response with two records:
 [
   {
     "promptNumber": 1,
@@ -418,9 +421,9 @@ Example of JSON with two records:
   $promptOptimize = @'
 ###Instruction###
 
-As a system optimizer, your mission is to improve system performance, resource utilization, and security posture based on insights derived from Windows event data analysis. Generate prompts aimed at identifying optimization opportunities, implementing optimization strategies, and measuring the impact of optimization efforts on system performance. These prompts should guide users through a systematic optimization process, ensuring continuous improvement and efficiency gains. Responses must strictly adhere to JSON format.
+As a prompt engineer, your job is to generate prompts based on insights from analyzing Windows event data to identify optimization opportunities, implement optimization strategies, and measure the impact of optimization efforts on system performance. These prompts should guide users through a systematic optimization process, ensuring continuous improvement and performance gains. Responses must strictly follow the JSON format.
 
-Example of JSON with two records:
+Example of a JSON response with two records:
 [
   {
     "promptNumber": 1,
@@ -448,9 +451,9 @@ Example of JSON with two records:
   $promptAudit = @'
 ###Instruction###
 
-As an IT auditor, your role is to conduct audits of Windows event logs to ensure compliance with regulatory requirements, organizational policies, and security best practices. Develop prompts aimed at defining audit criteria, conducting audit reviews, and documenting audit findings. These prompts should facilitate comprehensive audit processes, ensuring that users can effectively assess system compliance and identify areas for improvement. Responses must conform strictly to JSON format.
+Your tasks as a prompt engineer are to develop prompts to define audit criteria, suggest how audit reviews are conducted, and document audit findings. These prompts should facilitate end-to-end auditing processes, ensuring that the user can effectively assess system compliance, audit Windows event logs to ensure compliance with general best practices for regulatory requirements, organizational policies, and system security. and identify areas for improvement. Responses must strictly follow the JSON format.
 
-Example of JSON with two records:
+Example of a JSON response with two records:
 [
   {
     "promptNumber": 1,
@@ -479,9 +482,9 @@ Example of JSON with two records:
   $promptAutomate = @'
 ###Instruction###
 
-In your role as an IT automator, your objective is to streamline and optimize processes based on analysis of Windows event data, enabling efficient and reliable operation of IT systems. Create prompts aimed at identifying automation opportunities, designing automated workflows, and implementing automation solutions. These prompts should empower users to automate routine tasks, reduce manual effort, and improve overall operational efficiency. Responses must strictly adhere to JSON format.
+As a prompt engineer, your goal is to create prompts based on analysis of Windows event data, aimed at identifying automation opportunities, designing automated workflows, and implementing automation solutions. These prompts should enable the user to automate routine tasks, reduce manual effort, and improve overall operational efficiency. Responses must strictly follow the JSON format.
 
-Example of JSON with two records:
+Example of a JSON response with two records:
 [
   {
     "promptNumber": 1,
@@ -510,9 +513,9 @@ Example of JSON with two records:
   $promptEducate = @'
 ###Instruction###
 
-As an IT educator, your mission is to disseminate knowledge and empower others with insights gained from analysis of Windows event data. Develop prompts aimed at creating educational materials, conducting training sessions, or facilitating knowledge-sharing activities based on analysis findings. These prompts should ensure that users can effectively communicate key concepts, best practices, and actionable insights to enhance IT staff's understanding and proficiency. Responses must conform strictly to JSON format.
+As a prompt engineer, it's your job to develop prompts to create learning materials, conduct training sessions, or facilitate knowledge-sharing activities based on the results of Windows Event Analysis. These prompts should ensure that users can effectively communicate key concepts, best practices, and actionable insights to increase the understanding and proficiency of IT staff. Responses must strictly follow the JSON format.
 
-Example of JSON with two records:
+Example of a JSON response with two records:
 [
   {
     "promptNumber": 1,
@@ -540,9 +543,9 @@ Example of JSON with two records:
   $promptSummarize = @'
 ###Instruction###
 
-As a prompt creator, it's your job to develop prompts that help users summarize the most critical aspects of Windows events, including notable patterns, significant anomalies, identified root causes, and recommended actions. You need to extract key insights and insights from your Windows event data in concise summaries for easy referencing and analysis.  These prompts should enable users to effectively communicate the essence of the data analysis process and its implications in a clear and concise manner. Responses must strictly follow JSON to maintain consistency and facilitate easy referencing.
+As a prompt engineer, it's your job to develop prompts that help users summarize the most critical aspects of Windows events, including notable patterns, significant anomalies, identified root causes, and recommended actions. You need to extract key insights and insights from your Windows event data in concise summaries for easy referencing and analysis.  These prompts should enable users to effectively communicate the essence of the data analysis process and its implications in a clear and concise manner. Responses must strictly follow JSON to maintain consistency and facilitate easy referencing.
 
-Example of JSON with two records:
+Example of a JSON response with two records:
 [
   {
     "promptNumber": 1,
@@ -577,26 +580,34 @@ Example of JSON with two records:
   # Define the list of prompts corresponding to each action
   $prompts = @($promptAnalyze, $promptTroubleshoot, $promptCorrelate, $promptPredict, $promptOptimize, $promptAudit, $promptAutomate, $promptEducate, $promptDocumentation, $promptSummarize)
     
-  # Display the list of actions to the user
-  Write-Host "Please choose an action from the following list:"
-  for ($i = 0; $i -lt $actions.Length; $i++) {
-    Write-Host "$($i+1). $($actions[$i])"
-  }
-    
-  # Ask the user to choose an action
-  [int]$chosenActionIndex = Read-Host "Enter the number of your chosen action (default: 1 - Analyze)"
+  do {
+    # Display the list of actions to the user
+    Write-Host "Please choose an action for Windows events:" -ForegroundColor DarkCyan
+    for ($i = 0; $i -lt $actions.Length; $i++) {
+      Write-Host "$($i+1). $($actions[$i])" -ForegroundColor Cyan
+    }
+    Write-Host ""
+
+    # Ask the user to choose an action
+    Write-Host "Enter the number of your chosen action (default: 1 - Analyze)" -ForegroundColor DarkCyan -NoNewline
+    $chosenActionIndex = Read-Host " "
+    if ([string]::IsNullOrEmpty($chosenActionIndex)) {
+      $chosenActionIndex = 1
+      break
+    }
+    # Validate the user's input
+  } while ($chosenActionIndex -notmatch '^\d+$' -or [int]$chosenActionIndex -lt 1 -or [int]$chosenActionIndex -gt $actions.Length)
   
   Write-Verbose $chosenActionIndex
-
-  # Validate the user's input
-  if ([string]::IsNullOrEmpty($chosenActionIndex) -or $chosenActionIndex -lt 1 -or $chosenActionIndex -gt $actions.Length) {
-    $chosenActionIndex = 1
-    Write-Verbose "No valid user's input when choosing an action. Index = 1"
-    Write-Verbose "IsNullOrEmpty: $([string]::IsNullOrEmpty($chosenActionIndex) | out-string)"
-    Write-Verbose "Less then 1: $($chosenActionIndex -lt 1 | out-string)"
-    Write-Verbose "Greater then $($actions.Length): $($chosenActionIndex -gt $actions.Length | out-string)"
-  }
-  Write-Verbose $chosenActionIndex
+  
+  #  if () {
+  #    $chosenActionIndex = 1
+  #    Write-Verbose "No valid user's input when choosing an action. Index = 1"
+  #    Write-Verbose "IsNullOrEmpty: $([string]::IsNullOrEmpty($chosenActionIndex) | out-string)"
+  #    Write-Verbose "Less then 1: $($chosenActionIndex -lt 1 | out-string)"
+  #    Write-Verbose "Greater then $($actions.Length): $($chosenActionIndex -gt $actions.Length | out-string)"
+  #  }
+  #  Write-Verbose $chosenActionIndex
 
   # Get the chosen action and corresponding prompt
   $chosenAction = $actions[$chosenActionIndex - 1]
@@ -605,74 +616,106 @@ Example of JSON with two records:
   Write-Verbose $prompt_one
 
   # Display the chosen action to the user
-  Write-Host "You have chosen to: $chosenAction"
-    
+  Write-Host "Your selected action is: $chosenAction" -ForegroundColor Green
+  Write-Host ""  
   # Clean the system prompt by removing non-ASCII characters
   $prompt_one = [System.Text.RegularExpressions.Regex]::Replace($prompt_one, "[^\x00-\x7F]", " ")        
 
   # Get a list of all Windows event logs, sort them by record count in descending order, and select the top 25 logs
   $logs = Get-WinEvent -ListLog * -ErrorAction SilentlyContinue | Sort-Object RecordCount -Descending | Select-Object LogName, RecordCount
 
-  Write-Host "Please enter the minimum number of events a log should have to be shown in the list."
-  $minEventCount = Read-Host "Enter the minimum event count (default: 2200)"
+  $minEventCountDefault = 2100
+  Write-Host "Please enter the minimum number of events a log should have to be shown in the list." -ForegroundColor DarkCyan
+  Write-Host "Enter the minimum event count (default: $minEventCountDefault)" -ForegroundColor DarkCyan -NoNewline
+  $minEventCount = Read-Host " "
   if ([string]::IsNullOrEmpty($minEventCount) -or $minEventCount -lt 0) {
-    $minEventCount = 2200
+    $minEventCount = $minEventCountDefault
   }
+  Write-Host "You have chosen to display logs with at least $minEventCount events." -ForegroundColor Green
+  Write-Host ""
+
+
   $logs = $logs | Where-Object { $_.RecordCount -ge $minEventCount }
 
   # Display the name and record count of each log
   #$logs | ForEach-Object {Write-Host "$($_.LogName) - $($_.RecordCount) records"}
   try {
-    $logs.where{ $_.RecordCount -gt $minEventCount }  | Out-Host -Paging
+    $LogsFiltered = $logs.where{ $_.RecordCount -gt $minEventCount }
+    foreach ($log in $LogsFiltered) {
+      Write-Host "$($log.LogName) - " -ForegroundColor Cyan -NoNewline
+      Write-Host "$($log.RecordCount) records" -ForegroundColor DarkCyan
+    }
   }
   catch [System.Management.Automation.HaltCommandException] {
     # Handle termination here (e.g., write message)
-    Write-Host "Command stopped by user (Quit)"
+    Write-Host "Command stopped by user (Quit)" -ForegroundColor DarkMagenta
+    
   }
+  Write-Host ""
 
-  # Ask the user to input the name of the log they want to analyze
-  $chosenLogName = Read-Host "Please enter the LogName from the list above to analyze events (default: $($logs[0].LogName))"
-
+  $LogNameDefault = $logs[0].LogName
+  # Prompt the user to enter the log name for analysis
+  Write-Host "Please enter the LogName from the list above to analyze events (default: $LogNameDefault)" -ForegroundColor DarkCyan -NoNewline
+  $chosenLogName = Read-Host " "
 
   # Check if the chosen log name is empty or null. If it is, set it to the first log name in the logs list
   if ([string]::IsNullOrEmpty($chosenLogName)) {
-    $chosenLogName = $logs[0].LogName
+    $chosenLogName = $LogNameDefault
   }
+  Write-Host "You have chosen the log: $chosenLogName" -ForegroundColor Green
+  Write-Host ""
 
   # Get the record count for the chosen log name
   $logRecordCount = ($logs | Where-Object { $_.logname -eq "$chosenLogName" }).Recordcount
   # Display the record count for the chosen log name
   Write-Host "The log '$chosenLogName' has $logRecordCount events of all severity levels."
+  Write-Host ""
 
   # Loop until a valid severity level is entered
   do {
     # Ask the user to enter the severity level
-    Write-Host "Please enter the severity level of the events you want to analyze. Options are: Critical, Error, Warning, Information, Verbose, or All."
-    $chosenSeverityLevel = Read-Host "Enter the severity level (default: All)"
+    Write-Host "Please enter the severity level of the events you want to analyze. Options are: Critical, Error, Warning, Information, Verbose, or All." -ForegroundColor DarkCyan
+    Write-Host "Enter the severity level (default: All)" -ForegroundColor DarkCyan -NoNewline
+    $chosenSeverityLevel = Read-Host " "
     # If the entered severity level is valid, get the events for that severity level
     if ($chosenSeverityLevel -in @("Critical", "Error", "Warning", "Information", "Verbose")) {
       $filterXPath = "*[System[(Level=$(Get-EventSeverity -Severity $chosenSeverityLevel))]]"
       $data_to_analyze = Get-WinEvent -LogName $chosenLogName -FilterXPath $filterXPath -ErrorAction SilentlyContinue | Select-Object Message, Level, ProviderName, ProviderId, LogName, TimeCreated 
       $logRecordServerityCount = $data_to_analyze.Count
+      Write-Host "You have chosen the severity level: $chosenSeverityLevel ($(Get-EventSeverity -Severity $chosenSeverityLevel))" -ForegroundColor Green
+      Write-Host ""
     }
     # If the entered severity level is empty or null, set it to "All" and get all events
     elseif ([string]::IsNullOrEmpty($chosenSeverityLevel)) {
       $chosenSeverityLevel = "All"
       $logRecordServerityCount = $logRecordCount
+      Write-Host "You have chosen the severity level: $chosenSeverityLevel" -ForegroundColor Green
+      Write-Host ""
     }
     # If the entered severity level is invalid, set it to "All" and get all events
     else {
       $chosenSeverityLevel = "All"
       $logRecordServerityCount = $logRecordCount
+      Write-Host "You have chosen the severity level: $chosenSeverityLevel" -ForegroundColor Green
+      Write-Host ""
     }
   } until ([int]$logRecordServerityCount -gt 0)
 
+  $logRecordServerityCountDefault = 50
+  if ($logRecordServerityCount -lt $logRecordServerityCountDefault) {
+    $logRecordServerityCountDefault = $logRecordServerityCount
+  }
   # Ask the user to enter the number of most recent events they want to analyze
-  $chosenLogNameNewest = Read-Host "Please enter the number of most recent '$chosenLogName' for '$chosenSeverityLevel' serverity events you want to analyze (1-$logRecordServerityCount) (default: 50)"
+  Write-Host "Please enter the number of most recent '$chosenLogName' for '$chosenSeverityLevel' serverity events you want to analyze (1-$logRecordServerityCount) (default: $logRecordServerityCountDefault)" -ForegroundColor DarkCyan -NoNewline
+  $chosenLogNameNewest = Read-Host " "
+
   # If the entered number is empty or null, set it to 10
   if ([string]::IsNullOrEmpty($chosenLogNameNewest)) {
-    $chosenLogNameNewest = 50
+    $chosenLogNameNewest = $logRecordServerityCountDefault
   }
+  Write-Host "You have chosen $chosenLogNameNewest most recent events." -ForegroundColor Green
+  Write-Host ""
+
   # If the chosen severity level is not valid, get the most recent events up to the entered number
   if ($chosenSeverityLevel -notin @("Critical", "Error", "Warning", "Information", "Verbose")) {
     $data_to_analyze = Get-WinEvent -LogName $chosenLogName -MaxEvents $chosenLogNameNewest | Select-Object Message, Level, ProviderName, ProviderId, LogName, TimeCreated 
@@ -683,10 +726,11 @@ Example of JSON with two records:
   $logRecordServerityCount = $data_to_analyze.Count
 
   # Display the chosen log name, severity level, and event count
-  Write-Host "Action: $chosenAction"
-  Write-Host "LogName: $chosenLogName"
-  Write-Host "Level: $chosenSeverityLevel"
-  Write-Host "Event count: $logRecordServerityCount"
+  Write-Host "Action: $chosenAction" -ForegroundColor Yellow
+  Write-Host "LogName: $chosenLogName" -ForegroundColor Magenta
+  Write-Host "Level: $chosenSeverityLevel" -ForegroundColor Blue
+  Write-Host "Event count: $logRecordServerityCount (all: $logRecordCount)"  -ForegroundColor Yellow 
+  Write-Host ""
 
   $currentDateTime = Get-Date -Format "yyyyMMdd-HHmmss"
   $chosenLogName = $chosenLogName -replace '[\\/:*?"<>|]', '_'
@@ -696,14 +740,23 @@ Example of JSON with two records:
     "LogName"    = $chosenLogName
     "Level"      = $chosenSeverityLevel
     "EventCount" = $logRecordServerityCount
+    "All Events" = $logRecordCount
     "Prompt"     = (Format-ContinuousText -text $prompt_one)
   }
   foreach ($key in $data_to_file.Keys) {
     LogData -LogFolder $LogFolder -FileName $logFileName -Data "$key : $($data_to_file[$key])" -Type "user"
   }
 
+  $logFileNameEventData = "$chosenAction-$chosenLogName-$chosenSeverityLevel-EventData-$currentDateTime.txt"
+  $logFileNameEventData = Join-Path $LogFolder $logFileNameEventData
+  LogData -LogFolder $LogFolder -FileName $logFileName -Data "Log file with events data: $logFileNameEventData" -Type "other"
+
+  Write-Verbose "Log with event data: $logFileNameEventData"
+
+  Write-Host "Generating prompt for action $chosenAction..." -ForegroundColor Green
+
   # Invoke the AI model with the prompt and the data to analyze
-  $json_data = $data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $prompt_one -Verbose:$false
+  $json_data = $data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $prompt_one -LogFile $logFileNameEventData -Verbose:$false
 
   # Clean the returned JSON data
   $json_data = Clear-LLMDataJSON -data $json_data
@@ -713,51 +766,83 @@ Example of JSON with two records:
   # Convert the cleaned JSON data to a PowerShell object
   $object_prompt = ($json_data | ConvertFrom-Json ) 
 
+  Write-Host ""
   # Loop until the user chooses to quit
   while ($true) {
     # Display the prompt number and prompt
     $SubPrompts = $object_prompt
     #LogData -LogFolder $LogFolder -FileName $logFileName -Data "All Sub-Prompts: $(Format-ContinuousText -text $($SubPrompts | Out-String))" -Type "system"
-    $SubPrompts | Format-List promptNumber, prompt | Out-Host -Paging
-    # Inform the user that they can quit the script at any time
-    Write-Host "Enter 'Q' and ENTER to quit the script at any time."
-
-    # Ask the user to choose a prompt number to analyze events
-    $prompt_count = $object_prompt.Count
-    $choose_prompt_number = Read-Host "Choose the number of prompt to analyze events (1-$prompt_count)"
-
-    # If the user chooses to quit, end the script
-    if ($choose_prompt_number -eq 'q' -or $choose_prompt_number -eq 'Q') {
-      Write-Host "Quiting..."
-      LogData -LogFolder $LogFolder -FileName $logFileName -Data "Quiting" -Type "user"
-      Get-LogFileDetails -LogFolder $LogFolder -logFileName $logFileName
-      break
+    #$SubPrompts | Format-List promptNumber, prompt | Out-Host -Paging
+    foreach ($SubPrompt in $SubPrompts) {
+      Write-Host "$($SubPrompt.promptNumber)} " -foregroundColor DarkGreen -NoNewline
+      Write-Host "$($subPrompt.prompt)" -ForegroundColor Green
+      Write-Host ""
     }
+    Write-Host ""
 
+    # Inform the user that they can quit the script at any time
+    Write-Host "Enter 'Q' and ENTER to quit the script at any time." -ForegroundColor DarkBlue
+    Write-Host ""
+
+    # Get the total number of prompts
+    $prompt_count = $object_prompt.Count
+
+    $choose_prompt_number = $null
+    # Keep asking the user to choose a valid prompt number until they choose a number within the valid range
+    do {
+      if (-not [string]::IsNullOrEmpty($choose_prompt_number) -or [int]$choose_prompt_number -ge 1 -or [int]$choose_prompt_number -le $prompt_count) {
+        Write-Host "Last chosen prompt number: $choose_prompt_number" -ForegroundColor DarkGreen
+      }
+      
+      Write-Host "Choose the number of prompt to analyze events (1-$prompt_count)" -ForegroundColor Cyan -NoNewline
+      $choose_prompt_number = Read-Host " "
+      Write-Host ""
+
+      # If the user chooses to quit, end the script
+      if ($choose_prompt_number -eq 'q' -or $choose_prompt_number -eq 'Q') {
+        # Display a message indicating that the script is quitting
+        Write-Host "Quiting..."
+        Write-Host ""
+
+        # Log the quit action
+        LogData -LogFolder $LogFolder -FileName $logFileName -Data "Quiting" -Type "user"
+
+        # Get the details of the log file
+        Get-LogFileDetails -LogFolder $LogFolder -logFileName $logFileName
+        Write-Host ""
+
+        # Break the loop to end the script
+        # break
+        return
+      }
+    } while ($choose_prompt_number -notmatch '^\d+$' -or [int]$choose_prompt_number -lt 1 -or [int]$choose_prompt_number -gt $prompt_count)
+    
     # Construct the chosen prompt
     $choose_prompt = $($object_prompt[($choose_prompt_number - 1)].prompt)
 
     # Display the chosen prompt to the console
-    Write-Host "Prompt: '$choose_prompt'"
+    Write-Host "Prompt: '$choose_prompt'" -ForegroundColor Green
+    Write-Host ""
     # Log the chosen prompt
     LogData -LogFolder $LogFolder -FileName $logFileName -Data "Chosen Sub-Prompt: $(Format-ContinuousText -text $choose_prompt)" -Type "user"
 
     # Update the chosen prompt using the Update-PromptData function
     $choose_prompt = Update-PromptData -inputPrompt $choose_prompt
     # Display the updated prompt to the console
-    Write-Host "Enriched Prompt: '$choose_prompt'"
+    Write-Host "Enriched Prompt: '$choose_prompt'" -ForegroundColor DarkGreen
+    Write-Host ""
     # Log the updated prompt
     LogData -LogFolder $LogFolder -FileName $logFileName -Data "Chosen Sub-Prompt (updated): $(Format-ContinuousText -text $choose_prompt)" -Type "user"
         
     # Invoke the AI model with the chosen prompt and the data to analyze
-    $dataSubpromptResponse = ($data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $choose_prompt -Verbose:$false)
+    $dataSubpromptResponse = ($data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $choose_prompt -LogFile $logFileNameEventData -Verbose:$false)
     LogData -LogFolder $LogFolder -FileName $logFileName -Data "Sub-Prompt response: $(Format-ContinuousText -text $dataSubpromptResponse)" -Type "system"
     $dataSubpromptResponse | Out-Host -Paging
 
     # Ask the user to press any key to continue
-    Write-Host "Press any key to continue ..."
+    Write-Host "Press any key to continue ..." -ForegroundColor Cyan
     $null = [Console]::ReadKey($true)
-
+    Write-Host ""
   }
 }
 
@@ -771,6 +856,8 @@ function Show-Banner {
        /_/    \_\_____|______\_/ \___|_| |_|\__/_/    \_\_| |_|\__,_|_|\__, /___\___|_|   
                                                                         __/ |             
                                                                        |___/              
+                                                                   powered by AZURE OpenAI
+       
        voytas75; https://github.com/voytas75/AzureOpenAI-PowerShell
 
 
