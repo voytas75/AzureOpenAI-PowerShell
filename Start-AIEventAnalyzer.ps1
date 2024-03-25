@@ -790,10 +790,9 @@ Example of a JSON response with two records:
     $choose_prompt_number = $null
     # Keep asking the user to choose a valid prompt number until they choose a number within the valid range
     do {
-      if (-not [string]::IsNullOrEmpty($choose_prompt_number) -or [int]$choose_prompt_number -ge 1 -or [int]$choose_prompt_number -le $prompt_count) {
+      if (-not [string]::IsNullOrEmpty($choose_prompt_number) -and [int]$choose_prompt_number -ge 1 -and [int]$choose_prompt_number -le $prompt_count) {
         Write-Host "Last chosen prompt number: $choose_prompt_number" -ForegroundColor DarkGreen
       }
-      
       Write-Host "Choose the number of prompt to analyze events (1-$prompt_count)" -ForegroundColor Cyan -NoNewline
       $choose_prompt_number = Read-Host " "
       Write-Host ""
