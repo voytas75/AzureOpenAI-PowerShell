@@ -5,6 +5,23 @@
 This PowerShell script, `Start-AIEventAnalyzer.ps1`, is designed to analyze Windows event logs using AI. It prompts the user to select an action, a log to analyze, the severity level of the events, and the number of most recent events to analyze. The script then invokes an AI model to analyze the selected events and logs the results.
 This script utilizes the `Invoke-AzureOpenAIChatCompletion.ps1` file, which contains several functions that are essential for the operation of the AIEventAnalyzer.
 
+![image](../images/AIEventAnalyzer.gif)
+
+## Prerequisites
+
+Before running the `Start-AIEventAnalyzer.ps1` script, you need to set up your environment to use Azure OpenAI. Here are the steps to follow:
+
+1. **Azure OpenAI Service**: You need to have an active Azure subscription and access to Azure OpenAI Service. If you don't have it, you can create one from the [Azure portal](https://portal.azure.com/).
+
+2. **API Key**: You need to generate an API key from the Azure OpenAI Service. This key is used to authenticate your requests to the service. 
+
+3. **Environment Variables**: You need to set up the following environment variables in your system:
+
+    - `AZURE_OPENAI_KEY`: This should be set to the API key you generated from the Azure OpenAI Service.
+    - `AZURE_OPENAI_ENDPOINT`: This should be set to the endpoint URL of the Azure OpenAI Service. Typically, it is in the format `https://<region>.api.cognitive.microsoft.com`.
+
+You can set these environment variables in PowerShell using the following commands:
+
 ## Syntax
 
 ```powershell
@@ -41,5 +58,3 @@ The output file contains the following information:
 - The results of the AI analysis in JSON format.
 
 The script also displays the chosen action, log name, severity level, and event count in the console.
-
-![image](../images/AIEventAnalyzer.gif)
