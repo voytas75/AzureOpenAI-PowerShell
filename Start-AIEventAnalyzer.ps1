@@ -582,8 +582,10 @@ Example of JSON with two records:
   }
     
   # Ask the user to choose an action
-  $chosenActionIndex = Read-Host "Enter the number of your chosen action (default: 1 - Analyze)"
-    
+  [int]$chosenActionIndex = Read-Host "Enter the number of your chosen action (default: 1 - Analyze)"
+  
+  Write-Verbose $chosenActionIndex
+
   # Validate the user's input
   if ([string]::IsNullOrEmpty($chosenActionIndex) -or $chosenActionIndex -lt 1 -or $chosenActionIndex -gt $actions.Length) {
     $chosenActionIndex = 1
@@ -592,7 +594,8 @@ Example of JSON with two records:
     Write-Verbose "Less then 1: $($chosenActionIndex -lt 1 | out-string)"
     Write-Verbose "Greater then $($actions.Length): $($chosenActionIndex -gt $actions.Length | out-string)"
   }
-    
+  Write-Verbose $chosenActionIndex
+
   # Get the chosen action and corresponding prompt
   $chosenAction = $actions[$chosenActionIndex - 1]
   Write-Verbose $chosenAction 
@@ -698,7 +701,7 @@ Example of JSON with two records:
   }
 
   # Invoke the AI model with the prompt and the data to analyze
-  $json_data = $data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $prompt_one
+  $json_data = $data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $prompt_one -Verbose:$false
 
   # Clean the returned JSON data
   $json_data = Clear-LLMDataJSON -data $json_data
@@ -742,10 +745,10 @@ Example of JSON with two records:
     # Display the updated prompt to the console
     Write-Host "Enriched Prompt: '$choose_prompt'"
     # Log the updated prompt
-    LogData -LogFolder $LogFolder -FileName $logFileName -Data "Chosen Sub-Prompt: $(Format-ContinuousText -text $choose_prompt)" -Type "user"
+    LogData -LogFolder $LogFolder -FileName $logFileName -Data "Chosen Sub-Prompt (updated): $(Format-ContinuousText -text $choose_prompt)" -Type "user"
         
     # Invoke the AI model with the chosen prompt and the data to analyze
-    $dataSubpromptResponse = ($data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $choose_prompt)
+    $dataSubpromptResponse = ($data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $choose_prompt -Verbose:$false)
     LogData -LogFolder $LogFolder -FileName $logFileName -Data "Sub-Prompt response: $(Format-ContinuousText -text $dataSubpromptResponse)" -Type "system"
     $dataSubpromptResponse | Out-Host -Paging
 
