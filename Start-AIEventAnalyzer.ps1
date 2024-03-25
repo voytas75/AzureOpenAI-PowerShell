@@ -260,6 +260,8 @@ function Start-AIEventAnalyzer {
       New-Item -ItemType Directory -Path $LogFolder | Out-Null
     }
   }
+  Write-Host "[Info] The logs will be saved in the following folder: $LogFolder"
+  Write-Host ""
         
   # Define the prompts for the AI model
   $promptAnalyze = @'
@@ -325,9 +327,9 @@ Example of a JSON response with two records:
   $promptDocumentation = @'
 ###Instruction###
 
-As a documentarian, your responsibility is to compile comprehensive documentation about Windows events for reference and analysis. Craft prompts to guide users in gathering pertinent information from Windows events to include in documentation. These prompts should focus on capturing key details such as event types, event IDs, timestamps, event messages, and any associated actions taken. Ensure that the documentation provides a clear and concise overview of the events and their significance. Responses must strictly adhere to JSON format to maintain consistency and facilitate easy reference.
+As a prompt creator, it's your responsibility to create prompts that help users gather relevant information from Windows events to include in your documentation. These prompts should focus on capturing key details such as event types, event IDs, timestamps, event messages, and any associated activities. Make sure your documentation provides a clear and concise overview of the events and their significance. Responses must strictly follow JSON to maintain consistency and facilitate easy referencing.
 
-Example of JSON with two records:
+Example of a JSON response with two records:
 [
     {
         "promptNumber": 1,
@@ -355,9 +357,9 @@ Example of JSON with two records:
   $promptCorrelate = @'
 ###Instruction###
 
-In your role as a data correlator, you're tasked with uncovering relationships, dependencies, and causal factors within Windows event data to gain deeper insights into system behavior and performance. Generate a series of prompts focused on identifying correlations between events, determining their significance, and deriving actionable insights to improve system management and troubleshooting processes. Responses must strictly adhere to JSON format, facilitating structured analysis and interpretation of correlated data.
+As a prompt creator, you're tasked with generating a series of prompts focused on identifying correlations between Windows events, determining their importance, and gaining actionable insights to gain deeper insights into system behavior and performance, and improve system management and troubleshooting processes. Responses must strictly follow the JSON format, which facilitates structured analysis and interpretation of correlated data.
 
-Example of JSON with two records:
+Example of a JSON response with two records:
 [
     {
         "promptNumber": 1,
@@ -773,7 +775,6 @@ function Show-Banner {
 
 
        To start type 'Start-AIEventAnalyzer'
-
 
 "@
 }
