@@ -570,20 +570,31 @@ Example of JSON with two records:
 ]
 '@
 
+    # Define the list of actions
     $actions = @("Analyze", "Troubleshoot", "Correlate", "Predict", "Optimize", "Audit", "Automate", "Educate", "Documentation", "Summarize")
+    # Define the list of prompts corresponding to each action
     $prompts = @($promptAnalyze, $promptTroubleshoot, $promptCorrelate, $promptPredict, $promptOptimize, $promptAudit, $promptAutomate, $promptEducate, $promptDocumentation, $promptSummarize)
+    
+    # Display the list of actions to the user
     Write-Host "Please choose an action from the following list:"
     for ($i = 0; $i -lt $actions.Length; $i++) {
         Write-Host "$($i+1). $($actions[$i])"
     }
+    
+    # Ask the user to choose an action
     $chosenActionIndex = Read-Host "Enter the number of your chosen action (default: 1 - Analyze)"
+    
+    # Validate the user's input
     if ([string]::IsNullOrEmpty($chosenActionIndex) -or $chosenActionIndex -lt 1 -or $chosenActionIndex -gt $actions.Length) {
         $chosenActionIndex = 1
     }
+    
+    # Get the chosen action and corresponding prompt
     $chosenAction = $actions[$chosenActionIndex - 1]
     $prompt_one = $prompts[$chosenActionIndex - 1]
+    
+    # Display the chosen action to the user
     Write-Host "You have chosen to: $chosenAction"
-
     
     # Clean the system prompt by removing non-ASCII characters
     $prompt_one = [System.Text.RegularExpressions.Regex]::Replace($prompt_one, "[^\x00-\x7F]", " ")        
