@@ -924,7 +924,7 @@ function Show-Banner {
        voytas75; https://github.com/voytas75/AzureOpenAI-PowerShell
 
 '@
-Write-Host @"
+  Write-Host @"
        This PowerShell script, Start-AIEventAnalyzer.ps1, is a tool designed to analyze Windows Event Logs using Azure's OpenAI. 
        It allows users to select a specific log and severity level, and then uses AI to analyze the events. The script provides 
        prompts to guide the user through the process, and the results are displayed in a user-friendly format. The tool is 
@@ -933,7 +933,7 @@ Write-Host @"
 
 "@ -ForegroundColor Blue
 
-Write-Host @"
+  Write-Host @"
        To start type 'Start-AIEventAnalyzer'
 
 
