@@ -419,10 +419,11 @@ function Invoke-AzureOpenAIChatCompletion {
     function Show-ResponseMessage {
         <#
         .SYNOPSIS
-        Outputs the response message.
+        This function outputs the response message to the console.
         
         .DESCRIPTION
-        This function prints the response message to the console.
+        Show-ResponseMessage is a function that takes in a content and a stream type and outputs the response message. 
+        The output format can be simplified by using the -simpleresponse switch.
         
         .PARAMETER content
         The content to be displayed. This parameter is mandatory.
@@ -430,58 +431,68 @@ function Invoke-AzureOpenAIChatCompletion {
         .PARAMETER stream
         The stream type of the content. This parameter is mandatory.
         
+        .PARAMETER simpleresponse
+        A switch parameter. If used, the function will return only the content, without the stream type.
+        
         .EXAMPLE
         Show-ResponseMessage -content "Hello, how can I assist you today?" -stream "system"
         
+        .EXAMPLE
+        Show-ResponseMessage -content "Hello, how can I assist you today?" -stream "system" -simpleresponse
+        
         .OUTPUTS
-        None. This function outputs the response message to the console.
+        String. This function outputs the response message to the console.
         #> 
         param(
             [Parameter(Mandatory = $true)]
-            [string]$content,
+            [string]$content, # The content to be displayed
+
             [Parameter(Mandatory = $true)]
-            [string]$stream,
-            [switch]$simpleresponse
+            [string]$stream, # The stream type of the content
+
+            [switch]$simpleresponse # A switch to simplify the response output
         )
     
-        #Write-Host ""
-        #Write-Host "Response assistant ($stream):"
-        #Write-Host $content
+        # Check if the simpleresponse switch is used
         if (-not $simpleresponse) {
+            # Return the response message with the stream type
             return ("Response assistant ($stream):`n${content}")
         }
         else {
+            # Return only the content
             return $content
         }
     }
     
-    # Function to output the finish reason
+    # Function to display the reason for ending the conversation
     function Show-FinishReason {
         <#
         .SYNOPSIS
-        Outputs the finish reason.
+        Displays the reason for ending the conversation.
         
         .DESCRIPTION
-        This function prints the finish reason to the console.
+        The Show-FinishReason function is used to print the reason for ending the conversation to the console. This is typically used in chatbot interactions to indicate why the conversation was terminated.
         
         .PARAMETER finishReason
-        The finish reason to be displayed. This parameter is mandatory.
+        The reason for ending the conversation. This parameter is mandatory and should be a string.
         
         .EXAMPLE
         Show-FinishReason -finishReason "End of conversation"
+        This example shows how to use the Show-FinishReason function to display "End of conversation" as the reason for ending the conversation.
         
         .OUTPUTS
-        None. This function outputs the finish reason to the console.
+        None. This function does not return any output. It only prints the finish reason to the console.
         #> 
         param(
             [Parameter(Mandatory = $true)]
-            [string]$finishReason
+            [string]$finishReason # The reason for ending the conversation
         )
     
+        # Print an empty line to the console for better readability
         Write-Output ""
+        # Print the finish reason to the console
         Write-Output "(Finish reason: $finishReason)"
     }
-    
     function Show-PromptFilterResults {
         <#
         .SYNOPSIS
