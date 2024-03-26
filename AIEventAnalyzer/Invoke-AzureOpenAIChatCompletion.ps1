@@ -300,99 +300,116 @@ function Invoke-AzureOpenAIChatCompletion {
             'user'              = $user
         }
     }
-    # Function to generate the URL for the API request
+
+    <#
+    .SYNOPSIS
+    This function generates the URL for the Azure OpenAI API request.
+
+    .DESCRIPTION
+    The Get-Url function constructs the URL for the Azure OpenAI API request. It uses the provided endpoint, deployment, and API version to create the URL.
+
+    .PARAMETER Endpoint
+    Specifies the endpoint URL for the Azure OpenAI API. This parameter is mandatory.
+
+    .PARAMETER Deployment
+    Specifies the name of the OpenAI deployment to be used. This parameter is mandatory.
+
+    .PARAMETER APIVersion
+    Specifies the version of the Azure OpenAI API to be used. This parameter is mandatory.
+
+    .EXAMPLE
+    Get-Url -Endpoint "https://api.openai.com" -Deployment "myDeployment" -APIVersion "v1"
+
+    .OUTPUTS
+    Outputs a string representing the URL for the Azure OpenAI API request.
+    #>
     function Get-Url {
+        # Define parameters for the function
         param (
             [Parameter(Mandatory = $true)]
-            [string]$Endpoint,
+            [string]$Endpoint, # The endpoint URL for the Azure OpenAI API
+
             [Parameter(Mandatory = $true)]
-            [string]$Deployment,
+            [string]$Deployment, # The name of the OpenAI deployment to be used
+
             [Parameter(Mandatory = $true)]
-            [string]$APIVersion
+            [string]$APIVersion # The version of the Azure OpenAI API to be used
         )
-        <#
-        .SYNOPSIS
-        Generates the URL for the Azure OpenAI API request.
-        
-        .DESCRIPTION
-        This function constructs the URL used for the Azure OpenAI API request using the provided endpoint, deployment, and API version.
-        
-        .PARAMETER Endpoint
-        The endpoint URL for the Azure OpenAI API. This parameter is mandatory.
-        
-        .PARAMETER Deployment
-        The name of the OpenAI deployment to be used. This parameter is mandatory.
-        
-        .PARAMETER APIVersion
-        The version of the Azure OpenAI API to be used. This parameter is mandatory.
-        
-        .EXAMPLE
-        Get-Url -Endpoint "https://api.openai.com" -Deployment "myDeployment" -APIVersion "v1"
-        
-        .OUTPUTS
-        String of the URL for the Azure OpenAI API request.
-        #> 
+
+        # Construct and return the URL for the API request
         return "${Endpoint}/openai/deployments/${Deployment}/chat/completions?api-version=${APIVersion}"
     }
-    # Function to make the API request and store the response
+    
+    # This function makes an API request and stores the response
     function Invoke-ApiRequest {
         <#
         .SYNOPSIS
-        Makes the API request and stores the response.
-        
+        Sends a POST request to the specified API and stores the response.
+
         .DESCRIPTION
-        This function sends a POST request to the API and returns the response. It also handles any errors during the API request.
-        
+        The Invoke-ApiRequest function sends a POST request to the API specified by the url parameter. It uses the provided headers and bodyJSON for the request. 
+        If the request is successful, it returns the response. If an error occurs during the request, it handles the error and returns null.
+
         .PARAMETER url
-        The URL for the API request. This parameter is mandatory.
-        
+        Specifies the URL for the API request. This parameter is mandatory.
+
         .PARAMETER headers
-        The headers for the API request. This parameter is mandatory.
-        
+        Specifies the headers for the API request. This parameter is mandatory.
+
         .PARAMETER bodyJSON
-        The body for the API request. This parameter is mandatory.
-        
+        Specifies the body for the API request. This parameter is mandatory.
+
         .EXAMPLE
         Invoke-ApiRequest -url $url -headers $headers -bodyJSON $bodyJSON
-        
+
         .OUTPUTS
-        The response from the API request or null if an error occurs.
+        If successful, it outputs the response from the API request. If an error occurs, it outputs null.
         #>    
         param(
             [Parameter(Mandatory = $true)]
-            [string]$url,
+            [string]$url, # The URL for the API request
+
             [Parameter(Mandatory = $true)]
-            [hashtable]$headers,
+            [hashtable]$headers, # The headers for the API request
+
             [Parameter(Mandatory = $true)]
-            [string]$bodyJSON
+            [string]$bodyJSON # The body for the API request
         )
     
+        # Try to send the API request and handle any errors
         try {
+            # Start a new job to send the API request
             $response = Start-Job -ScriptBlock {
                 param($url, $headers, $bodyJSON)
+                # Send the API request
                 Invoke-RestMethod -Uri $url -Method POST -Headers $headers -Body $bodyJSON -TimeoutSec 240 -ErrorAction Stop
             } -ArgumentList $url, $headers, $bodyJSON
             
+            # Write verbose output for the job
             Write-Verbose ("Job: $($response | ConvertTo-Json)" )
 
+            # Wait for the job to finish
             while (($response.JobStateInfo.State -eq 'Running') -or ($response.JobStateInfo.State -eq 'NotStarted')) {
                 Write-Host "." -NoNewline -ForegroundColor Blue
                 Start-Sleep -Milliseconds 1000
             }
             Write-Host ""    
 
+            # If the job failed, write the error message
             if ($response.JobStateInfo.State -eq 'Failed') {
                 #Write-Output $($response.ChildJobs[0].JobStateInfo.Reason.message
-                
             }
 
-
+            # Receive the job result
             $response = Receive-Job -Id $response.Id -Wait -ErrorAction Stop
 
+            # Write verbose output for the response
             Write-Verbose ($response | Out-String)
 
+            # Return the response
             return $response
         }
+        # Catch any errors and write a warning
         catch {
             Write-Warning ($_.Exception.Message)
         }
