@@ -493,46 +493,50 @@ function Invoke-AzureOpenAIChatCompletion {
         # Print the finish reason to the console
         Write-Output "(Finish reason: $finishReason)"
     }
+    # Start of Selection
     function Show-PromptFilterResults {
         <#
         .SYNOPSIS
-        Outputs the prompt filter results.
-        
+        Displays the results of the prompt filter.
+
         .DESCRIPTION
-        This function prints the prompt filter results to the console.
-        
+        This function takes a response object as input and iterates through the 'prompt_filter_results' property of the object. 
+        For each item in 'prompt_filter_results', it extracts the 'content_filter_results' and converts it to a string. 
+        The function then outputs the 'content_filter_results' for each 'prompt_index'.
+
         .PARAMETER response
-        The prompt filter results to be displayed. This parameter is mandatory.
-        
+        A PSCustomObject that contains the prompt filter results to be displayed. This parameter is mandatory.
+
         .EXAMPLE
-        Show-PromptFilterResults -prompt_filter_results "Filtered results"
-        
+        Show-PromptFilterResults -response $response
+
         .OUTPUTS
-        None. This function outputs the prompt filter results to the console.
+        String. Outputs the 'content_filter_results' for each 'prompt_index' in the console.
         #> 
         param(
             [Parameter(Mandatory = $true)]
-            [PSCustomObject]$response
+            [PSCustomObject]$response # The response object containing the prompt filter results
         )
     
+        # Print an empty line for better readability
         Write-Host ""
+        # Print the title for the output
         Write-Host "Prompt Filter Results:"
-        #Write-Output $response.prompt_filter_results
 
-        # Iterate through each item in prompt_filter_results
+        # Iterate through each item in the 'prompt_filter_results' property of the response object
         foreach ($result in $response.prompt_filter_results) {
-            # Extract the content_filter_results
+            # Extract the 'content_filter_results' property from the current item
             $contentFilterResults = $result.content_filter_results
 
-            # Convert content_filter_results to PowerShell object
+            # Convert the 'content_filter_results' to a string
             $contentFilterObject = $contentFilterResults | Out-String
 
-            # Display the content_filter_results for each prompt_index
+            # Print the 'content_filter_results' for the current 'prompt_index'
             Write-Host "Results for prompt_index $($result.prompt_index):"
-            $contentFilterObject
+            return $contentFilterObject
         }
     }
-     
+    # End of Selection
     # Function to handle errors
     function Show-Error {
         <#
