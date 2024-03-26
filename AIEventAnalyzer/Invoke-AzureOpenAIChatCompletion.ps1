@@ -588,31 +588,35 @@ function Invoke-AzureOpenAIChatCompletion {
         Write-Host "" # Print an empty line for better readability
     }
         
-    # Function to test if a user environment variable exists
+    # Function to verify the existence of a user environment variable
     function Test-UserEnvironmentVariable {
         <#
         .SYNOPSIS
-        Tests if a user environment variable exists.
+        Verifies the existence of a user environment variable.
         
         .DESCRIPTION
-        This function checks if a specific user environment variable is set.
+        This function checks if a specific user environment variable is set in the system. It returns a boolean value indicating the existence of the variable.
         
         .PARAMETER VariableName
-        The name of the environment variable to test. This parameter is mandatory.
+        The name of the environment variable to verify. This parameter is mandatory.
         
         .EXAMPLE
         Test-UserEnvironmentVariable -VariableName "API_AZURE_OPENAI"
         
         .OUTPUTS
-        Boolean value indicating whether the environment variable exists or not.
+        Boolean. Returns $true if the environment variable exists, $false otherwise.
         #> 
         param (
             [Parameter(Mandatory = $true)]
-            [string]$VariableName
+            [string]$VariableName # The name of the environment variable to verify
         )
     
+        # Get the list of environment variables
         $envVariables = Get-ChildItem -Path "Env:$VariableName" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name
+        # Get the specific environment variable from the user environment
         $envVariable = [Environment]::GetEnvironmentVariable($VariableName, "User")
+        
+        # Check if the environment variable exists
         if ($envVariables -contains $VariableName -or $envVariable) {
             Write-Verbose "The user environment variable '$VariableName' is set."
             return $true
@@ -627,42 +631,33 @@ function Invoke-AzureOpenAIChatCompletion {
     function Show-Usage {
         <#
             .SYNOPSIS
-            Outputs the usage.
+            Outputs the usage statistics of the API call.
             
             .DESCRIPTION
-            This function prints the usage to the console.
+            This function takes in a usage object and prints the usage statistics to the console in a verbose manner. 
+            The usage object typically contains information about the total tokens in the API call and the total tokens used.
             
             .PARAMETER usage
-            The usage to be displayed. This parameter is mandatory.
+            The usage object to be displayed. This parameter is mandatory.
             
             .EXAMPLE
-            Show-Usage -usage "1"
+            Show-Usage -usage $response.usage
             
             .OUTPUTS
-            None. This function outputs the usage to the console.
+            String. This function outputs the usage statistics to the console and returns a string representation of the usage.
             #> 
         param(
             [Parameter(Mandatory = $true)]
-            #[System.Management.Automation.PSCustomObject]
-            [System.Object]$usage
+            [System.Object]$usage # The usage object to display
         )
-        #$_message = @()
-        #if ($usage.Count -gt 0) {
-        #    [void]($usage.keys | ForEach-Object { $_message += '{0}: {1}' -f $_, $usage[$_] })
-        #}
-        #else {
-        #    Write-Host "No usage information provided."
-        #    return
-        #}
-        #Write-Information ($($usage | gm) | Out-String) -InformationAction Continue
+
+        # Convert the usage object to a string and write it to the console in a verbose manner
         Write-Verbose ($usage | Out-String)
         Write-Verbose (($usage | gm) | Out-String)
-        #$usageData = $usage.keys | ForEach-Object { "$($_): $($usage[$_])" }
-        #$usageData = $usage | Get-Member | Where-Object {$_.MemberType -eq "Property"} | Format-Table Name, Value
+
+        # Return a string representation of the usage
         $usageData = $usage
         return "Usage:`n$usageData"
-        #return "Usage:`n$_message"
-
     }
     
     # Here's an example of how the Adjust-ParametersForSwitches function might look:
