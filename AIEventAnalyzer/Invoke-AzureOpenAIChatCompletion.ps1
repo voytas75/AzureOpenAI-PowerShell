@@ -1126,13 +1126,17 @@ function Invoke-AzureOpenAIChatCompletion {
 
 }
 
-
+# Define constants for environment variable names
 $API_AZURE_OPENAI_APIVERSION = "API_AZURE_OPENAI_APIVERSION"
 $API_AZURE_OPENAI_ENDPOINT = "API_AZURE_OPENAI_ENDPOINT"
 $API_AZURE_OPENAI_DEPLOYMENT = "API_AZURE_OPENAI_DEPLOYMENT"
 $API_AZURE_OPENAI_KEY = "API_AZURE_OPENAI_KEY"
 
+# Get the API version from the environment variable
 $APIVersion = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API version"
+# Get the endpoint from the environment variable
 $Endpoint = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"
+# Get the deployment from the environment variable
 $Deployment = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment"
+# Get the API key from the environment variable
 $ApiKey = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key"
