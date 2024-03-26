@@ -660,22 +660,39 @@ function Invoke-AzureOpenAIChatCompletion {
         return "Usage:`n$usageData"
     }
     
-    # Here's an example of how the Adjust-ParametersForSwitches function might look:
+    <#
+    .SYNOPSIS
+    This function sets the parameters for the switches.
+
+    .DESCRIPTION
+    This function takes in two boolean parameters, Creative and Precise, and sets the Temperature and TopP values accordingly.
+
+    .PARAMETER Creative
+    A boolean value that, when true, sets the Temperature to 0.7 and TopP to 0.95.
+
+    .PARAMETER Precise
+    A boolean value that, when true, sets the Temperature to 0.3 and TopP to 0.8.
+
+    .EXAMPLE
+    Set-ParametersForSwitches3 -Creative $true -Precise $false
+    #>
     function Set-ParametersForSwitches3 {
         param(
             [bool]$Creative,
             [bool]$Precise
         )
+        # If Creative is true, set Temperature to 0.7 and TopP to 0.95
         if ($Creative) {
             $script:Temperature = 0.7
             $script:TopP = 0.95
         }
+        # If Precise is true, set Temperature to 0.3 and TopP to 0.8
         if ($Precise) {
             $script:Temperature = 0.3
             $script:TopP = 0.8
         }
     }
-
+    
     function Set-ParametersForSwitches2 {
         param([bool]$Creative, [bool]$Precise)
         if ($Creative) {
@@ -692,41 +709,68 @@ function Invoke-AzureOpenAIChatCompletion {
     function Set-ParametersForSwitches {
         <#
         .SYNOPSIS
-        Adjusts temperature and top_p parameters based on the provided switches.
+        This function adjusts the 'Temperature' and 'TopP' parameters based on the provided switches.
 
         .DESCRIPTION
-        Sets the temperature and top_p parameters to predefined values based on whether the Creative or Precise switch is used.
+        This function sets the 'Temperature' and 'TopP' parameters to predefined values based on the state of the 'Creative' or 'Precise' switch. 
+        If 'Creative' is enabled, 'Temperature' is set to 0.7 and 'TopP' to 0.95. 
+        If 'Precise' is enabled, 'Temperature' is set to 0.3 and 'TopP' to 0.8.
 
         .PARAMETER Creative
-        A switch to set parameters for creative output.
+        A switch parameter. When enabled, it sets the parameters for a more creative output.
 
         .PARAMETER Precise
-        A switch to set parameters for precise output.
+        A switch parameter. When enabled, it sets the parameters for a more precise output.
 
         .OUTPUTS
-        Hashtable of adjusted parameters.
+        Outputs a Hashtable of the adjusted parameters.
         #>
         param(
             [switch]$Creative,
             [switch]$Precise
         )
+        
+        # Initialize parameters with default values
         $parameters = @{
             'Temperature' = 1.0
             'TopP'        = 1.0
         }
     
+        # If Creative switch is enabled, adjust parameters for creative output
         if ($Creative) {
             $parameters['Temperature'] = 0.7
             $parameters['TopP'] = 0.95
         }
+        # If Precise switch is enabled, adjust parameters for precise output
         elseif ($Precise) {
             $parameters['Temperature'] = 0.3
             $parameters['TopP'] = 0.8
         }
     
+        # Return the adjusted parameters
         return $parameters
     }
 
+    <#
+    .SYNOPSIS
+    This function writes a log message to a specified log file.
+
+    .DESCRIPTION
+    The Write-LogMessage function takes in a message, a log file path, and an optional log level (default is "INFO"). 
+    It then writes the message to the log file with a timestamp and the specified log level.
+
+    .PARAMETER Message
+    The message to be logged. This parameter is mandatory.
+
+    .PARAMETER LogFile
+    The path of the log file where the message will be written. This parameter is mandatory.
+
+    .PARAMETER Level
+    The level of the log message (e.g., "INFO", "VERBOSE", "ERROR"). This parameter is optional and defaults to "INFO".
+
+    .EXAMPLE
+    Write-LogMessage -Message "System prompt:`n$system_message" -LogFile $logfile -Level "VERBOSE"
+    #>
     function Write-LogMessage {
         param(
             [Parameter(Mandatory = $true)]
@@ -736,10 +780,14 @@ function Invoke-AzureOpenAIChatCompletion {
             [Parameter(Mandatory = $false)]
             [string]$Level = "INFO"
         )
-        # Usage:
-        #Write-LogMessage -Message "System prompt:`n$system_message" -LogFile $logfile -Level "VERBOSE"
+
+        # Get the current date and time in the format "yyyy-MM-dd HH:mm:ss"
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+
+        # Format the log entry
         $logEntry = "[$timestamp [$Level]] $Message"
+
+        # Write the log entry to the log file
         Add-Content -Path $LogFile -Value $logEntry -Force
     }
    
