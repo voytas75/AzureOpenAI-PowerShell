@@ -493,7 +493,7 @@ function Invoke-AzureOpenAIChatCompletion {
         # Print the finish reason to the console
         Write-Output "(Finish reason: $finishReason)"
     }
-    # Start of Selection
+    
     function Show-PromptFilterResults {
         <#
         .SYNOPSIS
@@ -536,15 +536,16 @@ function Invoke-AzureOpenAIChatCompletion {
             return $contentFilterObject
         }
     }
-    # End of Selection
-    # Function to handle errors
+
+    
+    # Function to handle and display errors
     function Show-Error {
         <#
         .SYNOPSIS
-        Handles errors.
+        Handles and displays errors.
         
         .DESCRIPTION
-        This function handles any errors during the execution of the script. It also prints the error details to the console.
+        This function handles any errors that occur during the execution of the script. It prints the error details to the console for debugging purposes.
         
         .PARAMETER ErrorVar
         The error variable that contains the error details. This parameter is mandatory.
@@ -557,10 +558,10 @@ function Invoke-AzureOpenAIChatCompletion {
         #> 
         param(
             [Parameter(Mandatory = $true)]
-            [string]$ErrorVar
+            [string]$ErrorVar # The error variable containing the error details
         )
     
-        # If any error occurs during the process, the error details (file, line, character, and message) are printed to the console.
+        # Print the error details (file, line, character, and message) to the console if any error occurs during the process
         Write-Host "[e] Error in file: $($ErrorVar.InvocationInfo.ScriptName)" -ForegroundColor DarkRed
         Write-Host "[e] Error in line: $($ErrorVar.InvocationInfo.ScriptLineNumber)" -ForegroundColor DarkRed
         Write-Host "[e] Error at char: $($ErrorVar.InvocationInfo.OffsetInLine)" -ForegroundColor DarkRed
@@ -569,20 +570,24 @@ function Invoke-AzureOpenAIChatCompletion {
         
         # Handle specific types of exceptions for more detailed error messages
         if ($ErrorVar.Exception -is [System.Net.WebException]) {
+            # Handle WebException and print the status code
             Write-Host "[e] WebException: $($ErrorVar.Exception.Response.StatusCode)" -ForegroundColor DarkRed
         }
         elseif ($ErrorVar.Exception -is [System.IO.IOException]) {
+            # Handle IOException and print the IO error
             Write-Host "[e] IOException: $($ErrorVar.Exception.IOError)" -ForegroundColor DarkRed
         }
         elseif ($ErrorVar.Exception -is [System.ArgumentException]) {
+            # Handle ArgumentException and print the parameter name that caused the exception
             Write-Host "[e] ArgumentException: $($ErrorVar.Exception.ParamName)" -ForegroundColor DarkRed
         }
         else {
+            # Handle unknown error types and print the full type name
             Write-Host "[e] Unknown error type: $($ErrorVar.Exception.GetType().FullName)" -ForegroundColor DarkRed
         }
-        Write-Host ""
+        Write-Host "" # Print an empty line for better readability
     }
-    
+        
     # Function to test if a user environment variable exists
     function Test-UserEnvironmentVariable {
         <#
