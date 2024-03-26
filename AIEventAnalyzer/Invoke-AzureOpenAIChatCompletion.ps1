@@ -839,16 +839,60 @@ function Invoke-AzureOpenAIChatCompletion {
         return [System.Text.RegularExpressions.Regex]::Replace($Message, "[^\x00-\x7F]", "")
     }
 
+    function Get-EnvironmentVariable {
+        [CmdletBinding()]
+        param(
+            [Parameter(Mandatory = $true)]
+            [string]$VariableName,
+            [Parameter(Mandatory = $true)]
+            [string]$PromptMessage
+        )
+        $VariableValue = [System.Environment]::GetEnvironmentVariable($VariableName, "User")
+        if ([string]::IsNullOrEmpty($VariableValue)) {
+            $VariableValue = Read-Host -Prompt $PromptMessage
+            try {
+                [System.Environment]::SetEnvironmentVariable($VariableName, $VariableValue, "User")
+                if ([System.Environment]::GetEnvironmentVariable($VariableName, "User") -eq $VariableValue) {
+                    Write-Host "Environment variable $VariableName was set successfully."
+                }
+            }
+            catch {
+                Write-Host "Failed to set environment variable $VariableName."
+            }
+        }
+        return $VariableValue
+    }
     
-    ##### Main program 
+    function Clear-AzureOpenAIAPIEnv {
+        param()
+        try {
+            [System.Environment]::SetEnvironmentVariable("API_AZURE_OPENAI_APIVERSION", "", "User")
+            [System.Environment]::SetEnvironmentVariable("API_AZURE_OPENAI_DEPLOYMENT", "", "User")
+            [System.Environment]::SetEnvironmentVariable("API_AZURE_OPENAI_KEY", "", "User")
+            [System.Environment]::SetEnvironmentVariable("API_AZURE_OPENAI_Endpoint", "", "User")
+            Write-Host "Environment variables for Azure API have been deleted successfully."
+        }
+        catch {
+            Write-Host "An error occurred while trying to delete Azure API environment variables. Please check your permissions and try again."
+        }
+    }
+    
+
+    # Main program 
+
+    # Define constants for environment variable names
     $API_AZURE_OPENAI_APIVERSION = "API_AZURE_OPENAI_APIVERSION"
     $API_AZURE_OPENAI_ENDPOINT = "API_AZURE_OPENAI_ENDPOINT"
     $API_AZURE_OPENAI_DEPLOYMENT = "API_AZURE_OPENAI_DEPLOYMENT"
     $API_AZURE_OPENAI_KEY = "API_AZURE_OPENAI_KEY"
     
+    # Get the API version from the environment variable
     $APIVersion = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API version"
+    # Get the endpoint from the environment variable
     $Endpoint = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"
+    # Get the deployment from the environment variable
     $Deployment = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment"
+    # Get the API key from the environment variable
     $ApiKey = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key"
     
     try {
@@ -858,35 +902,44 @@ function Invoke-AzureOpenAIChatCompletion {
             $usermessage = (get-content $usermessagelogfile | out-string)
         }
 
+        # Check if logfile is not set
         if (-not $logfile) {
+            # Check if usermessagelogfile is not set, but usermessage and SystemPromptFileName are set
             if (-not $usermessagelogfile -and $usermessage -and $SystemPromptFileName) {
                 $logfileBaseName = "usermessage-" + [System.IO.Path]::GetFileNameWithoutExtension($SystemPromptFileName) + "-"
                 $logfileExtension = ".txt"
                 $logfileDirectory = [Environment]::GetFolderPath("MyDocuments")
             }
+            # Check if OneTimeUserPrompt and SystemPromptFileName are set
             elseif ($OneTimeUserPrompt -and $SystemPromptFileName) {
                 $logfileBaseName = "usermessage_OneTimeUserPrompt-" + [System.IO.Path]::GetFileNameWithoutExtension($SystemPromptFileName) + "-"
                 $logfileExtension = ".txt"
                 $logfileDirectory = [Environment]::GetFolderPath("MyDocuments")
             }
+            # Check if SystemPrompt is set
             elseif ($SystemPrompt) {
                 $logfileBaseName = "SystemPrompt"
                 $logfileExtension = ".txt"
                 $logfileDirectory = [Environment]::GetFolderPath("MyDocuments")
-                <# Action when this condition is true #>
+                # Action when this condition is true
             }
+            # If none of the above conditions are met
             else {
                 $logfileBaseName = [System.IO.Path]::GetFileNameWithoutExtension($usermessagelogfile)
                 $logfileExtension = [System.IO.Path]::GetExtension($usermessagelogfile)
                 $logfileDirectory = [System.IO.Path]::GetDirectoryName($usermessagelogfile)
                 $logfileBaseName += "-" + [System.IO.Path]::GetFileNameWithoutExtension($SystemPromptFileName) + "-"
             }
+            # Initialize logfileNumber to 1
             $logfileNumber = 1
+            # Increment logfileNumber until a unique logfile name is found
             while (Test-Path -Path (Join-Path $logfileDirectory ($logfileBaseName + $logfileNumber + $logfileExtension))) {
                 $logfileNumber++
             }
+            # Set logfile to the unique logfile name
             $logfile = Join-Path $logfileDirectory ($logfileBaseName + $logfileNumber + $logfileExtension)
         }
+
         # Call functions to execute API request and output results
         $headers = Get-Headers -ApiKeyVariable "API_AZURE_OPENAI_KEY"
 
@@ -933,20 +986,29 @@ function Invoke-AzureOpenAIChatCompletion {
             }
         }
         
+        # Get the messages from the system and user
         $messages = Get-Messages -system_message $system_message -UserMessage $userMessage
+        # Write the messages to the verbose output
         Write-Verbose "Messages: $($messages | out-string)"
 
+        # Get the URL for the chat
         $urlChat = Get-Url -Endpoint $Endpoint -Deployment $Deployment -APIVersion $APIVersion
+        # Write the URL to the verbose output
         Write-Verbose "urtChat: $urlChat"
 
+        # Write the system prompt to the log file
         Write-LogMessage -Message "System promp:`n$system_message" -LogFile $logfile
+        # Write the user message to the log file
         Write-LogMessage -Message "User message:`n$userMessage" -LogFile $logfile
 
         do {
+            # Get the body of the message
             $body = Get-Body -messages $messages -temperature $parameters['Temperature'] -top_p $parameters['TopP'] -frequency_penalty $FrequencyPenalty -presence_penalty $PresencePenalty -user $User -n $N -stop $Stop -stream $Stream
 
+            # Convert the body to JSON
             $bodyJSON = ($body | ConvertTo-Json)
             
+            # If not a simple response, display chat completion and other details
             if (-not $simpleresponse) {
                 Write-Host "[Chat completion]" -ForegroundColor Green
                 if ($logfile) {
@@ -959,20 +1021,25 @@ function Invoke-AzureOpenAIChatCompletion {
                     Write-Host "{SysPrompt, temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
                 }
             }
+            # Invoke the API request
             $response = Invoke-ApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON
             
+            # If the response is null, break the loop
             if ($null -eq $response) {
                 Write-Verbose "Response is empty"
                 break
             }
 
+            # Write the received job to verbose output
             Write-Verbose ("Receive job:`n$($response | ConvertTo-Json)" | Out-String)
 
+            # Get the assistant response
             $assistant_response = $response.choices[0].message.content
 
+            # Add the assistant response to the messages
             $messages += @{"role" = "assistant"; "content" = $assistant_response }
 
-
+            # If there is a one-time user prompt, process it
             if ($OneTimeUserPrompt) {
                 Write-Verbose "OneTimeUserPrompt output with return"
                 if (-not $simpleresponse) {
@@ -985,32 +1052,31 @@ function Invoke-AzureOpenAIChatCompletion {
                 }
                 Write-Verbose "Show-ResponseMessage - return"
 
+                # Get the response text
                 $responseText = (Show-ResponseMessage -content $assistant_response -stream "assistant" -simpleresponse:$simpleresponse | Out-String)
 
+                # Write the one-time user prompt and response text to the log file
                 Write-LogMessage -Message "OneTimeUserPrompt:`n$OneTimeUserPrompt" -LogFile $logfile
                 Write-LogMessage -Message "ResponseText:`n$responseText" -LogFile $logfile
 
+                # Return the response text
                 return $responseText
             }
             else {
                 Write-Verbose "NO OneTimeUserPrompt"
 
+                # Show the response message
                 Show-ResponseMessage -content $assistant_response -stream "assistant" -simpleresponse:$simpleresponse
             
-                Write-LogMessage -Message "Assistant reposnse:`n$assistant_response" -LogFile $logfile
+                # Write the assistant response to the log file
+                Write-LogMessage -Message "Assistant response:`n$assistant_response" -LogFile $logfile
 
-                #                Write-Information -MessageData (Show-FinishReason -finishReason $response.choices.finish_reason | Out-String) -InformationAction Continue
-                
-                #$usage = $response.usage
-                #$usage
-                #                $usage.keys
-                #                $usageData = $usage.keys | ForEach-Object {"$($_): $($usage[$_])"}
-                #                $usageData
-                #                Write-Information -MessageData (Show-Usage -usage $response.usage | Out-String) -InformationAction Continue
-
+                # Get the user message
                 $user_message = Read-Host "Enter chat message (user)" 
+                # Add the user message to the messages
                 $messages += @{"role" = "user"; "content" = $user_message }
 
+                # Write the user response to the log file
                 Write-LogMessage -Message "User response:`n$user_message" -LogFile $logfile
             }
             
@@ -1020,44 +1086,6 @@ function Invoke-AzureOpenAIChatCompletion {
         Format-Error -ErrorVar $_
     }
 
-}
-
-function Get-EnvironmentVariable {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$VariableName,
-        [Parameter(Mandatory = $true)]
-        [string]$PromptMessage
-    )
-    $VariableValue = [System.Environment]::GetEnvironmentVariable($VariableName, "User")
-    if ([string]::IsNullOrEmpty($VariableValue)) {
-        $VariableValue = Read-Host -Prompt $PromptMessage
-        try {
-            [System.Environment]::SetEnvironmentVariable($VariableName, $VariableValue, "User")
-            if ([System.Environment]::GetEnvironmentVariable($VariableName, "User") -eq $VariableValue) {
-                Write-Host "Environment variable $VariableName was set successfully."
-            }
-        }
-        catch {
-            Write-Host "Failed to set environment variable $VariableName."
-        }
-    }
-    return $VariableValue
-}
-
-function Clear-AzureOpenAIAPIEnv {
-    param()
-    try {
-        [System.Environment]::SetEnvironmentVariable("API_AZURE_OPENAI_APIVERSION", "", "User")
-        [System.Environment]::SetEnvironmentVariable("API_AZURE_OPENAI_DEPLOYMENT", "", "User")
-        [System.Environment]::SetEnvironmentVariable("API_AZURE_OPENAI_KEY", "", "User")
-        [System.Environment]::SetEnvironmentVariable("API_AZURE_OPENAI_Endpoint", "", "User")
-        Write-Host "Environment variables for Azure API have been deleted successfully."
-    }
-    catch {
-        Write-Host "An error occurred while trying to delete Azure API environment variables. Please check your permissions and try again."
-    }
 }
 
 
