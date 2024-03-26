@@ -839,6 +839,22 @@ function Invoke-AzureOpenAIChatCompletion {
         return [System.Text.RegularExpressions.Regex]::Replace($Message, "[^\x00-\x7F]", "")
     }
 
+    <#
+    .SYNOPSIS
+    This function retrieves the value of a specified environment variable. If the variable does not exist, it prompts the user to provide a value and sets the variable.
+
+    .DESCRIPTION
+    The Get-EnvironmentVariable function retrieves the value of the environment variable specified by the VariableName parameter. If the variable does not exist or its value is null or empty, the function prompts the user to provide a value using the message specified by the PromptMessage parameter. The function then attempts to set the environment variable to the provided value.
+
+    .PARAMETER VariableName
+    The name of the environment variable to retrieve. This parameter is mandatory.
+
+    .PARAMETER PromptMessage
+    The message to display when prompting the user to provide a value for the environment variable. This parameter is mandatory.
+
+    .EXAMPLE
+    $APIVersion = Get-EnvironmentVariable -VariableName "API_AZURE_OPENAI_APIVERSION" -PromptMessage "Please enter the API version"
+    #>
     function Get-EnvironmentVariable {
         [CmdletBinding()]
         param(
@@ -847,19 +863,30 @@ function Invoke-AzureOpenAIChatCompletion {
             [Parameter(Mandatory = $true)]
             [string]$PromptMessage
         )
+
+        # Retrieve the value of the environment variable
         $VariableValue = [System.Environment]::GetEnvironmentVariable($VariableName, "User")
+
+        # If the variable does not exist or its value is null or empty, prompt the user to provide a value
         if ([string]::IsNullOrEmpty($VariableValue)) {
             $VariableValue = Read-Host -Prompt $PromptMessage
+
+            # Attempt to set the environment variable to the provided value
             try {
                 [System.Environment]::SetEnvironmentVariable($VariableName, $VariableValue, "User")
+
+                # If the variable was set successfully, display a success message
                 if ([System.Environment]::GetEnvironmentVariable($VariableName, "User") -eq $VariableValue) {
                     Write-Host "Environment variable $VariableName was set successfully."
                 }
             }
+            # If setting the variable failed, display an error message
             catch {
                 Write-Host "Failed to set environment variable $VariableName."
             }
         }
+
+        # Return the value of the environment variable
         return $VariableValue
     }
     
