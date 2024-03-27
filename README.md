@@ -103,7 +103,6 @@ This PowerShell function communicates with the Azure OpenAI API to facilitate th
 
 #### Parameters
 
-#### Parameters
 - `APIVersion`: Defines the version of the Azure OpenAI API to be utilized.
 - `Endpoint`: Specifies the endpoint URL for the Azure OpenAI API.
 - `Deployment`: Denotes the name of the OpenAI deployment to be utilized.
