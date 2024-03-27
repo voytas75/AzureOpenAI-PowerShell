@@ -816,7 +816,7 @@ Example of a JSON response with two records:
   # Invoke the AI model with the prompt and the data to analyze
   $json_data = $data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $prompt_one -LogFile $logFileNameEventData -Verbose:$false
 
-  $json_data
+  write-Verbose $json_data
   
   if ([string]::IsNullOrEmpty($json_data)) {
     Write-Host "No data to analyze. Exiting script..." -ForegroundColor Red
