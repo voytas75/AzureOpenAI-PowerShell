@@ -960,8 +960,10 @@ function Show-Banner {
 }
 
 
+Clear-Host
+Show-Banner
+
+
 # Load the Invoke-AzureOpenAIChatCompletion script
 . $PSScriptRoot\Invoke-AzureOpenAIChatCompletion.ps1 
 
-Clear-Host
-Show-Banner
