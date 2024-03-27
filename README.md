@@ -45,11 +45,11 @@ By providing the API key through the `ApiKeyVariable` parameter when invoking th
 ## Functionalities
 
 - [x] Completion - Function [`Invoke-AzureOpenAICompletion`](#function-invoke-azureopenaicompletion)
-- [x] Chat completion - Function [`Invoke-AzureOpenAIChatCompletion`](#function-invoke-azureopenaichatcompletion)
+- [x] Chat completion - Function [`Invoke-AzureOpenAIChatCompletion`](#function-invoke-azureopenaichatcompletion) ([source code](./AIEventAnalyzer/Invoke-AzureOpenAIChatCompletion.ps1))
 - [x] Embedding - Function [`Invoke-AzureOpenAIEmbedding`](#function-invoke-azureopenaiembedding)
 - [x] DALL-E 3 - Function [`Invoke-AzureOpenAIDalle3`](#function-invoke-azureopenaidalle3)
 - [x] Helper function for displaying information about request parameters - Function [`Invoke-APICall`](#function-invoke-apicall)
-- [x] AI Event Analyzer - Function [`Start-AIEventAnalyzer`](./AIEventAnalyzer/README.md)
+- [x] AI Event Analyzer - Function [`Start-AIEventAnalyzer`](./AIEventAnalyzer/README.md) ([source code](./AIEventAnalyzer/Start-AIEventAnalyzer.ps1))
 
 ### Function: `Invoke-AzureOpenAICompletion`
 
