@@ -1,3 +1,5 @@
+using namespace System.Diagnostics
+
 <#
 .SYNOPSIS
 This function logs the data into a specified file in a specified folder.
@@ -171,6 +173,45 @@ function Get-EventSeverity {
     return ($EventLevelsReverse[$Severity]).Name
   }
 }
+
+<#
+.SYNOPSIS
+   This function retrieves the count of events from a specified Windows Event Log based on the severity level.
+
+.DESCRIPTION
+   The Get-EventLogInfo function creates an object of the specified Windows Event Log and filters the entries based on the provided severity level. 
+   It then returns the count of the filtered events.
+
+.PARAMETER logName
+   The name of the Windows Event Log from which the events are to be retrieved.
+
+.PARAMETER severityLevel
+   The severity level of the events to be retrieved. The valid values are "Critical", "Error", "Warning", "Information", "Verbose", "SuccessAudit", "FailureAudit".
+
+.EXAMPLE
+   Get-EventLogInfo -logName "System" -severityLevel "Information"
+   This command retrieves the count of "Information" level events from the "System" Windows Event Log.
+#>
+function Get-EventLogInfo {
+  param (
+      [Parameter(Mandatory=$true)]
+      [string]$logName,
+
+      [Parameter(Mandatory=$true)]
+      [ValidateSet("Critical", "Error", "Warning", "Information", "Verbose", "SuccessAudit", "FailureAudit")]
+      [string]$severityLevel
+  )
+
+  # Create an object of the specified Windows Event Log
+  $eventLog = new-object System.Diagnostics.EventLog($logName)
+
+  # Filter the entries of the Event Log based on the provided severity level
+  $filteredEvents = $eventLog.Entries | Where-Object { $_.EntryType -eq $([System.Diagnostics.EventLogEntryType]::$severityLevel) }
+  
+  # Return the count of the filtered events
+  return $filteredEvents.Count
+}
+
 
 function Get-LogFileDetails {
   param (
@@ -731,6 +772,13 @@ Example of a JSON response with two records:
 
   # Loop until a valid severity level is entered
   do {
+    Write-Host "Counting the number of events for each severity level, this may take some time..." -ForegroundColor DarkCyan
+    $severityLevels = @("Critical", "Error", "Warning", "Information", "Verbose")
+    foreach ($level in $severityLevels) {
+      $count = Get-EventLogInfo -logName $chosenLogName -severityLevel $level
+      Write-Host "The log '$chosenLogName' has $count events of '$level' severity level." -ForegroundColor DarkCyan
+    }
+    Write-Host ""
     # Ask the user to enter the severity level
     Write-Host "Please enter the severity level of the events you want to analyze. Options are: Critical, Error, Warning, Information, Verbose, or All." -ForegroundColor DarkCyan
     Write-Host "Enter the severity level (default: All)" -ForegroundColor DarkCyan -NoNewline
@@ -966,4 +1014,3 @@ Show-Banner
 
 # Load the Invoke-AzureOpenAIChatCompletion script
 . $PSScriptRoot\Invoke-AzureOpenAIChatCompletion.ps1 
-
