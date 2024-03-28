@@ -39,9 +39,9 @@ function Invoke-AzureOpenAIChatCompletion {
     .PARAMETER Stream
     Adjusts the stream parameter for the API request, determining whether the chatbot should stream its responses.
 
-    .PARAMETER SystemPromptFileName
-    Identifies the file name of the system prompt.
-
+    .PARAMETER SystemPromptFilePath
+    Specifies the path of the file containing the system prompt.
+    
     .PARAMETER SystemPrompt
     Identifies the system prompt.
 
@@ -905,7 +905,8 @@ function Invoke-AzureOpenAIChatCompletion {
 
         # system prompt
         if ($SystemPromptFileName) {
-            $system_message = get-content -path (Join-Path $PSScriptRoot "prompts\$SystemPromptFileName") -Encoding UTF8 -Raw 
+            #$system_message = get-content -path (Join-Path $PSScriptRoot "prompts\$SystemPromptFileName") -Encoding UTF8 -Raw 
+            $system_message = get-content -path $SystemPromptFileName -Encoding UTF8 -Raw 
         }
         else {
             $system_message = $SystemPrompt
@@ -975,7 +976,7 @@ function Invoke-AzureOpenAIChatCompletion {
                     Write-Host "{Logfile:'${logfile}'} " -ForegroundColor Magenta
                 }
                 if ($SystemPromptFileName) {
-                    Write-Host "{SysPFile:'${SystemPromptFileName}', temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
+                    Write-Host "{SysPFile:'$(Split-Path -Path $SystemPromptFileName -Leaf)', temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
                 }
                 else {
                     Write-Host "{SysPrompt, temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
