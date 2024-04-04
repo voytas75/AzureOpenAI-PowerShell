@@ -864,24 +864,23 @@ function Invoke-AzureOpenAIChatCompletion {
 
         # Check if logfile is not set
         if (-not $logfile) {
+            $logfileDirectory = [Environment]::GetFolderPath("MyDocuments")
             # Check if usermessagelogfile is not set, but usermessage and SystemPromptFileName are set
             if (-not $usermessagelogfile -and $usermessage -and $SystemPromptFileName) {
-                $logfileBaseName = "usermessage-" + [System.IO.Path]::GetFileNameWithoutExtension($SystemPromptFileName) + "-"
+                $userMessageHash = Get-Hash -InputString $usermessage -HashType MD5
+                $logfileBaseName = "usermessage-$userMessageHash-" + [System.IO.Path]::GetFileNameWithoutExtension($SystemPromptFileName) + "-"
                 $logfileExtension = ".txt"
-                $logfileDirectory = [Environment]::GetFolderPath("MyDocuments")
             }
             # Check if OneTimeUserPrompt and SystemPromptFileName are set
             elseif ($OneTimeUserPrompt -and $SystemPromptFileName) {
-                $logfileBaseName = "usermessage_OneTimeUserPrompt-" + [System.IO.Path]::GetFileNameWithoutExtension($SystemPromptFileName) + "-"
+                $OneTimeUserPromptHash = Get-Hash -InputString $OneTimeUserPrompt -HashType MD5
+                $logfileBaseName = "usermessage_OneTimeUserPrompt-$OneTimeUserPromptHash-" + [System.IO.Path]::GetFileNameWithoutExtension($SystemPromptFileName) + "-"
                 $logfileExtension = ".txt"
-                $logfileDirectory = [Environment]::GetFolderPath("MyDocuments")
             }
             # Check if SystemPrompt is set
             elseif ($SystemPrompt) {
                 $logfileBaseName = "SystemPrompt"
                 $logfileExtension = ".txt"
-                $logfileDirectory = [Environment]::GetFolderPath("MyDocuments")
-                # Action when this condition is true
             }
             # If none of the above conditions are met
             else {
