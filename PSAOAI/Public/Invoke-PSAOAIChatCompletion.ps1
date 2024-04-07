@@ -1,4 +1,4 @@
-function Invoke-AzureOpenAIChatCompletion {
+function Invoke-PSAOAIChatCompletion {
     <#
     .SYNOPSIS
     This function facilitates interaction with an Azure OpenAI chatbot by sending an API request and retrieving the chatbot's response.
@@ -1085,7 +1085,7 @@ function Get-EnvironmentVariable {
             [System.Environment]::SetEnvironmentVariable($VariableName, $VariableValue, "User")
 
             # If the variable was set successfully, display a success message
-            if ([System.Environment]::GetEnvironmentVariable($VariableName, "User") -eq $VariableValue) {
+            if (Test-UserEnvironmentVariable -VariableName $VariableName) {
                 Write-Host "Environment variable $VariableName was set successfully."
             }
         }
