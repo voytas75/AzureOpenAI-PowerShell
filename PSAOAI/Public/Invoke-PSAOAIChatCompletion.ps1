@@ -75,20 +75,44 @@ function Invoke-PSAOAIChatCompletion {
     Author: Wojciech Napierala
     Date:   2023-06-27
     #>
-    [CmdletBinding(DefaultParameterSetName)]
+    [CmdletBinding(DefaultParameterSetName = 'SystemPrompt_Mode')]
     param(
+        [Parameter(ParameterSetName = 'SystemPrompt_Mode', Mandatory = $true)]
+        [Parameter(ParameterSetName = 'SystemPrompt_TempTop', Mandatory = $true)]
+        [string]$SystemPrompt,
+        [Parameter(ParameterSetName = 'SystemPromptFileName_Mode', Mandatory = $true)]
+        [Parameter(ParameterSetName = 'SystemPromptFileName_TempTop', Mandatory = $true)]
+        [string]$SystemPromptFileName,
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+        [string]$usermessage,
         [Parameter(Mandatory = $false)]
-        [string]$APIVersion,
+        [switch]$OneTimeUserPrompt,
+        [Parameter(ParameterSetName = 'SystemPrompt_Mode', Mandatory = $true)]
+        [Parameter(ParameterSetName = 'SystemPromptFileName_Mode', Mandatory = $true)]
+        [ValidateSet("Precise", "Creative")]
+        [string]$Mode,
+        [Parameter(ParameterSetName = 'SystemPrompt_TempTop', Mandatory = $false)]
+        [Parameter(ParameterSetName = 'SystemPromptFileName_TempTop', Mandatory = $false)]
+        [Parameter(ParameterSetName = 'temptop')]
+        [double]$Temperature = 1,
+        [Parameter(ParameterSetName = 'SystemPrompt_TempTop', Mandatory = $false)]
+        [Parameter(ParameterSetName = 'SystemPromptFileName_TempTop', Mandatory = $false)]
+        [Parameter(ParameterSetName = 'temptop')]
+        [double]$TopP = 1,
+        [Parameter(Mandatory = $false)]
+        [string]$logfile,
+        [Parameter(Mandatory = $false)]
+        [string]$usermessagelogfile,
+        [Parameter(Mandatory = $false)]
+        [switch]$simpleresponse,
+        [Parameter(Mandatory = $false)]
+        [string]$APIVersion = (get-apiversion -preview | select-object -first 1),
         [Parameter(Mandatory = $false)]
         [string]$Endpoint,
         [Parameter(Mandatory = $false)]
         [string]$Deployment,
         [Parameter(Mandatory = $false)]
         [string]$User = "",
-        [Parameter(Mandatory = $false)]
-        [double]$Temperature = 1,
-        [Parameter(Mandatory = $false)]
-        [double]$TopP = 1,
         [Parameter(Mandatory = $false)]
         [int]$N = 1,
         [Parameter(Mandatory = $false)]
@@ -98,27 +122,8 @@ function Invoke-PSAOAIChatCompletion {
         [Parameter(Mandatory = $false)]
         [string]$Stop = $null,
         [Parameter(Mandatory = $false)]
-        [bool]$Stream = $false,
-        [Parameter(Mandatory = $false)]
-        [string]$SystemPromptFileName,
-        [Parameter(Mandatory = $false)]
-        [string]$SystemPrompt,
-        [Parameter(Mandatory = $false, ValueFromPipeline = $true)]
-        [ValidateNotNullOrEmpty()]
-        [string]$OneTimeUserPrompt,
-        [Parameter(Mandatory = $false)]
-        [string]$logfile,
-        [Parameter(ParameterSetName = 'UserMessage')]
-        [string]$usermessage,
-        [Parameter(ParameterSetName = 'UserMessageLogfile')]
-        [string]$usermessagelogfile,
-        [Parameter(ParameterSetName = 'Precise')]
-        [switch]$Precise,
-        [Parameter(ParameterSetName = 'Creative')]
-        [switch]$Creative,
-        [switch]$simpleresponse
+        [bool]$Stream = $false
     )
-
     # Function to generate the headers for the API request.
     function Get-Headers {
         <#
@@ -301,7 +306,8 @@ function Invoke-PSAOAIChatCompletion {
         }
     }
 
-    <#
+    function Get-Url {
+        <#
     .SYNOPSIS
     This function generates the URL for the Azure OpenAI API request.
 
@@ -323,8 +329,6 @@ function Invoke-PSAOAIChatCompletion {
     .OUTPUTS
     Outputs a string representing the URL for the Azure OpenAI API request.
     #>
-    function Get-Url {
-        # Define parameters for the function
         param (
             [Parameter(Mandatory = $true)]
             [string]$Endpoint, # The endpoint URL for the Azure OpenAI API
@@ -536,7 +540,6 @@ function Invoke-PSAOAIChatCompletion {
             return $contentFilterObject
         }
     }
-
     
     # Function to handle and display errors
     function Show-Error {
@@ -660,7 +663,8 @@ function Invoke-PSAOAIChatCompletion {
         return "Usage:`n$usageData"
     }
     
-    <#
+    function Set-ParametersForSwitches3 {
+        <#
     .SYNOPSIS
     This function sets the parameters for the switches.
 
@@ -676,7 +680,6 @@ function Invoke-PSAOAIChatCompletion {
     .EXAMPLE
     Set-ParametersForSwitches3 -Creative $true -Precise $false
     #>
-    function Set-ParametersForSwitches3 {
         param(
             [bool]$Creative,
             [bool]$Precise
@@ -751,7 +754,8 @@ function Invoke-PSAOAIChatCompletion {
         return $parameters
     }
 
-    <#
+    function Write-LogMessage {
+        <#
     .SYNOPSIS
     This function writes a log message to a specified log file.
 
@@ -771,7 +775,6 @@ function Invoke-PSAOAIChatCompletion {
     .EXAMPLE
     Write-LogMessage -Message "System prompt:`n$system_message" -LogFile $logfile -Level "VERBOSE"
     #>
-    function Write-LogMessage {
         param(
             [Parameter(Mandatory = $true)]
             [string]$Message,
@@ -780,7 +783,6 @@ function Invoke-PSAOAIChatCompletion {
             [Parameter(Mandatory = $false)]
             [string]$Level = "INFO"
         )
-
         # Get the current date and time in the format "yyyy-MM-dd HH:mm:ss"
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
@@ -791,7 +793,8 @@ function Invoke-PSAOAIChatCompletion {
         Add-Content -Path $LogFile -Value $logEntry -Force
     }
    
-    <#
+    function Format-Error {
+        <#
     .SYNOPSIS
     This function formats and outputs the provided error record.
 
@@ -805,7 +808,6 @@ function Invoke-PSAOAIChatCompletion {
     .EXAMPLE
     Format-Error -ErrorVar $Error
     #>
-    function Format-Error {
         param(
             [Parameter(Mandatory = $true)]
             [System.Management.Automation.ErrorRecord]$ErrorVar
@@ -815,7 +817,8 @@ function Invoke-PSAOAIChatCompletion {
         Write-Output $ErrorVar
     }
 
-    <#
+    function Format-Message {
+        <#
     .SYNOPSIS
     This function formats the provided message by removing non-ASCII characters.
 
@@ -829,7 +832,6 @@ function Invoke-PSAOAIChatCompletion {
     .EXAMPLE
     $userMessage = Format-Message -Message $OneTimeUserPrompt
     #>
-    function Format-Message {
         param(
             [Parameter(Mandatory = $true)]
             [string]$Message
@@ -838,7 +840,6 @@ function Invoke-PSAOAIChatCompletion {
         # Remove non-ASCII characters from the message
         return [System.Text.RegularExpressions.Regex]::Replace($Message, "[^\x00-\x7F]", "")
     }
-
 
     # Define constants for environment variable names
     $API_AZURE_OPENAI_APIVERSION = "API_AZURE_OPENAI_APIVERSION"
@@ -855,40 +856,83 @@ function Invoke-PSAOAIChatCompletion {
     # Get the API key from the environment variable
     $ApiKey = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key"
     
+    switch ($Mode) {
+        "Precise" {
+            $Precise = $true
+            $Creative = $false
+        }
+        "Creative" {
+            $Creative = $true
+            $Precise = $false
+        }
+        default {
+            # Code for default case
+            [double]$Temperature = 1
+            [double]$TopP = 1
+            }
+    }
+
+    if ($OneTimeUserPrompt) {
+        [string]$OneTimeUserPrompt = ($usermessage | out-string)
+    }
+
+    if ($VerbosePreference -eq "Continue") {
+        Write-Host "APIVersion: $APIVersion"
+        Write-Host "Endpoint: $Endpoint"
+        Write-Host "Deployment: $Deployment"
+        Write-Host "Precise: $Precise"
+        Write-Host "Creative: $Creative"
+        Write-Host "SystemPromptFileName: $(if($SystemPromptFileName){"exists"}else{"not exists"})"
+        Write-Host "SystemPrompt: $(if($SystemPrompt){"exist"}else{"not exists"})"
+        Write-Host "usermessage: $(if($usermessage){"exists"}else{"not exists"})"
+        Write-Host "OneTimeUserPrompt: $(if($OneTimeUserPrompt){"true"}else{"false"})"
+        Write-Host "Temperature: $Temperature"
+        Write-Host "TopP: $TopP"
+        Write-Host "FrequencyPenalty: $FrequencyPenalty"
+        Write-Host "PresencePenalty: $PresencePenalty"
+        Write-Host "User: $User"
+        Write-Host "N: $N"
+        Write-Host "Stop: $Stop"
+        Write-Host "Stream: $Stream"
+        Write-Host "logfile: $logfile"
+        Write-Host "simpleresponse: $simpleresponse"
+        Write-Host "usermessagelogfile: $usermessagelogfile"
+    }
+
     try {
         # Check if usermessage is not set and usermessagelogfile is set
         if (-not $usermessage -and $usermessagelogfile) {
             # If so, read the content of usermessagelogfile and assign it to usermessage
             $usermessage = (get-content $usermessagelogfile | out-string)
         }
+        $moduleName = "PSAOAI"
 
         # Check if logfile is not set
         if (-not $logfile) {
-            $logfileDirectory = [Environment]::GetFolderPath("MyDocuments")
-            # Check if usermessagelogfile is not set, but usermessage and SystemPromptFileName are set
-            if (-not $usermessagelogfile -and $usermessage -and $SystemPromptFileName) {
+            $logfileDirectory = Join-Path -Path ([Environment]::GetFolderPath("MyDocuments")) -ChildPath $modulename
+
+            if (!(Test-Path -Path $logfileDirectory)) {
+                # Create the directory if it does not exist
+                New-Item -ItemType Directory -Path $logfileDirectory -Force | Out-Null
+            }
+    
+            $logfileBaseName = ""
+            $logfileExtension = ".txt"
+            if ($usermessage) {
                 $userMessageHash = Get-Hash -InputString $usermessage -HashType MD5
-                $logfileBaseName = "usermessage-$userMessageHash-" + [System.IO.Path]::GetFileNameWithoutExtension($SystemPromptFileName) + "-"
-                $logfileExtension = ".txt"
+                $logfileBaseName = "usermessage-$userMessageHash-"
+                if ($OneTimeUserPrompt) {
+                    $logfileBaseName = "usermessage-OneTimeUserPrompt-$userMessageHash-"
+                }
             }
-            # Check if OneTimeUserPrompt and SystemPromptFileName are set
-            elseif ($OneTimeUserPrompt -and $SystemPromptFileName) {
-                $OneTimeUserPromptHash = Get-Hash -InputString $OneTimeUserPrompt -HashType MD5
-                $logfileBaseName = "usermessage_OneTimeUserPrompt-$OneTimeUserPromptHash-" + [System.IO.Path]::GetFileNameWithoutExtension($SystemPromptFileName) + "-"
-                $logfileExtension = ".txt"
+            if ($SystemPrompt) {
+                $SystemMessageHash = Get-Hash -InputString $SystemPrompt -HashType MD5
+                $logfileBaseName += "SystemPrompt-$SystemMessageHash-"
             }
-            # Check if SystemPrompt is set
-            elseif ($SystemPrompt) {
-                $logfileBaseName = "SystemPrompt"
-                $logfileExtension = ".txt"
+            elseif ($SystemPromptFileName) {
+                $logfileBaseName += "SystemPrompt-" + [System.IO.Path]::GetFileNameWithoutExtension($SystemPromptFileName) + "-"
             }
-            # If none of the above conditions are met
-            else {
-                $logfileBaseName = [System.IO.Path]::GetFileNameWithoutExtension($usermessagelogfile)
-                $logfileExtension = [System.IO.Path]::GetExtension($usermessagelogfile)
-                $logfileDirectory = [System.IO.Path]::GetDirectoryName($usermessagelogfile)
-                $logfileBaseName += "-" + [System.IO.Path]::GetFileNameWithoutExtension($SystemPromptFileName) + "-"
-            }
+
             # Initialize logfileNumber to 1
             $logfileNumber = 1
             # Increment logfileNumber until a unique logfile name is found
@@ -1127,7 +1171,8 @@ function Clear-AzureOpenAIAPIEnv {
     }
 }
 
-<#
+function Get-Hash {
+    <#
     .SYNOPSIS
     This function generates a hash of a given string using the specified hash algorithm.
 
@@ -1151,7 +1196,6 @@ function Clear-AzureOpenAIAPIEnv {
     Author: Your Name
     Date:   Current Date
 #>
-function Get-Hash {
     [CmdletBinding()]
     param(
         # The string to be hashed
@@ -1176,8 +1220,6 @@ function Get-Hash {
     # Return the hash string
     return $hashString
 }
-
-
 
 # Define constants for environment variable names
 $API_AZURE_OPENAI_APIVERSION = "API_AZURE_OPENAI_APIVERSION"

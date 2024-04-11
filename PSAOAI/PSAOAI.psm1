@@ -1,7 +1,4 @@
 
-# Clear the console
-Clear-Host
-
 # Define the name of the current module
 $ModuleName = "PSAOAI"
 $ModuleNameFull = "PowerShell Azure OpenAI"
