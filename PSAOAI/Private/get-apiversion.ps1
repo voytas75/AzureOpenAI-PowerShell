@@ -12,8 +12,26 @@ This switch parameter indicates whether to retrieve the API versions from the 's
 This switch parameter indicates whether to retrieve the API versions from the 'preview' folder.
 
 .EXAMPLE
-Get-APIVersion -Stable -Preview
+PS> Get-APIVersion -Stable -Preview
+
 This command retrieves the API versions from both the 'stable' and 'preview' folders.
+
+.EXAMPLE 
+PS> Get-APIVersion -Stable
+
+This example retrieves all stable API versions without including preview ones.
+
+.INPUTS
+None. You cannot pipe objects to this function.
+
+.OUTPUTS
+System.Array.
+An array of strings containing sorted list of version names based on their release dates in descending order is returned by this command.
+
+.NOTES 
+Author: Voytas75
+Date: 04.2024
+GitHub Repository URL: https://github.com/voytas75/AzureOpenAI-PowerShell/
 #>
 function Get-APIVersion {
     param (
