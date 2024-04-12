@@ -1,4 +1,4 @@
-function Invoke-AzureOpenAICompletion {
+function Invoke-PSAOAICompletion {
     <#
     .SYNOPSIS
     This script makes an API request to an OpenAI chatbot and outputs the response message.
@@ -80,25 +80,17 @@ function Invoke-AzureOpenAICompletion {
     Author: Wojciech Napierała
     Date:   2023-06-27
     Repo: https://github.com/voytas75/AzureOpenAI-PowerShell
-    #>
-    
-    [CmdletBinding(DefaultParameterSetName='SamplingParameters_Precise')]
+    #>    
+    [CmdletBinding(DefaultParameterSetName = 'Mode')]
     param(
-        [Parameter(Mandatory = $true)]
-        [string]$APIVersion,
-        [Parameter(Mandatory = $true)]
-        [string]$Endpoint,
-        [Parameter(Mandatory = $true)]
-        [string]$Deployment,
-        [Parameter(Mandatory = $true)]
-        [int]$MaxTokens,
-
-        [Parameter(ParameterSetName = 'SamplingParameters', Mandatory = $true, HelpMessage = "What sampling temperature to use, between 0 and 2. Higher values means the model will take more risks. Try 0.9 for more creative applications, and 0 (argmax sampling) for ones with a well-defined answer. We generally recommend altering this or top_p but not both.")]
-        [double]$Temperature,
-
-        [Parameter(ParameterSetName = 'SamplingParameters', Mandatory = $true, HelpMessage = 'An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered. We generally recommend altering this or temperature but not both.')]
-        [double]$TopP,
-
+        [Parameter(ValueFromPipeline)]
+        [string]$usermessage,
+        [Parameter(Mandatory = $false)]
+        [int]$MaxTokens = "800",
+        [Parameter(ParameterSetName = 'SamplingParameters', Mandatory = $false, HelpMessage = "What sampling temperature to use, between 0 and 2. Higher values means the model will take more risks. Try 0.9 for more creative applications, and 0 (argmax sampling) for ones with a well-defined answer. We generally recommend altering this or top_p but not both.")]
+        [double]$Temperature = 1,
+        [Parameter(ParameterSetName = 'SamplingParameters', Mandatory = $false, HelpMessage = 'An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered. We generally recommend altering this or temperature but not both.')]
+        [double]$TopP = 1,
         [Parameter(Mandatory = $false)]
         [double]$FrequencyPenalty = 0,
         [Parameter(Mandatory = $false, HelpMessage = "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.")]
@@ -122,16 +114,20 @@ function Invoke-AzureOpenAICompletion {
         [Parameter(Mandatory = $false)]
         [string]$completion_config = $null,        
         [Parameter(Mandatory = $false)]
-        [string]$User = $null,
+        [string]$User = "",
         [Parameter(Mandatory = $false)]
         [string]$model,
-        [Parameter(ParameterSetName = 'SamplingParameters_Precise', Mandatory = $true)]
-        [switch]$Precise,
-        [Parameter(ParameterSetName = 'SamplingParameters1_Creative', Mandatory = $true)]
-        [switch]$Creative,
-        [string]$usermessage
-
-
+        [Parameter(ParameterSetName = 'Mode', Mandatory = $true)]
+        [ValidateSet("Precise", "Creative")]
+        [string]$Mode,
+        [Parameter(Mandatory = $false)]
+        [switch]$simpleresponse,
+        [Parameter(Mandatory = $false)]
+        [string]$APIVersion = (Get-EnvironmentVariable -VariableName "API_AZURE_OPENAI_APIVERSION" -PromptMessage "Please enter the API version"),
+        [Parameter(Mandatory = $false)]
+        [string]$Endpoint = (Get-EnvironmentVariable -VariableName "API_AZURE_OPENAI_ENDPOINT" -PromptMessage "Please enter the endpoint"),
+        [Parameter(Mandatory = $false)]
+        [string]$Deployment = (Get-EnvironmentVariable -VariableName "API_AZURE_OPENAI_DEPLOYMENT" -PromptMessage "Please enter the deployment")
     )
     
     # Define headers for API request
@@ -296,22 +292,57 @@ function Invoke-AzureOpenAICompletion {
             return $response
         }
         catch {
-            Show-Error -ErrorMessage $_
+            Format-Error -ErrorVar $_
         }
     }
     
     # Output response message
     function Show-ResponseMessage {
+        <#
+        .SYNOPSIS
+        This function outputs the response message to the console.
+        
+        .DESCRIPTION
+        Show-ResponseMessage is a function that takes in a content and a stream type and outputs the response message. 
+        The output format can be simplified by using the -simpleresponse switch.
+        
+        .PARAMETER content
+        The content to be displayed. This parameter is mandatory.
+        
+        .PARAMETER stream
+        The stream type of the content. This parameter is mandatory.
+        
+        .PARAMETER simpleresponse
+        A switch parameter. If used, the function will return only the content, without the stream type.
+        
+        .EXAMPLE
+        Show-ResponseMessage -content "Hello, how can I assist you today?" -stream "system"
+        
+        .EXAMPLE
+        Show-ResponseMessage -content "Hello, how can I assist you today?" -stream "system" -simpleresponse
+        
+        .OUTPUTS
+        String. This function outputs the response message to the console.
+        #> 
         param(
             [Parameter(Mandatory = $true)]
-            [string]$content,
+            [string]$content, # The content to be displayed
+
             [Parameter(Mandatory = $true)]
-            [string]$stream
+            [string]$stream, # The stream type of the content
+
+            [switch]$simpleresponse # A switch to simplify the response output
         )
     
-        Write-Output ""
-        Write-Output "Response message ($stream):"
-        Write-Output $content
+        # Check if the simpleresponse switch is used
+        if (-not $simpleresponse) {
+            # Return the response message with the stream type
+            return ("Response assistant ($stream):`n${content}")
+        }
+        else {
+            # Return only the content
+            return $content
+        }
     }
     
     # Output finish reason
@@ -321,8 +352,8 @@ function Invoke-AzureOpenAICompletion {
             [string]$finishReason
         )
     
-        Write-Output ""
-        Write-Output "Finish reason: $($finishReason)"
+        Write-Host ""
+        Write-Host "Finish reason: $($finishReason)"
     }
     
     # Output usage
@@ -332,20 +363,34 @@ function Invoke-AzureOpenAICompletion {
             [string]$usage
         )
     
-        Write-Output ""
-        Write-Output "Usage:"
-        Write-Output $usage
+        Write-Host ""
+        Write-Host "Usage:"
+        Write-Host $usage
     }
     
     # Define function to handle errors
-    function Show-Error {
+    function Format-Error {
+        <#
+    .SYNOPSIS
+    This function formats and outputs the provided error record.
+
+    .DESCRIPTION
+    The Format-Error function takes in an ErrorRecord object and outputs it. 
+    This can be used for better error handling and logging in scripts.
+
+    .PARAMETER ErrorVar
+    The ErrorRecord object to be formatted and outputted. This parameter is mandatory.
+
+    .EXAMPLE
+    Format-Error -ErrorVar $Error
+    #>
         param(
             [Parameter(Mandatory = $true)]
-            [string]$ErrorMessage
+            [System.Management.Automation.ErrorRecord]$ErrorVar
         )
-    
-        Write-Error $ErrorMessage
-        # Log error to file or other logging mechanism
+
+        # Output the ErrorRecord object
+        Write-Host $ErrorVar
     }
 
     function Test-UserEnvironmentVariable {
@@ -437,46 +482,90 @@ function Invoke-AzureOpenAICompletion {
         return [System.Text.RegularExpressions.Regex]::Replace($Message, "[^\x00-\x7F]", " ")
     }
 
+    # Define constants for environment variable names
+    $API_AZURE_OPENAI_APIVERSION = "API_AZURE_OPENAI_APIVERSION"
+    $API_AZURE_OPENAI_ENDPOINT = "API_AZURE_OPENAI_ENDPOINT"
+    $API_AZURE_OPENAI_DEPLOYMENT = "API_AZURE_OPENAI_DEPLOYMENT"
+    $API_AZURE_OPENAI_KEY = "API_AZURE_OPENAI_KEY"
+    
+    if (-not $APIVersion) {
+        # Get the API version from the environment variable
+        $APIVersion = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API version"
+    }
 
-    ###### Main Program 
+    if (-not $Endpoint) {
+        # Get the endpoint from the environment variable
+        $Endpoint = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"
+    }
+
+    if (-not $Deployment) {
+        # Get the deployment from the environment variable
+        $Deployment = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment"
+    }
+
+    if (-not $ApiKey) {
+        # Get the API key from the environment variable
+        $ApiKey = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key"
+    }
 
     try {
-
-        <#         if (-not (Test-UserEnvironmentVariable -VariableName "API_AZURE_OPENAI")) {
-            Write-Host "The AZURE OPENAI API key is not set."
-            $variableValue = Read-Host "Please provide the AZURE OPENAI API"
-            [Environment]::SetEnvironmentVariable("API_AZURE_OPENAI", $variableValue, "User")
-    
-        }
- #>
-        
+       
         # Adjust parameters based on switches.
-        if ($Creative -or $Precise) {
-            $parameters = Set-ParametersForSwitches -Creative:$Creative -Precise:$Precise
-        }
-        else {
-            $parameters = @{
-                'Temperature' = $Temperature
-                'TopP'        = $TopP
+        switch ($Mode) {
+            "Precise" {
+                $Precise = $true
+                $Creative = $false
+            }
+            "Creative" {
+                $Creative = $true
+                $Precise = $false
+            }
+            default {
+                # Code for default case
+                [double]$Temperature = 1
+                [double]$TopP = 1
             }
         }
 
         # Call functions to execute API request and output results
-        $headers = Get-Headers -ApiKey "API_AZURE_OPENAI"
+        $headers = Get-Headers -ApiKey $API_AZURE_OPENAI_KEY 
 
         if ($usermessage) {
             $prompt = Format-Message -Message $usermessage
-        } else {
+        }
+        else {
             $prompt = Get-Prompt
         }
+
         #$prompt 
-        $prompt | Measure-Object -Word -Line -Character
+        #($prompt | Measure-Object -Word -Line -Character) | out-string
         
-        $body = Get-Body -prompt $prompt `
-            -temperature $parameters['Temperature'] `
+        Write-Verbose "Parameters:"
+        Write-Verbose "Prompt: $prompt"
+        Write-Verbose "Temperature: $Temperature"
+        Write-Verbose "Frequency Penalty: $FrequencyPenalty"
+        Write-Verbose "Presence Penalty: $PresencePenalty"
+        Write-Verbose "Mode: $Mode"
+        Write-Verbose "TopP: $TopP"
+        Write-Verbose "Stop: $Stop"
+        Write-Verbose "Stream: $Stream"
+        Write-Verbose "User: $User"
+        Write-Verbose "Max Tokens: $MaxTokens"
+        Write-Verbose "N: $n"
+        Write-Verbose "Best of: $best_of"
+        Write-Verbose "Logit Bias: $logit_bias"
+        Write-Verbose "Logprobs: $logprobs"
+        Write-Verbose "Suffix: $suffix"
+        Write-Verbose "Echo: $echo"
+        Write-Verbose "Completion Config: $completion_config"
+        Write-Verbose "Model: $Deployment"
+
+        
+        $bodyJSON = Get-Body -prompt $prompt `
+            -temperature $Temperature `
             -frequency_penalty $FrequencyPenalty `
             -presence_penalty $PresencePenalty `
-            -top_p $parameters['TopP'] `
+            -top_p $TopP `
             -stop $Stop `
             -stream $Stream `
             -user $User `
@@ -488,22 +577,41 @@ function Invoke-AzureOpenAICompletion {
             -suffix $suffix `
             -echo $echo `
             -completion_config $completion_config `
-            -model $Deployment
-        $bodyJSON = ($body | ConvertTo-Json)
+            -model $Deployment | ConvertTo-Json
+        
         Write-Verbose ($bodyJSON | Out-String)
+        
         $urlChat = Get-Url
         $response = Invoke-ApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON
 
-        $response | ConvertTo-Json
-
-        Show-ResponseMessage -content $response.choices[0].text -stream "console"
-        Show-FinishReason -finishReason $response.choices.finish_reason
-        Show-Usage -usage $response.usage
+        $responseText = (Show-ResponseMessage -content $response.choices[0].text -stream "console"  -simpleresponse:$simpleresponse| out-String)
+        
+        if (-not $simpleresponse) {
+            Show-FinishReason -finishReason $response.choices.finish_reason
+            Show-Usage -usage $response.usage
+        }
+        return $responseText
     }
     catch {
-        Show-Error -ErrorMessage $Error[0]
+        Format-Error -ErrorVar $_
     }
 }
+
+# Define constants for environment variable names
+$API_AZURE_OPENAI_APIVERSION = "API_AZURE_OPENAI_APIVERSION"
+$API_AZURE_OPENAI_ENDPOINT = "API_AZURE_OPENAI_ENDPOINT"
+$API_AZURE_OPENAI_DEPLOYMENT = "API_AZURE_OPENAI_DEPLOYMENT"
+$API_AZURE_OPENAI_KEY = "API_AZURE_OPENAI_KEY"
+    
+# Get the API version from the environment variable
+$APIVersion = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API version"
+# Get the endpoint from the environment variable
+$Endpoint = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"
+# Get the deployment from the environment variable
+$Deployment = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment"
+# Get the API key from the environment variable
+$ApiKey = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key"
+
 
 <# 
 top_p:
