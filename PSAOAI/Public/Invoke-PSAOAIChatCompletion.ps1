@@ -74,6 +74,9 @@ function Invoke-PSAOAIChatCompletion {
     .NOTES
     Author: Wojciech Napierala
     Date:   2023-06-27
+    
+    .LINK
+    https://learn.microsoft.com/en-us/azure/ai-services/openai/
     #>
     [CmdletBinding(DefaultParameterSetName = 'SystemPrompt_Mode')]
     param(
