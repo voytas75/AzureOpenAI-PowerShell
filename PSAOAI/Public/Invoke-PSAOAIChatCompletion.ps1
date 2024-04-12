@@ -869,7 +869,7 @@ function Invoke-PSAOAIChatCompletion {
             # Code for default case
             [double]$Temperature = 1
             [double]$TopP = 1
-            }
+        }
     }
 
     if ($OneTimeUserPrompt) {
