@@ -111,9 +111,9 @@ function Invoke-PSAOAIChatCompletion {
         [Parameter(Mandatory = $false)]
         [string]$APIVersion = (get-apiversion -preview | select-object -first 1),
         [Parameter(Mandatory = $false)]
-        [string]$Endpoint = (Get-EnvironmentVariable -VariableName "API_AZURE_OPENAI_ENDPOINT" -PromptMessage "Please enter the endpoint"),
+        [string]$Endpoint = (Set-EnvironmentVariable -VariableName "API_AZURE_OPENAI_ENDPOINT" -PromptMessage "Please enter the endpoint" -Verbose:$Verbose),
         [Parameter(Mandatory = $false)]
-        [string]$Deployment = (Get-EnvironmentVariable -VariableName "API_AZURE_OPENAI_DEPLOYMENT" -PromptMessage "Please enter the deployment"),
+        [string]$Deployment = (Set-EnvironmentVariable -VariableName "API_AZURE_OPENAI_DEPLOYMENT" -PromptMessage "Please enter the deployment" -Verbose:$Verbose),
         [Parameter(Mandatory = $false)]
         [string]$User = "",
         [Parameter(Mandatory = $false)]
@@ -152,7 +152,8 @@ function Invoke-PSAOAIChatCompletion {
         param (
             [Parameter(Mandatory = $true)]
             [ValidateNotNullOrEmpty()]
-            [string]$ApiKeyVariable
+            [string]$ApiKeyVariable,
+            [switch]$Secure
         )
 
         # Initialize API key variable
@@ -162,7 +163,11 @@ function Invoke-PSAOAIChatCompletion {
             # Check if the API key exists in the user's environment variables
             if (Test-UserEnvironmentVariable -VariableName $ApiKeyVariable) {
                 # Retrieve the API key from the environment variable
-                $ApiKey = [System.Environment]::GetEnvironmentVariable($ApiKeyVariable, "user")
+                if ($secure) {
+                    $ApiKey = Get-EnvironmentVariable -VariableName $ApiKeyVariable -Secure
+                } else {
+                    $ApiKey = Get-EnvironmentVariable -VariableName $ApiKeyVariable
+                }
             }
         }
         catch {
@@ -666,52 +671,6 @@ function Invoke-PSAOAIChatCompletion {
         return "Usage:`n$usageData"
     }
     
-    function Set-ParametersForSwitches3 {
-        <#
-    .SYNOPSIS
-    This function sets the parameters for the switches.
-
-    .DESCRIPTION
-    This function takes in two boolean parameters, Creative and Precise, and sets the Temperature and TopP values accordingly.
-
-    .PARAMETER Creative
-    A boolean value that, when true, sets the Temperature to 0.7 and TopP to 0.95.
-
-    .PARAMETER Precise
-    A boolean value that, when true, sets the Temperature to 0.3 and TopP to 0.8.
-
-    .EXAMPLE
-    Set-ParametersForSwitches3 -Creative $true -Precise $false
-    #>
-        param(
-            [bool]$Creative,
-            [bool]$Precise
-        )
-        # If Creative is true, set Temperature to 0.7 and TopP to 0.95
-        if ($Creative) {
-            $script:Temperature = 0.7
-            $script:TopP = 0.95
-        }
-        # If Precise is true, set Temperature to 0.3 and TopP to 0.8
-        if ($Precise) {
-            $script:Temperature = 0.3
-            $script:TopP = 0.8
-        }
-    }
-    
-    function Set-ParametersForSwitches2 {
-        param([bool]$Creative, [bool]$Precise)
-        if ($Creative) {
-            $Temperature = 0.7
-            $TopP = 0.95
-        }
-        elseif ($Precise) {
-            $Temperature = 0.3
-            $TopP = 0.8
-        }
-        return @{ 'Temperature' = $Temperature; 'TopP' = $TopP }
-    }
-    
     function Set-ParametersForSwitches {
         <#
         .SYNOPSIS
@@ -853,22 +812,22 @@ function Invoke-PSAOAIChatCompletion {
     
     if (-not $APIVersion) {
         # Get the API version from the environment variable
-        $APIVersion = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API version"
+        $APIVersion = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API version"
     }
 
     if (-not $Endpoint) {
         # Get the endpoint from the environment variable
-        $Endpoint = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"
+        $Endpoint = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"
     }
 
     if (-not $Deployment) {
         # Get the deployment from the environment variable
-        $Deployment = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment"
+        $Deployment = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment"
     }
 
     if (-not $ApiKey) {
         # Get the API key from the environment variable
-        $ApiKey = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key"
+        $ApiKey = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key" -Secure
     }
 
     switch ($Mode) {
@@ -895,11 +854,10 @@ function Invoke-PSAOAIChatCompletion {
         Write-Host "APIVersion: $APIVersion"
         Write-Host "Endpoint: $Endpoint"
         Write-Host "Deployment: $Deployment"
-        Write-Host "Precise: $Precise"
-        Write-Host "Creative: $Creative"
-        Write-Host "SystemPromptFileName: $(if($SystemPromptFileName){"exists"}else{"not exists"})"
-        Write-Host "SystemPrompt: $(if($SystemPrompt){"exist"}else{"not exists"})"
-        Write-Host "usermessage: $(if($usermessage){"exists"}else{"not exists"})"
+        Write-Host "Mode: $Mode"
+        Write-Host "SystemPromptFileName: $(if($SystemPromptFileName){"exists"}else{"does not exist"})"
+        Write-Host "SystemPrompt: $(if($SystemPrompt){"exists"}else{"does not exist"})"
+        Write-Host "usermessage: $(if($usermessage){"exists"}else{"does not exist"})"
         Write-Host "OneTimeUserPrompt: $(if($OneTimeUserPrompt){"true"}else{"false"})"
         Write-Host "Temperature: $Temperature"
         Write-Host "TopP: $TopP"
@@ -907,9 +865,9 @@ function Invoke-PSAOAIChatCompletion {
         Write-Host "PresencePenalty: $PresencePenalty"
         Write-Host "User: $User"
         Write-Host "N: $N"
-        Write-Host "Stop: $Stop"
-        Write-Host "Stream: $Stream"
-        Write-Host "logfile: $logfile"
+        Write-Host "Stop: $(if($stop){"set"}else{"not set"})"
+        Write-Host "Stream: $(if($stream){"true"}else{"false"})"
+        Write-Host "logfile: $(if($logfile){$logfile}else{"not set"})"
         Write-Host "simpleresponse: $simpleresponse"
         Write-Host "usermessagelogfile: $usermessagelogfile"
     }
@@ -959,7 +917,7 @@ function Invoke-PSAOAIChatCompletion {
         }
 
         # Call functions to execute API request and output results
-        $headers = Get-Headers -ApiKeyVariable "API_AZURE_OPENAI_KEY"
+        $headers = Get-Headers -ApiKeyVariable "API_AZURE_OPENAI_KEY" -Secure
 
         # system prompt
         if ($SystemPromptFileName) {
@@ -1107,85 +1065,6 @@ function Invoke-PSAOAIChatCompletion {
 
 }
 
-function Get-EnvironmentVariable {
-    <#
-    .SYNOPSIS
-    This function retrieves the value of a specified environment variable. If the variable does not exist, it prompts the user to provide a value and sets the variable.
-
-    .DESCRIPTION
-    The Get-EnvironmentVariable function retrieves the value of the environment variable specified by the VariableName parameter. If the variable does not exist or its value is null or empty, the function prompts the user to provide a value using the message specified by the PromptMessage parameter. The function then attempts to set the environment variable to the provided value.
-
-    .PARAMETER VariableName
-    The name of the environment variable to retrieve. This parameter is mandatory.
-
-    .PARAMETER PromptMessage
-    The message to display when prompting the user to provide a value for the environment variable. This parameter is mandatory.
-
-    .EXAMPLE
-    $APIVersion = Get-EnvironmentVariable -VariableName "API_AZURE_OPENAI_APIVERSION" -PromptMessage "Please enter the API version"
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$VariableName,
-        [Parameter(Mandatory = $true)]
-        [string]$PromptMessage
-    )
-
-    # Retrieve the value of the environment variable
-    $VariableValue = [System.Environment]::GetEnvironmentVariable($VariableName, "User")
-
-    # If the variable does not exist or its value is null or empty, prompt the user to provide a value
-    if ([string]::IsNullOrEmpty($VariableValue)) {
-        $VariableValue = Read-Host -Prompt $PromptMessage
-
-        # Attempt to set the environment variable to the provided value
-        try {
-            [System.Environment]::SetEnvironmentVariable($VariableName, $VariableValue, "User")
-
-            # If the variable was set successfully, display a success message
-            if (Test-UserEnvironmentVariable -VariableName $VariableName) {
-                Write-Host "Environment variable $VariableName was set successfully."
-            }
-        }
-        # If setting the variable failed, display an error message
-        catch {
-            Write-Host "Failed to set environment variable $VariableName."
-        }
-    }
-
-    # Return the value of the environment variable
-    return $VariableValue
-}
-    
-
-function Clear-AzureOpenAIAPIEnv {
-    <#
-    .SYNOPSIS
-    This function clears the Azure OpenAI API environment variables.
-
-    .DESCRIPTION
-    The Clear-AzureOpenAIAPIEnv function clears the values of the Azure OpenAI API environment variables. If an error occurs during the process, it provides an error message to the user.
-
-    .EXAMPLE
-    Clear-AzureOpenAIAPIEnv
-    #>    param()
-    try {
-        # Clear the environment variables related to Azure OpenAI API
-        [System.Environment]::SetEnvironmentVariable("API_AZURE_OPENAI_APIVERSION", "", "User")
-        [System.Environment]::SetEnvironmentVariable("API_AZURE_OPENAI_DEPLOYMENT", "", "User")
-        [System.Environment]::SetEnvironmentVariable("API_AZURE_OPENAI_KEY", "", "User")
-        [System.Environment]::SetEnvironmentVariable("API_AZURE_OPENAI_Endpoint", "", "User")
-            
-        # Inform the user about the successful deletion of the environment variables
-        Write-Host "Environment variables for Azure API have been deleted successfully."
-    }
-    catch {
-        # Inform the user about any errors occurred during the deletion of the environment variables
-        Write-Host "An error occurred while trying to delete Azure API environment variables. Please check your permissions and try again."
-    }
-}
-
 function Get-Hash {
     <#
     .SYNOPSIS
@@ -1236,6 +1115,7 @@ function Get-Hash {
     return $hashString
 }
 
+<#
 # Define constants for environment variable names
 $API_AZURE_OPENAI_APIVERSION = "API_AZURE_OPENAI_APIVERSION"
 $API_AZURE_OPENAI_ENDPOINT = "API_AZURE_OPENAI_ENDPOINT"
@@ -1243,10 +1123,11 @@ $API_AZURE_OPENAI_DEPLOYMENT = "API_AZURE_OPENAI_DEPLOYMENT"
 $API_AZURE_OPENAI_KEY = "API_AZURE_OPENAI_KEY"
 
 # Get the API version from the environment variable
-$APIVersion = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API version"
+$APIVersion = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API version"
 # Get the endpoint from the environment variable
-$Endpoint = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"
+$Endpoint = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"
 # Get the deployment from the environment variable
-$Deployment = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment"
+$Deployment = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment"
 # Get the API key from the environment variable
-$ApiKey = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key"
+$ApiKey = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key"
+#>

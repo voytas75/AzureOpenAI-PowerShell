@@ -490,22 +490,22 @@ function Invoke-PSAOAICompletion {
     
     if (-not $APIVersion) {
         # Get the API version from the environment variable
-        $APIVersion = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API version"
+        $APIVersion = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API version"
     }
 
     if (-not $Endpoint) {
         # Get the endpoint from the environment variable
-        $Endpoint = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"
+        $Endpoint = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"
     }
 
     if (-not $Deployment) {
         # Get the deployment from the environment variable
-        $Deployment = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment"
+        $Deployment = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment"
     }
 
     if (-not $ApiKey) {
         # Get the API key from the environment variable
-        $ApiKey = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key"
+        $ApiKey = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key"
     }
 
     try {
@@ -597,6 +597,7 @@ function Invoke-PSAOAICompletion {
     }
 }
 
+<#
 # Define constants for environment variable names
 $API_AZURE_OPENAI_APIVERSION = "API_AZURE_OPENAI_APIVERSION"
 $API_AZURE_OPENAI_ENDPOINT = "API_AZURE_OPENAI_ENDPOINT"
@@ -611,7 +612,7 @@ $Endpoint = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_ENDPOINT -Pr
 $Deployment = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment"
 # Get the API key from the environment variable
 $ApiKey = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key"
-
+#>
 
 <# 
 top_p:
