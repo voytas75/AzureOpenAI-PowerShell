@@ -111,9 +111,9 @@ function Invoke-PSAOAIChatCompletion {
         [Parameter(Mandatory = $false)]
         [string]$APIVersion = (get-apiversion -preview | select-object -first 1),
         [Parameter(Mandatory = $false)]
-        [string]$Endpoint = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"),
+        [string]$Endpoint,
         [Parameter(Mandatory = $false)]
-        [string]$Deployment = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment"),
+        [string]$Deployment,
         [Parameter(Mandatory = $false)]
         [string]$User = "",
         [Parameter(Mandatory = $false)]
@@ -635,12 +635,16 @@ function Invoke-PSAOAIChatCompletion {
         return [System.Text.RegularExpressions.Regex]::Replace($Message, "[^\x00-\x7F]", "")
     }
 
+    while (-not $APIVersion) {
+        $APIVersion = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API version"
+    }
+    <#
     if (-not $APIVersion) {
         # Get the API version from the environment variable
         $APIVersion = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API version"
     }
-
-    if (-not $Endpoint) {
+    #>
+    while (-not $Endpoint) {
         # Get the endpoint from the environment variable
         $Endpoint = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"
     }
