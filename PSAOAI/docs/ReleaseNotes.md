@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Changed
 
-- secure api key
+- Modified API key handling with security
 
 ## [0.0.1] - 2024.04.07
 
