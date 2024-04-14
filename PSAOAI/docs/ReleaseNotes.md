@@ -8,18 +8,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Added
 
-- 
+- Function to retrieve the API versions from the Azure OpenAI GitHub repository.
+- Function to clear the Azure OpenAI API environment variables.
 
 ### Changed
 
-- Modified API key handling with security
+- Modified API key handling with security.
 
 ## [0.0.1] - 2024.04.07
 
 ### Added
 
-- Initiated the module for the first time
-
-### Changed
-
-- n/a
+- Initiated the module for the first time.

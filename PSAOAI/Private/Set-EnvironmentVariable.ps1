@@ -28,19 +28,18 @@ function Set-EnvironmentVariable {
         [switch]$Secure
     )
 
-    # Writing the name of the variable to the verbose output stream for debugging purposes
-    Write-Verbose "Variable Name: $VariableName"
-
-    if ($Secure) {
-        # If the variable does not exist or its value is null or empty, prompt the user to provide a value
-        $VariableValue = Get-EnvironmentVariable -VariableName $VariableName -Secure
-        # Writing the value of the variable to the verbose output stream for debugging purposes
-        Write-Verbose "Variable Value: *****"
+    try {
+        if ($Secure) {
+            # If the variable does not exist or its value is null or empty, prompt the user to provide a value
+            $VariableValue = Get-EnvironmentVariable -VariableName $VariableName -Secure
+        }
+        else {
+            $VariableValue = Get-EnvironmentVariable -VariableName $VariableName
+        }
     }
-    else {
-        $VariableValue = Get-EnvironmentVariable -VariableName $VariableName
-        # Writing the value of the variable to the verbose output stream for debugging purposes
-        Write-Verbose "Variable Value: $VariableValue"
+    catch {
+        Write-Warning "Failed to get environment variable $VariableName."
+        Show-Error -ErrorVar $_
     }
     # Checking if the value of the variable is null or empty
     if ([string]::IsNullOrEmpty($VariableValue)) {
@@ -58,12 +57,13 @@ function Set-EnvironmentVariable {
 
             # If the variable was set successfully, display a success message
             if (Test-UserEnvironmentVariable -VariableName $VariableName) {
-                Write-Host "Environment variable $VariableName was set successfully."
+                Write-Host "Environment variable $VariableName was set successfully." -ForegroundColor Green
             }
         }
         # If setting the variable failed, display an error message
         catch {
-            Write-Host "Failed to set environment variable $VariableName."
+            Write-Warning "Failed to set environment variable $VariableName."
+            Show-Error -ErrorVar $_
         }
     }
     return $VariableValue

@@ -19,15 +19,21 @@ function Convert-SecureStringToPlainText {
         [System.Security.SecureString]$SecureString
     )
 
-    # Convert the SecureString to a BSTR
-    $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureString)
+    try {
+        # Convert the SecureString to a BSTR
+        $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureString)
 
-    # Convert the BSTR to a plain text string
-    $PlainTextString = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+        # Convert the BSTR to a plain text string
+        $PlainTextString = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
 
-    # Free the memory that was allocated for the BSTR
-    [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
+        # Free the memory that was allocated for the BSTR
+        [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
 
-    # Return the plain text string
-    return $PlainTextString
+        # Return the plain text string
+        return $PlainTextString
+    }
+    catch {
+        $ErrorVar = $_
+        Show-Error -ErrorVar $ErrorVar
+    }
 }

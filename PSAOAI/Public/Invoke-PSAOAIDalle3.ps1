@@ -1,9 +1,60 @@
-function Invoke-AzureOpenAIDALLE3 {
+function Invoke-PSAOAIDalle3 {
+    <#
+    .SYNOPSIS
+    This function interacts with Azure OpenAI Services.
+
+    .DESCRIPTION
+    The Invoke-PSAOAIDalle3 function sends a request to the Azure OpenAI Services and retrieves the response. It takes several parameters including the service name, prompt, model, size, response format, quality, style, user, API version, save path, image loops, n, and timeout in seconds.
+
+    .PARAMETER serviceName
+    The name of the service to interact with.
+
+    .PARAMETER Prompt
+    The prompt to be used.
+
+    .PARAMETER model
+    The model to be used. Default is 'dalle3'.
+
+    .PARAMETER size
+    The size of the output. Default is '1792x1024'.
+
+    .PARAMETER response_format
+    The format of the response. Default is 'url'.
+
+    .PARAMETER quality
+    The quality of the output. Default is 'hd'.
+
+    .PARAMETER style
+    The style of the output. Default is 'natural'.
+
+    .PARAMETER user
+    The user for the request.
+
+    .PARAMETER ApiVersion
+    The API version to be used. Default is '2023-12-01-preview'.
+
+    .PARAMETER SavePath
+    The path where the output will be saved. Default is the MyPictures folder.
+
+    .PARAMETER ImageLoops
+    The number of image loops. Default is 1.
+
+    .PARAMETER n
+    The number of outputs. Default is 1.
+
+    .PARAMETER timeoutSec
+    The timeout in seconds. Default is 60.
+
+    .EXAMPLE
+    Invoke-PSAOAIDalle3 -serviceName "MyService" -Prompt "MyPrompt" -user "MyUser"
+
+    This command sends a request to the "MyService" service with the prompt "MyPrompt" and the user "MyUser", and retrieves the response.
+    #>
     [CmdletBinding()]
     param (
         [string]$serviceName,
 
-        [Parameter(ValueFromPipeline = $true)]
+        [Parameter(ValueFromPipeline = $true, Mandatory = $true)]
         [string]$Prompt,
 
         [string]$model = 'dalle3',
@@ -34,6 +85,21 @@ function Invoke-AzureOpenAIDALLE3 {
     )
 
     function Get-Headers {
+        <#
+        .SYNOPSIS
+        This function constructs and returns the headers for the API call.
+
+        .DESCRIPTION
+        The Get-Headers function takes an API key variable as input, checks if it is valid and then constructs the headers for the API call.
+
+        .PARAMETER ApiKeyVariable
+        The API key variable to be validated and used in the headers.
+
+        .EXAMPLE
+        Get-Headers -ApiKeyVariable "MyApiKeyVariable"
+
+        This command constructs the headers using the "MyApiKeyVariable" API key variable.
+        #>
         [CmdletBinding()]
         param (
             [Parameter(Mandatory = $true)]
@@ -41,57 +107,82 @@ function Invoke-AzureOpenAIDALLE3 {
             [string]$ApiKeyVariable
         )
 
-        # Construct headers
+        # Construct an empty headers dictionary
         $headers = [ordered]@{
             "api-key" = ""
         }
 
-        # Check if API key is valid
+        # Try to validate the API key and construct the headers
         try {
+            # If the API key variable is valid
             if (Test-UserEnvironmentVariable -VariableName $ApiKeyVariable) {
+                # Get the API key from the environment variables
                 $ApiKey = [System.Environment]::GetEnvironmentVariable($ApiKeyVariable, "user")
+                # Add the API key to the headers
                 $headers["api-key"] = $ApiKey
+                # Add the Content-Type to the headers
                 $headers["Content-Type"] = "application/json"
             } 
         }
+        # If an error occurs during the validation or construction of the headers
         catch {
+            # Write an error message
             Write-Error "API key '$ApiKeyVariable' not found in environment variables. Please set the environment variable before running this script."
         }
 
+        # Return the constructed headers
         return $headers
     }
-
-    # This function checks if a user environment variable exists
-    # Given a variable name, it checks if it exists in the environment variables
-    # If it does, it returns true, otherwise it returns false
     function Test-UserEnvironmentVariable {
+        <#
+        .SYNOPSIS
+        This function checks if a user environment variable exists.
+
+        .DESCRIPTION
+        Given a variable name, it checks if it exists in the environment variables.
+        If it does, it returns true, otherwise it returns false.
+
+        .PARAMETER VariableName
+        The name of the environment variable to check.
+
+        .EXAMPLE
+        Test-UserEnvironmentVariable -VariableName "MyVariableName"
+
+        This command checks if the "MyVariableName" environment variable exists.
+        #>
         param (
             [Parameter(Mandatory = $true)]
             [string]$VariableName
         )
     
-        $envVariable = [Environment]::GetEnvironmentVariable($VariableName, "User")
+        # Get the environment variable
+        $envVariable = Get-EnvironmentVariable -VariableName $VariableName        
+        
+        # Check if the environment variable exists
         if ($envVariable) {
+            # If it exists, write a verbose message and return true
             Write-Verbose "The user environment variable '$VariableName' is set."
             return $true
         }
         else {
+            # If it doesn't exist, write a verbose message and return false
             Write-Verbose "The user environment variable '$VariableName' is not set."
             return $false
         }
     }
-
+    
     # This function displays the error message and performs any necessary error logging.
     function Show-Error {
         <#
         .SYNOPSIS
-        Displays the error message and performs error logging.
+        This function displays an error message and performs any necessary error logging.
 
         .DESCRIPTION
-        This function displays the error message on the console and performs any necessary error logging.
+        This function takes an error message as a parameter, displays it on the console, and performs any necessary error logging. 
+        The error logging mechanism is not implemented in this function but can be added.
 
         .PARAMETER ErrorMessage
-        The error message to be displayed.
+        The error message to be displayed. This parameter is mandatory.
         #>
 
         param(
@@ -99,7 +190,7 @@ function Invoke-AzureOpenAIDALLE3 {
             [string]$ErrorMessage # The error message to be displayed
         )
 
-        # Display the error message
+        # Display the error message using Write-Error cmdlet
         Write-Error $ErrorMessage
         # Log error to file or other logging mechanism (Not implemented in this function but can be added here)
     }
@@ -153,15 +244,26 @@ function Invoke-AzureOpenAIDALLE3 {
         return ($body | ConvertTo-Json)
     }
     
+    if ($VerbosePreference -eq 'Continue') {
+        Write-Host "Parameters and values:"
+        Write-Host "Prompt: $prompt"
+        Write-Host "n: $n"
+        Write-Host "User: $user"
+        Write-Host "Size: $size"
+        Write-Host "Response format: $response_format"
+        Write-Host "Quality: $quality"
+        Write-Host "Style: $style"
+    }
 
     # Define the API version and Azure endpoint
     $azureEndpoint = "https://${serviceName}.openai.azure.com"
-        
+    $azureEndpoint = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_ENDPOINT
+    Write-Verbose $azureEndpoint
     # Create the JSON request body for the API call
     $requestBodyJSON = get-BodyJSON -prompt $prompt -n $n -user $user -size $size -response_format $response_format -quality $quality -style $style
 
     # Define the headers for the API call
-    $headers = Get-Headers -ApiKey "API_AZURE_OPENAI_KEY"
+    $headers = Get-Headers -ApiKey (Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key" -Secure) -Secure
 
     # Define the URI for the API call
     $URI = Get-Url -apiVersion $ApiVersion

@@ -111,9 +111,9 @@ function Invoke-PSAOAIChatCompletion {
         [Parameter(Mandatory = $false)]
         [string]$APIVersion = (get-apiversion -preview | select-object -first 1),
         [Parameter(Mandatory = $false)]
-        [string]$Endpoint = (Set-EnvironmentVariable -VariableName "API_AZURE_OPENAI_ENDPOINT" -PromptMessage "Please enter the endpoint" -Verbose:$Verbose),
+        [string]$Endpoint = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"),
         [Parameter(Mandatory = $false)]
-        [string]$Deployment = (Set-EnvironmentVariable -VariableName "API_AZURE_OPENAI_DEPLOYMENT" -PromptMessage "Please enter the deployment" -Verbose:$Verbose),
+        [string]$Deployment = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment"),
         [Parameter(Mandatory = $false)]
         [string]$User = "",
         [Parameter(Mandatory = $false)]
@@ -127,62 +127,6 @@ function Invoke-PSAOAIChatCompletion {
         [Parameter(Mandatory = $false)]
         [bool]$Stream = $false
     )
-    # Function to generate the headers for the API request.
-    function Get-Headers {
-        <#
-        .SYNOPSIS
-        Generates the necessary headers for an API request to Azure OpenAI.
-        
-        .DESCRIPTION
-        This function constructs the headers required for an API request to Azure OpenAI. It retrieves the API key from the specified environment variable and uses it for request authentication.
-        
-        .PARAMETER ApiKeyVariable
-        Specifies the name of the environment variable that stores the API key. This parameter is mandatory.
-        
-        .EXAMPLE
-        Get-Headers -ApiKeyVariable "OPENAI_API_KEY"
-        
-        .OUTPUTS
-        Returns a hashtable of headers for the API request. The headers include "Content-Type" set to "application/json" and "api-key" set to the value of the API key retrieved from the environment variable.
-        
-        .NOTES
-        It's crucial to store the API key securely in an environment variable. The function will throw an error if it can't find the API key in the specified environment variable.        
-        #>
-        [CmdletBinding()]
-        param (
-            [Parameter(Mandatory = $true)]
-            [ValidateNotNullOrEmpty()]
-            [string]$ApiKeyVariable,
-            [switch]$Secure
-        )
-
-        # Initialize API key variable
-        $ApiKey = $null
-
-        try {
-            # Check if the API key exists in the user's environment variables
-            if (Test-UserEnvironmentVariable -VariableName $ApiKeyVariable) {
-                # Retrieve the API key from the environment variable
-                if ($secure) {
-                    $ApiKey = Get-EnvironmentVariable -VariableName $ApiKeyVariable -Secure
-                } else {
-                    $ApiKey = Get-EnvironmentVariable -VariableName $ApiKeyVariable
-                }
-            }
-        }
-        catch {
-            # Throw an error if the API key is not found
-            Write-Error "API key '$ApiKeyVariable' not found in environment variables. Please set the environment variable before running this script."
-            return $null
-        }
-
-        # Return the headers for the API request
-        return @{
-            "Content-Type" = "application/json"
-            "api-key"      = $ApiKey
-        }
-               
-    }
 
     # Function to assemble system and user messages
     function Get-Messages {
@@ -548,95 +492,7 @@ function Invoke-PSAOAIChatCompletion {
             return $contentFilterObject
         }
     }
-    
-    # Function to handle and display errors
-    function Show-Error {
-        <#
-        .SYNOPSIS
-        Handles and displays errors.
-        
-        .DESCRIPTION
-        This function handles any errors that occur during the execution of the script. It prints the error details to the console for debugging purposes.
-        
-        .PARAMETER ErrorVar
-        The error variable that contains the error details. This parameter is mandatory.
-        
-        .EXAMPLE
-        Show-Error -ErrorVar $errorVar
-        
-        .OUTPUTS
-        None. This function handles the errors and prints the error details to the console.
-        #> 
-        param(
-            [Parameter(Mandatory = $true)]
-            [string]$ErrorVar # The error variable containing the error details
-        )
-    
-        # Print the error details (file, line, character, and message) to the console if any error occurs during the process
-        Write-Host "[e] Error in file: $($ErrorVar.InvocationInfo.ScriptName)" -ForegroundColor DarkRed
-        Write-Host "[e] Error in line: $($ErrorVar.InvocationInfo.ScriptLineNumber)" -ForegroundColor DarkRed
-        Write-Host "[e] Error at char: $($ErrorVar.InvocationInfo.OffsetInLine)" -ForegroundColor DarkRed
-        Write-Host "[e] An error occurred:" -NoNewline
-        Write-Host " $($ErrorVar.Exception.Message)" -ForegroundColor DarkRed
-        
-        # Handle specific types of exceptions for more detailed error messages
-        if ($ErrorVar.Exception -is [System.Net.WebException]) {
-            # Handle WebException and print the status code
-            Write-Host "[e] WebException: $($ErrorVar.Exception.Response.StatusCode)" -ForegroundColor DarkRed
-        }
-        elseif ($ErrorVar.Exception -is [System.IO.IOException]) {
-            # Handle IOException and print the IO error
-            Write-Host "[e] IOException: $($ErrorVar.Exception.IOError)" -ForegroundColor DarkRed
-        }
-        elseif ($ErrorVar.Exception -is [System.ArgumentException]) {
-            # Handle ArgumentException and print the parameter name that caused the exception
-            Write-Host "[e] ArgumentException: $($ErrorVar.Exception.ParamName)" -ForegroundColor DarkRed
-        }
-        else {
-            # Handle unknown error types and print the full type name
-            Write-Host "[e] Unknown error type: $($ErrorVar.Exception.GetType().FullName)" -ForegroundColor DarkRed
-        }
-        Write-Host "" # Print an empty line for better readability
-    }
-        
-    # Function to verify the existence of a user environment variable
-    function Test-UserEnvironmentVariable {
-        <#
-        .SYNOPSIS
-        Verifies the existence of a user environment variable.
-        
-        .DESCRIPTION
-        This function checks if a specific user environment variable is set in the system. It returns a boolean value indicating the existence of the variable.
-        
-        .PARAMETER VariableName
-        The name of the environment variable to verify. This parameter is mandatory.
-        
-        .EXAMPLE
-        Test-UserEnvironmentVariable -VariableName "API_AZURE_OPENAI"
-        
-        .OUTPUTS
-        Boolean. Returns $true if the environment variable exists, $false otherwise.
-        #> 
-        param (
-            [Parameter(Mandatory = $true)]
-            [string]$VariableName # The name of the environment variable to verify
-        )
-    
-        # Get the list of environment variables
-        $envVariables = Get-ChildItem -Path "Env:$VariableName" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name
-        # Get the specific environment variable from the user environment
-        $envVariable = [Environment]::GetEnvironmentVariable($VariableName, "User")
-        
-        # Check if the environment variable exists
-        if ($envVariables -contains $VariableName -or $envVariable) {
-            Write-Verbose "The user environment variable '$VariableName' is set."
-            return $true
-        }
-        else {
-            Write-Verbose "The user environment variable '$VariableName' is not set."
-            return $false
-        }
-    }
+           
     
     # Function to output the usage
     function Show-Usage {
@@ -754,31 +610,7 @@ function Invoke-PSAOAIChatCompletion {
         # Write the log entry to the log file
         Add-Content -Path $LogFile -Value $logEntry -Force
     }
-   
-    function Format-Error {
-        <#
-    .SYNOPSIS
-    This function formats and outputs the provided error record.
-
-    .DESCRIPTION
-    The Format-Error function takes in an ErrorRecord object and outputs it. 
-    This can be used for better error handling and logging in scripts.
-
-    .PARAMETER ErrorVar
-    The ErrorRecord object to be formatted and outputted. This parameter is mandatory.
-
-    .EXAMPLE
-    Format-Error -ErrorVar $Error
-    #>
-        param(
-            [Parameter(Mandatory = $true)]
-            [System.Management.Automation.ErrorRecord]$ErrorVar
-        )
-
-        # Output the ErrorRecord object
-        Write-Output $ErrorVar
-    }
-
+       
     function Format-Message {
         <#
     .SYNOPSIS
@@ -803,31 +635,24 @@ function Invoke-PSAOAIChatCompletion {
         return [System.Text.RegularExpressions.Regex]::Replace($Message, "[^\x00-\x7F]", "")
     }
 
-    # Define constants for environment variable names
-    $API_AZURE_OPENAI_APIVERSION = "API_AZURE_OPENAI_APIVERSION"
-    $API_AZURE_OPENAI_ENDPOINT = "API_AZURE_OPENAI_ENDPOINT"
-    $API_AZURE_OPENAI_DEPLOYMENT = "API_AZURE_OPENAI_DEPLOYMENT"
-    $API_AZURE_OPENAI_KEY = "API_AZURE_OPENAI_KEY"
-    
-    
     if (-not $APIVersion) {
         # Get the API version from the environment variable
-        $APIVersion = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API version"
+        $APIVersion = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API version"
     }
 
     if (-not $Endpoint) {
         # Get the endpoint from the environment variable
-        $Endpoint = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"
+        $Endpoint = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"
     }
 
     if (-not $Deployment) {
         # Get the deployment from the environment variable
-        $Deployment = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment"
+        $Deployment = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment"
     }
 
     if (-not $ApiKey) {
         # Get the API key from the environment variable
-        $ApiKey = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key" -Secure
+        $ApiKey = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key" -Secure
     }
 
     switch ($Mode) {
@@ -917,7 +742,7 @@ function Invoke-PSAOAIChatCompletion {
         }
 
         # Call functions to execute API request and output results
-        $headers = Get-Headers -ApiKeyVariable "API_AZURE_OPENAI_KEY" -Secure
+        $headers = Get-Headers -ApiKeyVariable $script:API_AZURE_OPENAI_KEY -Secure
 
         # system prompt
         if ($SystemPromptFileName) {
@@ -1061,6 +886,7 @@ function Invoke-PSAOAIChatCompletion {
     }
     catch {
         Format-Error -ErrorVar $_
+        Show-Error -ErrorVar $_
     }
 
 }
