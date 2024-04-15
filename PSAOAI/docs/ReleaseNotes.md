@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ### Changed
 
 - Modified API key handling with security.
+- Make functions as stand-alone files.
 
 ## [0.0.1] - 2024.04.07
 

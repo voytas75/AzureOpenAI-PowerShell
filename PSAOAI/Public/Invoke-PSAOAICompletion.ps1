@@ -123,11 +123,11 @@ function Invoke-PSAOAICompletion {
         [Parameter(Mandatory = $false)]
         [switch]$simpleresponse,
         [Parameter(Mandatory = $false)]
-        [string]$APIVersion = (Get-EnvironmentVariable -VariableName "API_AZURE_OPENAI_APIVERSION" -PromptMessage "Please enter the API version"),
+        [string]$APIVersion = (get-apiversion -preview | select-object -first 1),
         [Parameter(Mandatory = $false)]
-        [string]$Endpoint = (Get-EnvironmentVariable -VariableName "API_AZURE_OPENAI_ENDPOINT" -PromptMessage "Please enter the endpoint"),
+        [string]$Endpoint = (Get-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"),
         [Parameter(Mandatory = $false)]
-        [string]$Deployment = (Get-EnvironmentVariable -VariableName "API_AZURE_OPENAI_DEPLOYMENT" -PromptMessage "Please enter the deployment")
+        [string]$Deployment = (Get-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment")
     )
     
     # Define headers for API request

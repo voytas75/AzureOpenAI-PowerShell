@@ -18,6 +18,7 @@ function Convert-SecureStringToPlainText {
         [Parameter(Mandatory = $true)]
         [System.Security.SecureString]$SecureString
     )
+    write-verbose "Convert-SecureStringToPlainText"
 
     try {
         # Convert the SecureString to a BSTR
@@ -33,7 +34,6 @@ function Convert-SecureStringToPlainText {
         return $PlainTextString
     }
     catch {
-        $ErrorVar = $_
-        Show-Error -ErrorVar $ErrorVar
+        Show-Error -ErrorVar $_
     }
 }

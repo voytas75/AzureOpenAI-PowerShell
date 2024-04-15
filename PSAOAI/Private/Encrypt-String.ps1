@@ -20,6 +20,8 @@ function Encrypt-String {
         [System.Security.SecureString]$SecureText
     )
 
+    write-verbose "Encrypt-String"
+
     # Convert the secure string to an encrypted standard string
     # The ConvertFrom-SecureString cmdlet is used to convert the secure string into an encrypted standard string
     $encryptedString = $SecureText | ConvertFrom-SecureString
