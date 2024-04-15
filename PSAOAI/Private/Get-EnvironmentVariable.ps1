@@ -1,16 +1,16 @@
 function Get-EnvironmentVariable {
     <#
     .SYNOPSIS
-    This function retrieves the value of a specified environment variable.
+    Retrieves the value of a specified environment variable.
 
     .DESCRIPTION
-    The Get-EnvironmentVariable function retrieves the value of the environment variable specified by the VariableName parameter. If the Secure parameter is set to $true, the function will convert the value of the environment variable to plain text using the Convert-SecureStringToPlainText function.
+    The Get-EnvironmentVariable function fetches the value of the environment variable defined by the VariableName parameter. If the Secure parameter is set to $true, the function will transform the value of the environment variable to plain text using the Convert-SecureStringToPlainText function.
 
     .PARAMETER VariableName
-    The name of the environment variable to retrieve. This parameter is mandatory.
+    The name of the environment variable to fetch. This parameter is mandatory.
 
     .PARAMETER Secure
-    If set to $true, the function will convert the value of the environment variable to plain text using the Convert-SecureStringToPlainText function. This parameter is optional.
+    If set to $true, the function will transform the value of the environment variable to plain text using the Convert-SecureStringToPlainText function. This parameter is optional.
 
     .EXAMPLE
     $APIVersion = Get-EnvironmentVariable -VariableName "API_AZURE_OPENAI_APIVERSION"
@@ -23,12 +23,12 @@ function Get-EnvironmentVariable {
         [switch]$Secure
     )
 
-    write-verbose "Get-EnvironmentVariable"
+    write-verbose "Executing Get-EnvironmentVariable"
 
-    # Writing the name of the variable to the verbose output stream for debugging purposes
+    # Outputting the name of the variable to the verbose output stream for debugging
     Write-Verbose "Variable Name: $VariableName"
 
-    # Retrieve the value of the environment variable
+    # Fetch the value of the environment variable
     $VariableValue = [System.Environment]::GetEnvironmentVariable($VariableName, "User")
 
     Write-Verbose "Variable Value: $VariableValue"
@@ -37,18 +37,16 @@ function Get-EnvironmentVariable {
     if ([string]::IsNullOrEmpty($VariableValue)) {
         return $null
     }
-    # If Secure is set to $true, convert the value of the environment variable to plain text
+    # If Secure is set to $true, transform the value of the environment variable to plain text
     if ($Secure) {
         
         try {
             $VariableValue = Convert-SecureStringToPlainText -SecureString ($VariableValue | ConvertTo-SecureString)
-            #$VariableValue = Convert-SecureStringToPlainText -SecureString ($VariableValue | ConvertTo-SecureString -AsPlainText -Force)
-            # Writing the value of the variable to the verbose output stream for debugging purposes
+            # Outputting the value of the variable to the verbose output stream for debugging
             Write-Verbose "Variable Value: *****"
             return $VariableValue
         }
         catch {
-            #Write-warning "Failed to convert the environment variable value to plain text. The value may not be a valid SecureString."
             Show-Error -ErrorVar $_
             return $null
         }
@@ -56,7 +54,7 @@ function Get-EnvironmentVariable {
     }
     else {
         
-        # Writing the value of the variable to the verbose output stream for debugging purposes
+        # Outputting the value of the variable to the verbose output stream for debugging
         Write-Verbose "Variable Value: $VariableValue"
 
     }
