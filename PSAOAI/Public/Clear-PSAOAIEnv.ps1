@@ -1,17 +1,19 @@
 function Clear-PSAOAIEnv {
     <#
     .SYNOPSIS
-    This function clears the Azure OpenAI API environment variables.
+    This function is designed to clear all Azure OpenAI API environment variables.
 
     .DESCRIPTION
-    The Clear-AzureOpenAIAPIEnv function clears the values of the Azure OpenAI API environment variables. If an error occurs during the process, it provides an error message to the user.
+    The Clear-PSAOAIEnv function is responsible for resetting the values of the Azure OpenAI API environment variables to null. If an error is encountered during this process, the function will catch the exception and provide a detailed error message to the user.
 
     .EXAMPLE
-    Clear-AzureOpenAIAPIEnv
-    #>    param()
-    Write-Host "This operation will clear all $script:ModuleName environment variables. Make sure to backup any important data before proceeding."
+    Clear-PSAOAIEnv
+    #>    
+    param()
+    # Informing the user about the upcoming operation
+    Write-Host "This operation will clear all $script:ModuleName environment variables. Please ensure you have backed up any important data before proceeding."
     try {
-        # Start a job to clear the environment variables related to Azure OpenAI API
+        # Initiating a job to clear the environment variables associated with Azure OpenAI API
         $job = Start-Job -ScriptBlock {
             param (
                 $apiversion,
@@ -22,6 +24,7 @@ function Clear-PSAOAIEnv {
                 $Endpoint
             )
             $purgeText = "purging"
+            # Setting the environment variable to 'purging' before setting it to null
             [System.Environment]::SetEnvironmentVariable($apiversion, $purgeText, "User")
             [System.Environment]::SetEnvironmentVariable($apiversion, $null, "User")
             Write-Host "Purged $apiversion"
@@ -47,7 +50,7 @@ function Clear-PSAOAIEnv {
             $script:API_AZURE_OPENAI_KEY, `
             $script:API_AZURE_OPENAI_Endpoint
 
-        # Show "." every 0.5 seconds while the job is running
+        # Displaying a "." every 0.5 seconds to indicate that the job is still running
         while ($job.State -eq "Running") {
             Write-Host "." -NoNewline -ForegroundColor Blue
             Start-Sleep -Milliseconds 1000
@@ -55,17 +58,17 @@ function Clear-PSAOAIEnv {
         Write-Host ""
         Write-Host ""
 
-        # Receive the job and remove it
+        # Receiving the job and removing it from the job queue
         Receive-Job -Job $job
         Remove-Job -Job $job
 
-        # Inform the user about the successful deletion of the environment variables
+        # Notifying the user about the successful deletion of the environment variables
         Write-Host "Environment variables for Azure API have been deleted successfully."
         Write-Host ""
     }
     catch {
-        # Inform the user about any errors occurred during the deletion of the environment variables
-        Write-Host "An error occurred while trying to delete Azure API environment variables. Please check your permissions and try again."
+        # Providing detailed error information if any errors occurred during the deletion of the environment variables
+        Write-Host "An error occurred while trying to delete Azure API environment variables. Please verify your permissions and try again."
         Show-Error -ErrorVar $_
         Write-Host ""
     }

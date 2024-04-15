@@ -125,54 +125,10 @@ function Invoke-PSAOAICompletion {
         [Parameter(Mandatory = $false)]
         [string]$APIVersion = (get-apiversion -preview | select-object -first 1),
         [Parameter(Mandatory = $false)]
-        [string]$Endpoint = (Get-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"),
+        [string]$Endpoint = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"),
         [Parameter(Mandatory = $false)]
-        [string]$Deployment = (Get-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment")
+        [string]$Deployment = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_C_DEPLOYMENT -PromptMessage "Please enter the deployment")
     )
-    
-    # Define headers for API request
-    # GetHeaders: Retrieve headers for API request.
-    #
-    # EXAMPLE
-    # GetHeaders -ApiKey "0123456789abcdef"
-    #
-    # INPUTS
-    # -ApiKey <String>
-    #   The API key used to authenticate the request. This parameter is mandatory.
-    #
-    # OUTPUTS
-    # Hashtable of headers to use in API request.
-    #
-    # NOTES
-    # The function retrieves the headers required to make an API request to Azure OpenAI Text Analytics API.
-    #
-    function Get-Headers {
-        [CmdletBinding()]
-        param (
-            [Parameter(Mandatory = $true)]
-            [ValidateNotNullOrEmpty()]
-            [string]$ApiKeyVariable
-        )
-
-        # Check if API key is valid
-        try {
-            if (Test-UserEnvironmentVariable -VariableName $ApiKeyVariable) {
-                $ApiKey = [System.Environment]::GetEnvironmentVariable($ApiKeyVariable, "user")
-            } 
-        }
-        catch {
-            Write-Error "API key '$ApiKeyVariable' not found in environment variables. Please set the environment variable before running this script."
-            return $null
-        }
-
-        # Construct headers
-        $headers = @{
-            "Content-Type" = "application/json"
-            "api-key"      = $ApiKey
-        }
-
-        return $headers
-    }
     
     # Define system and user messages
     function Get-Prompt {
@@ -181,97 +137,7 @@ function Invoke-PSAOAICompletion {
 
         return $prompt
     }
-    
-    # Define body for API request
-    function Get-Body {
-        param(
-            [Parameter(Mandatory = $true)]
-            [string]$prompt,
-            [Parameter(Mandatory = $false)]
-            [int]$MaxTokens,
-            [Parameter(Mandatory = $false)]
-            [double]$temperature,
-            [Parameter(Mandatory = $false)]
-            [double]$top_p,
-            [Parameter(Mandatory = $false)]
-            [double]$frequency_penalty,
-            [Parameter(Mandatory = $false)]
-            [double]$presence_penalty,
-            [Parameter(Mandatory = $false)]
-            [int]$n,
-            [Parameter(Mandatory = $false)]
-            [int]$best_of,
-            [Parameter(Mandatory = $false)]
-            [bool]$Stream,
-            [Parameter(Mandatory = $false)]
-            $logit_bias,
-            [Parameter(Mandatory = $false)]
-            [int]$logprobs,
-            [Parameter(Mandatory = $false)]
-            [string]$suffix = $null,
-            [Parameter(Mandatory = $false)]
-            [bool]$echo,
-            [Parameter(Mandatory = $false)]
-            [string]$completion_config,        
-            [Parameter(Mandatory = $false)]
-            [string]$User,
-            [Parameter(Mandatory = $false)]
-            $stop,
-            [Parameter(Mandatory = $false)]
-            [string]$model
-        )
-        if ($model -eq 'gpt-35-turbo') {
-            $body = [ordered]@{
-                'prompt'            = $prompt
-                'max_tokens'        = $MaxTokens
-                'temperature'       = $temperature
-                'frequency_penalty' = $frequency_penalty
-                'presence_penalty'  = $presence_penalty
-                'top_p'             = $top_p
-                'stop'              = $stop
-                'stream'            = $stream
-                'n'                 = $n
-                'user'              = $user
-                'logit_bias'        = $logit_bias
-            }
-            <# 
-            'echo'              = $echo
-            'completion_config' = $completion_config
-            'best_of'           = $best_of
-'suffix'            = $null
-
-#>
-        }
-        else {
-            $body = @{
-                'prompt'            = $prompt
-                'max_tokens'        = $MaxTokens
-                'temperature'       = $temperature
-                'frequency_penalty' = $frequency_penalty
-                'presence_penalty'  = $presence_penalty
-                'top_p'             = $top_p
-                'stop'              = $stop
-                'stream'            = $stream
-                'n'                 = $n
-                'user'              = $user
-                #'echo'              = $echo
-                'logit_bias'        = $logit_bias
-                #'completion_config' = $completion_config
-                #'suffix'            = $suffix
-                #'best_of'           = $best_of
-            }
-        }    
-
-        return $body
-    }
-    
-    # Define URL for API request
-    function Get-Url {
-        $urlChat = "${Endpoint}/openai/deployments/${Deployment}/completions?api-version=${APIVersion}"
-
-        return $urlChat
-    }
-    
+        
     # Make API request and store response
     function Invoke-ApiRequest {
         param(
@@ -280,15 +146,19 @@ function Invoke-PSAOAICompletion {
             [Parameter(Mandatory = $true)]
             [hashtable]$headers,
             [Parameter(Mandatory = $true)]
-            [string]$bodyJSON
+            [string]$bodyJSON,
+            $timeout = 240
         )
-    
-        try {
-            Write-Verbose $url
-            Write-Verbose $headers
-            Write-Verbose $bodyJSON
 
-            $response = Invoke-RestMethod -Uri $url -Method POST -Headers $headers -Body $bodyJSON -TimeoutSec 240 -ErrorAction Stop
+        Write-Verbose "Invoke-ApiRequest"
+
+        try {
+
+            Write-Verbose "Url: $url"
+            #Write-Verbose "Headers: $($headers | convertto-json)"
+            Write-Verbose "Body: $bodyJSON"
+
+            $response = Invoke-RestMethod -Uri $url -Method POST -Headers $headers -Body $bodyJSON -TimeoutSec $timeout -ErrorAction Stop
             return $response
         }
         catch {
@@ -345,171 +215,28 @@ function Invoke-PSAOAICompletion {
         }
     }
     
-    # Output finish reason
-    function Show-FinishReason {
-        param(
-            [Parameter(Mandatory = $true)]
-            [string]$finishReason
-        )
-    
-        Write-Host ""
-        Write-Host "Finish reason: $($finishReason)"
-    }
-    
-    # Output usage
-    function Show-Usage {
-        param(
-            [Parameter(Mandatory = $true)]
-            [string]$usage
-        )
-    
-        Write-Host ""
-        Write-Host "Usage:"
-        Write-Host $usage
-    }
-    
-    # Define function to handle errors
-    function Format-Error {
-        <#
-    .SYNOPSIS
-    This function formats and outputs the provided error record.
-
-    .DESCRIPTION
-    The Format-Error function takes in an ErrorRecord object and outputs it. 
-    This can be used for better error handling and logging in scripts.
-
-    .PARAMETER ErrorVar
-    The ErrorRecord object to be formatted and outputted. This parameter is mandatory.
-
-    .EXAMPLE
-    Format-Error -ErrorVar $Error
-    #>
-        param(
-            [Parameter(Mandatory = $true)]
-            [System.Management.Automation.ErrorRecord]$ErrorVar
-        )
-
-        # Output the ErrorRecord object
-        Write-Host $ErrorVar
+    while (-not $APIVersion) {
+        $APIVersion = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API Version"
     }
 
-    function Test-UserEnvironmentVariable {
-        <#
-        .SYNOPSIS
-        Checks if a user environment variable is set.
-        
-        .DESCRIPTION
-        This function checks if a user environment variable with the specified name is set. It searches both the environment variables under 'Env:' PSDrive and a specific environment variable named 'API_AZURE_OPENAI' for the user.
-        
-        .PARAMETER VariableName
-        The name of the environment variable to check.
-        
-        .EXAMPLE
-        PS C:\> Test-UserEnvironmentVariable -VariableName "MY_VARIABLE"
-        
-        This command checks if the user environment variable named 'MY_VARIABLE' is set.
-        #>
-        [CmdletBinding()]
-        param (
-            [Parameter(Mandatory = $true)]
-            [ValidateNotNullOrEmpty()]
-            [string]$VariableName
-        )
-    
-        # Get all environment variable names under 'Env:' PSDrive
-        $envVariables = Get-ChildItem -Path "Env:" | Select-Object -ExpandProperty Name
-    
-        # Get the value of a specific user environment variable
-        $envVariable = [Environment]::GetEnvironmentVariable($VariableName, "User")
-    
-        if ($envVariables -contains $VariableName -or $envVariable) {
-            # Variable is set
-            Write-Verbose "The user environment variable '$VariableName' is set."
-            return $true
-        }
-        else {
-            # Variable is not set
-            Write-Verbose "The user environment variable '$VariableName' is not set." -Verbose
-            return $false
-        }
-    }
-
-    function Set-ParametersForSwitches {
-        <#
-        .SYNOPSIS
-        Adjusts temperature and top_p parameters based on the provided switches.
-
-        .DESCRIPTION
-        Sets the temperature and top_p parameters to predefined values based on whether the Creative or Precise switch is used.
-
-        .PARAMETER Creative
-        A switch to set parameters for creative output.
-
-        .PARAMETER Precise
-        A switch to set parameters for precise output.
-
-        .OUTPUTS
-        Hashtable of adjusted parameters.
-        #>
-        param(
-            [switch]$Creative,
-            [switch]$Precise
-        )
-        $parameters = @{
-            'Temperature' = 1.0
-            'TopP'        = 1.0
-        }
-    
-        if ($Creative) {
-            $parameters['Temperature'] = 0.7
-            $parameters['TopP'] = 0.95
-        }
-        elseif ($Precise) {
-            $parameters['Temperature'] = 0.3
-            $parameters['TopP'] = 0.8
-        }
-    
-        return $parameters
-    }
-
-    function Format-Message {
-        param(
-            [Parameter(Mandatory = $true)]
-            [string]$Message
-        )
-        # Usage:
-        #$userMessage = Format-Message -Message $OneTimeUserPrompt
-        return [System.Text.RegularExpressions.Regex]::Replace($Message, "[^\x00-\x7F]", " ")
-    }
-
-    # Define constants for environment variable names
-    $API_AZURE_OPENAI_APIVERSION = "API_AZURE_OPENAI_APIVERSION"
-    $API_AZURE_OPENAI_ENDPOINT = "API_AZURE_OPENAI_ENDPOINT"
-    $API_AZURE_OPENAI_DEPLOYMENT = "API_AZURE_OPENAI_DEPLOYMENT"
-    $API_AZURE_OPENAI_KEY = "API_AZURE_OPENAI_KEY"
-    
-    if (-not $APIVersion) {
-        # Get the API version from the environment variable
-        $APIVersion = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API version"
-    }
-
-    if (-not $Endpoint) {
+    while (-not $Endpoint) {
         # Get the endpoint from the environment variable
-        $Endpoint = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"
+        $Endpoint = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the Endpoint"
     }
 
-    if (-not $Deployment) {
+    while (-not $Deployment) {
         # Get the deployment from the environment variable
-        $Deployment = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment"
+        $Deployment = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_C_DEPLOYMENT -PromptMessage "Please enter the Deployment"
     }
 
-    if (-not $ApiKey) {
-        # Get the API key from the environment variable
-        $ApiKey = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key"
+    while ([string]::IsNullOrEmpty($ApiKey)) {
+        if (-not ($ApiKey = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API Key" -Secure)) {
+            Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_KEY -VariableValue $null
+            $ApiKey = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API Key" -Secure
+        }
     }
 
     try {
-       
         # Adjust parameters based on switches.
         switch ($Mode) {
             "Precise" {
@@ -527,8 +254,15 @@ function Invoke-PSAOAICompletion {
             }
         }
 
+        # Adjust parameters based on switches.
+        if ($Creative -or $Precise) {
+            $parameters = Set-ParametersForSwitches -Creative:$Creative -Precise:$Precise
+            $Temperature = $parameters['Temperature']
+            $TopP = $parameters['TopP']
+        }
+
         # Call functions to execute API request and output results
-        $headers = Get-Headers -ApiKey $API_AZURE_OPENAI_KEY 
+        $headers = Get-Headers -ApiKey $script:API_AZURE_OPENAI_KEY -Secure
 
         if ($usermessage) {
             $prompt = Format-Message -Message $usermessage
@@ -561,7 +295,7 @@ function Invoke-PSAOAICompletion {
         Write-Verbose "Model: $Deployment"
 
         
-        $bodyJSON = Get-Body -prompt $prompt `
+        $bodyJSON = Get-PSAOAICompletionBody -prompt $prompt `
             -temperature $Temperature `
             -frequency_penalty $FrequencyPenalty `
             -presence_penalty $PresencePenalty `
@@ -581,10 +315,21 @@ function Invoke-PSAOAICompletion {
         
         Write-Verbose ($bodyJSON | Out-String)
         
-        $urlChat = Get-Url
+        # Get the URL for the chat
+        $urlChat = Get-PSAOAIUrl -Endpoint $Endpoint -Deployment $Deployment -APIVersion $APIVersion -Mode Completion
+
+        # If not a simple response, display chat completion and other details
+        if (-not $simpleresponse) {
+            Write-Host "[Completion]" -ForegroundColor Green
+            if ($logfile) {
+                Write-Host "{Logfile:'${logfile}'} " -ForegroundColor Magenta
+            }
+            Write-Host "{MaxTokens:'$MaxTokens', temp:'$Temperature', top_p:'$TopP', fp:'$FrequencyPenalty', pp:'$PresencePenalty', user:'$User', n:'$N', stop:'$Stop', stream:'$Stream'} " -ForegroundColor Magenta
+        }
+        
         $response = Invoke-ApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON
 
-        $responseText = (Show-ResponseMessage -content $response.choices[0].text -stream "console"  -simpleresponse:$simpleresponse| out-String)
+        $responseText = (Show-ResponseMessage -content $response.choices[0].text -stream "console"  -simpleresponse:$simpleresponse | out-String)
         
         if (-not $simpleresponse) {
             Show-FinishReason -finishReason $response.choices.finish_reason

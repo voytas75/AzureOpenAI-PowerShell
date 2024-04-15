@@ -48,7 +48,6 @@ function Set-EnvironmentVariable {
         if ($Secure) {
             # If the variable does not exist or its value is null or empty, prompt the user to provide a value
             $VariableValue = Get-EnvironmentVariable -VariableName $VariableName -Secure
-            write-Host "VariableValue: $VariableValue"
         }
         else {
             $VariableValue = Get-EnvironmentVariable -VariableName $VariableName
@@ -63,8 +62,6 @@ function Set-EnvironmentVariable {
     if ([string]::IsNullOrEmpty($VariableValue)) {
         if ($Secure) {
             $VariableValue = (Read-Host -Prompt $PromptMessage -AsSecureString) | ConvertFrom-SecureString
-            #$VariableValue = Encrypt-String -SecureText $VariableValue
-            #$VariableValue = $VariableValue | Convertfrom-SecureString
         }
         else {
             $VariableValue = Read-Host -Prompt $PromptMessage

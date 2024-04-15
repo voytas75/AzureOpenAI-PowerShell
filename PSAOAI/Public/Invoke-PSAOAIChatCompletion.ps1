@@ -173,129 +173,6 @@ function Invoke-PSAOAIChatCompletion {
         )
     }
 
-    # Function to generate the body for the API request
-    function Get-Body {
-        <#
-        .SYNOPSIS
-        Constructs the body for the API request.
-        
-        .DESCRIPTION
-        This function builds the body for the API request. It includes parameters such as messages, temperature, frequency_penalty, presence_penalty, top_p, stop, stream, and user.
-        
-        .PARAMETER messages
-        An array of messages to be included in the API request. This parameter is mandatory.
-        
-        .PARAMETER temperature
-        The temperature parameter for the API request, influencing the randomness of the chatbot's responses. This parameter is mandatory.
-        
-        .PARAMETER n
-        The number of messages to generate for the API request. This parameter is mandatory.
-        
-        .PARAMETER frequency_penalty
-        The frequency penalty parameter for the API request, controlling how much the model should avoid using frequent tokens. This parameter is mandatory.
-        
-        .PARAMETER presence_penalty
-        The presence penalty parameter for the API request, controlling how much the model should favor tokens that are already present. This parameter is mandatory.
-        
-        .PARAMETER top_p
-        The top-p parameter for the API request, controlling the nucleus sampling, a method of random sampling in the model. This parameter is mandatory.
-        
-        .PARAMETER stop
-        The stop parameter for the API request, defining any tokens that should signal the end of a text generation.
-        
-        .PARAMETER stream
-        The stream parameter for the API request, indicating whether the API should return intermediate results. This parameter is mandatory.
-        
-        .PARAMETER user
-        The user parameter for the API request, representing the user initiating the request.
-        
-        .EXAMPLE
-        Get-Body -messages $messages -temperature 0.5 -n 1 -frequency_penalty 0 -presence_penalty 0 -top_p 1 -stop null -stream $false -user "JohnDoe"
-        
-        .OUTPUTS
-        Hashtable of parameters for the API request.
-        #>    
-        param(
-            [Parameter(Mandatory = $true)]
-            [array]$messages, # An array of messages to be included in the API request
-            
-            [Parameter(Mandatory = $true)]
-            [double]$temperature, # The temperature parameter for the API request
-            
-            [Parameter(Mandatory = $true)]
-            [int]$n, # The number of messages to generate for the API request
-            
-            [Parameter(Mandatory = $true)]
-            [double]$frequency_penalty, # The frequency penalty parameter for the API request
-            
-            [Parameter(Mandatory = $true)]
-            [double]$presence_penalty, # The presence penalty parameter for the API request
-            
-            [Parameter(Mandatory = $true)]
-            [double]$top_p, # The top-p parameter for the API request
-            
-            [Parameter(Mandatory = $false)]
-            [string]$stop, # The stop parameter for the API request
-            
-            [Parameter(Mandatory = $true)]
-            [bool]$stream, # The stream parameter for the API request
-            
-            [Parameter(Mandatory = $false)]
-            [string]$user # The user parameter for the API request
-        )
-    
-        # Construct and return the body for the API request
-        return @{
-            'messages'          = $messages
-            'temperature'       = $temperature
-            'n'                 = $n
-            'frequency_penalty' = $frequency_penalty
-            'presence_penalty'  = $presence_penalty
-            'top_p'             = $top_p
-            'stop'              = $stop
-            'stream'            = $stream
-            'user'              = $user
-        }
-    }
-
-    function Get-Url {
-        <#
-    .SYNOPSIS
-    This function generates the URL for the Azure OpenAI API request.
-
-    .DESCRIPTION
-    The Get-Url function constructs the URL for the Azure OpenAI API request. It uses the provided endpoint, deployment, and API version to create the URL.
-
-    .PARAMETER Endpoint
-    Specifies the endpoint URL for the Azure OpenAI API. This parameter is mandatory.
-
-    .PARAMETER Deployment
-    Specifies the name of the OpenAI deployment to be used. This parameter is mandatory.
-
-    .PARAMETER APIVersion
-    Specifies the version of the Azure OpenAI API to be used. This parameter is mandatory.
-
-    .EXAMPLE
-    Get-Url -Endpoint "https://api.openai.com" -Deployment "myDeployment" -APIVersion "v1"
-
-    .OUTPUTS
-    Outputs a string representing the URL for the Azure OpenAI API request.
-    #>
-        param (
-            [Parameter(Mandatory = $true)]
-            [string]$Endpoint, # The endpoint URL for the Azure OpenAI API
-
-            [Parameter(Mandatory = $true)]
-            [string]$Deployment, # The name of the OpenAI deployment to be used
-
-            [Parameter(Mandatory = $true)]
-            [string]$APIVersion # The version of the Azure OpenAI API to be used
-        )
-
-        # Construct and return the URL for the API request
-        return "${Endpoint}/openai/deployments/${Deployment}/chat/completions?api-version=${APIVersion}"
-    }
-    
     # This function makes an API request and stores the response
     function Invoke-ApiRequest {
         <#
@@ -420,36 +297,6 @@ function Invoke-PSAOAIChatCompletion {
         }
     }
     
-    # Function to display the reason for ending the conversation
-    function Show-FinishReason {
-        <#
-        .SYNOPSIS
-        Displays the reason for ending the conversation.
-        
-        .DESCRIPTION
-        The Show-FinishReason function is used to print the reason for ending the conversation to the console. This is typically used in chatbot interactions to indicate why the conversation was terminated.
-        
-        .PARAMETER finishReason
-        The reason for ending the conversation. This parameter is mandatory and should be a string.
-        
-        .EXAMPLE
-        Show-FinishReason -finishReason "End of conversation"
-        This example shows how to use the Show-FinishReason function to display "End of conversation" as the reason for ending the conversation.
-        
-        .OUTPUTS
-        None. This function does not return any output. It only prints the finish reason to the console.
-        #> 
-        param(
-            [Parameter(Mandatory = $true)]
-            [string]$finishReason # The reason for ending the conversation
-        )
-    
-        # Print an empty line to the console for better readability
-        Write-Output ""
-        # Print the finish reason to the console
-        Write-Output "(Finish reason: $finishReason)"
-    }
-    
     function Show-PromptFilterResults {
         <#
         .SYNOPSIS
@@ -492,86 +339,7 @@ function Invoke-PSAOAIChatCompletion {
             return $contentFilterObject
         }
     }
-           
-    
-    # Function to output the usage
-    function Show-Usage {
-        <#
-            .SYNOPSIS
-            Outputs the usage statistics of the API call.
-            
-            .DESCRIPTION
-            This function takes in a usage object and prints the usage statistics to the console in a verbose manner. 
-            The usage object typically contains information about the total tokens in the API call and the total tokens used.
-            
-            .PARAMETER usage
-            The usage object to be displayed. This parameter is mandatory.
-            
-            .EXAMPLE
-            Show-Usage -usage $response.usage
-            
-            .OUTPUTS
-            String. This function outputs the usage statistics to the console and returns a string representation of the usage.
-            #> 
-        param(
-            [Parameter(Mandatory = $true)]
-            [System.Object]$usage # The usage object to display
-        )
-
-        # Convert the usage object to a string and write it to the console in a verbose manner
-        Write-Verbose ($usage | Out-String)
-        Write-Verbose (($usage | gm) | Out-String)
-
-        # Return a string representation of the usage
-        $usageData = $usage
-        return "Usage:`n$usageData"
-    }
-    
-    function Set-ParametersForSwitches {
-        <#
-        .SYNOPSIS
-        This function adjusts the 'Temperature' and 'TopP' parameters based on the provided switches.
-
-        .DESCRIPTION
-        This function sets the 'Temperature' and 'TopP' parameters to predefined values based on the state of the 'Creative' or 'Precise' switch. 
-        If 'Creative' is enabled, 'Temperature' is set to 0.7 and 'TopP' to 0.95. 
-        If 'Precise' is enabled, 'Temperature' is set to 0.3 and 'TopP' to 0.8.
-
-        .PARAMETER Creative
-        A switch parameter. When enabled, it sets the parameters for a more creative output.
-
-        .PARAMETER Precise
-        A switch parameter. When enabled, it sets the parameters for a more precise output.
-
-        .OUTPUTS
-        Outputs a Hashtable of the adjusted parameters.
-        #>
-        param(
-            [switch]$Creative,
-            [switch]$Precise
-        )
         
-        # Initialize parameters with default values
-        $parameters = @{
-            'Temperature' = 1.0
-            'TopP'        = 1.0
-        }
-    
-        # If Creative switch is enabled, adjust parameters for creative output
-        if ($Creative) {
-            $parameters['Temperature'] = 0.7
-            $parameters['TopP'] = 0.95
-        }
-        # If Precise switch is enabled, adjust parameters for precise output
-        elseif ($Precise) {
-            $parameters['Temperature'] = 0.3
-            $parameters['TopP'] = 0.8
-        }
-    
-        # Return the adjusted parameters
-        return $parameters
-    }
-
     function Write-LogMessage {
         <#
     .SYNOPSIS
@@ -609,30 +377,6 @@ function Invoke-PSAOAIChatCompletion {
 
         # Write the log entry to the log file
         Add-Content -Path $LogFile -Value $logEntry -Force
-    }
-       
-    function Format-Message {
-        <#
-    .SYNOPSIS
-    This function formats the provided message by removing non-ASCII characters.
-
-    .DESCRIPTION
-    The Format-Message function takes in a string message and returns a version of the message with all non-ASCII characters removed. 
-    This can be used to ensure that the message can be properly displayed in environments that only support ASCII characters.
-
-    .PARAMETER Message
-    The string message to be formatted. This parameter is mandatory.
-
-    .EXAMPLE
-    $userMessage = Format-Message -Message $OneTimeUserPrompt
-    #>
-        param(
-            [Parameter(Mandatory = $true)]
-            [string]$Message
-        )
-
-        # Remove non-ASCII characters from the message
-        return [System.Text.RegularExpressions.Regex]::Replace($Message, "[^\x00-\x7F]", "")
     }
 
     while (-not $APIVersion) {
@@ -674,6 +418,20 @@ function Invoke-PSAOAIChatCompletion {
         }
     }
 
+    # Adjust parameters based on switches.
+    if ($Creative -or $Precise) {
+        $parameters = Set-ParametersForSwitches -Creative:$Creative -Precise:$Precise
+        $Temperature = $parameters['Temperature']
+        $TopP = $parameters['TopP']
+    }
+    else {
+        $parameters = @{
+            'Temperature' = $Temperature
+            'TopP'        = $TopP
+        }
+    }
+
+
     if ($OneTimeUserPrompt) {
         [string]$OneTimeUserPrompt = ($usermessage | out-string)
     }
@@ -706,11 +464,10 @@ function Invoke-PSAOAIChatCompletion {
             # If so, read the content of usermessagelogfile and assign it to usermessage
             $usermessage = (get-content $usermessagelogfile | out-string)
         }
-        $moduleName = "PSAOAI"
 
         # Check if logfile is not set
         if (-not $logfile) {
-            $logfileDirectory = Join-Path -Path ([Environment]::GetFolderPath("MyDocuments")) -ChildPath $modulename
+            $logfileDirectory = Join-Path -Path ([Environment]::GetFolderPath("MyDocuments")) -ChildPath $script:modulename
 
             if (!(Test-Path -Path $logfileDirectory)) {
                 # Create the directory if it does not exist
@@ -779,17 +536,6 @@ function Invoke-PSAOAIChatCompletion {
             $userMessage = Format-Message -Message $userMessage
             Write-Verbose $userMessage
         }
-
-        # Adjust parameters based on switches.
-        if ($Creative -or $Precise) {
-            $parameters = Set-ParametersForSwitches -Creative:$Creative -Precise:$Precise
-        }
-        else {
-            $parameters = @{
-                'Temperature' = $Temperature
-                'TopP'        = $TopP
-            }
-        }
         
         # Get the messages from the system and user
         $messages = Get-Messages -system_message $system_message -UserMessage $userMessage
@@ -797,7 +543,8 @@ function Invoke-PSAOAIChatCompletion {
         Write-Verbose "Messages: $($messages | out-string)"
 
         # Get the URL for the chat
-        $urlChat = Get-Url -Endpoint $Endpoint -Deployment $Deployment -APIVersion $APIVersion
+        $urlChat = Get-PSAOAIUrl -Endpoint $Endpoint -Deployment $Deployment -APIVersion $APIVersion -Mode chat
+
         # Write the URL to the verbose output
         Write-Verbose "urtChat: $urlChat"
 
@@ -808,7 +555,7 @@ function Invoke-PSAOAIChatCompletion {
 
         do {
             # Get the body of the message
-            $body = Get-Body -messages $messages -temperature $parameters['Temperature'] -top_p $parameters['TopP'] -frequency_penalty $FrequencyPenalty -presence_penalty $PresencePenalty -user $User -n $N -stop $Stop -stream $Stream
+            $body = Get-PSAOAIChatBody -messages $messages -temperature $parameters['Temperature'] -top_p $parameters['TopP'] -frequency_penalty $FrequencyPenalty -presence_penalty $PresencePenalty -user $User -n $N -stop $Stop -stream $Stream
 
             # Convert the body to JSON
             $bodyJSON = ($body | ConvertTo-Json)
@@ -826,6 +573,7 @@ function Invoke-PSAOAIChatCompletion {
                     Write-Host "{SysPrompt, temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
                 }
             }
+            
             # Invoke the API request
             $response = Invoke-ApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON
             

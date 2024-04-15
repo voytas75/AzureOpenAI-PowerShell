@@ -31,9 +31,6 @@ function Get-EnvironmentVariable {
     # Fetch the value of the environment variable
     $VariableValue = [System.Environment]::GetEnvironmentVariable($VariableName, "User")
 
-    Write-Verbose "Variable Value: $VariableValue"
-
-
     if ([string]::IsNullOrEmpty($VariableValue)) {
         return $null
     }
@@ -53,7 +50,7 @@ function Get-EnvironmentVariable {
 
     }
     else {
-        
+       
         # Outputting the value of the variable to the verbose output stream for debugging
         Write-Verbose "Variable Value: $VariableValue"
 
