@@ -39,7 +39,7 @@ function Get-EnvironmentVariable {
     }
     # If Secure is set to $true, convert the value of the environment variable to plain text
     if ($Secure) {
-        Write-Verbose $VariableValue
+        
         try {
             $VariableValue = Convert-SecureStringToPlainText -SecureString ($VariableValue | ConvertTo-SecureString)
             #$VariableValue = Convert-SecureStringToPlainText -SecureString ($VariableValue | ConvertTo-SecureString -AsPlainText -Force)
