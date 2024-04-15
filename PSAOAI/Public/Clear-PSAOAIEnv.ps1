@@ -9,6 +9,7 @@ function Clear-PSAOAIEnv {
     .EXAMPLE
     Clear-AzureOpenAIAPIEnv
     #>    param()
+    Write-Host "This operation will clear all $script:ModuleName environment variables. Make sure to backup any important data before proceeding."
     try {
         # Start a job to clear the environment variables related to Azure OpenAI API
         $job = Start-Job -ScriptBlock {
