@@ -17,7 +17,11 @@
         Returns a hashtable of headers for the API request. The headers include "Content-Type" set to "application/json" and "api-key" set to the value of the API key retrieved from the environment variable.
         
         .NOTES
-        It's crucial to store the API key securely in an environment variable. The function will throw an error if it can't find the API key in the specified environment variable.        
+        It's crucial to store the API key securely in an environment variable. The function will throw an error if it can't find the API key in the specified environment variable.
+
+        .NOTES
+        Author: Wojciech Napierala
+        Date: 2024-04
         #>
         [CmdletBinding()]
         param (

@@ -49,6 +49,10 @@ function Invoke-PSAOAIDalle3 {
     Invoke-PSAOAIDalle3 -serviceName "MyService" -Prompt "MyPrompt" -user "MyUser"
 
     This command sends a request to the "MyService" service with the prompt "MyPrompt" and the user "MyUser", and retrieves the response.
+
+    .NOTES
+    Author: Wojciech Napierala
+    Date:   2023-06
     #>
     [CmdletBinding()]
     param (

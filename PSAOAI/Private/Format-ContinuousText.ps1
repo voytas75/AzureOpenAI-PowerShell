@@ -1,17 +1,32 @@
+<#
+.SYNOPSIS
+    This function transforms any text into a continuous string by replacing newline characters with a space.
+
+.DESCRIPTION
+    The Format-ContinuousText function accepts a string as input and returns a string where all newline characters (`r`n) and (`n`) are replaced with a space (" ").
+
+.PARAMETER text
+    The text parameter is mandatory and should be a string. This is the text that will be transformed into a continuous string.
+
+.EXAMPLE
+    PS C:\> $Text = "Hello,`nWorld!"
+    PS C:\> $ContinuousText = Format-ContinuousText -text $Text
+    PS C:\> Write-Host $ContinuousText
+    Hello, World!
+
+.NOTES
+    Author: Wojciech Napierala
+    Date: 2024-04
+#>
 function Format-ContinuousText {
-    # Define the parameters for the function
     param (
-        # The text parameter is mandatory and should be a string
         [Parameter(Mandatory = $true)]
         [string]$text
     )
 
-    # This function is designed to transform any text into a continuous string by replacing newline characters with a space.
-    # It accepts a string as input and returns a string where all newline characters (`r`n) and (`n`) are replaced with a space (" ").
+    # Replace carriage return and newline characters with a space
+    $text = $text -replace "`r`n", " "
 
-    # The `-replace` operator is used to replace all newline characters with a space.
-    # The result is returned as the output of the function.
-
-    $text = $text -replace "`r`n", " " # Replace carriage return and newline characters
-    return $text -replace "`n", " " # Replace newline characters
+    # Replace newline characters with a space and return the result
+    return $text -replace "`n", " "
 }

@@ -12,6 +12,11 @@
     $SecurePassword = Read-Host "Enter your password" -AsSecureString
     $PlainTextPassword = Convert-SecureStringToPlainText -SecureString $SecurePassword
     Write-Host $PlainTextPassword
+
+.NOTES
+Author: Wojciech Napierala
+Date:   2024-04
+
 #>
 function Convert-SecureStringToPlainText {
     param (

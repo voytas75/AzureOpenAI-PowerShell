@@ -14,6 +14,11 @@ function Get-PSAOAIEmbededBody {
     
     .OUTPUTS
     The body object for the API request.
+
+    .NOTES
+        Author: Wojciech Napierala
+        Date: 2024-04
+
     #>
     
     param(

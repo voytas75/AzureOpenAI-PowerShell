@@ -15,6 +15,11 @@ function Test-UserEnvironmentVariable {
     
     .OUTPUTS
     Boolean. Returns $true if the environment variable exists, $false otherwise.
+
+    .NOTES
+        Author: Wojciech Napierala
+        Date: 2024-04
+
     #> 
     param (
         [Parameter(Mandatory = $true)]

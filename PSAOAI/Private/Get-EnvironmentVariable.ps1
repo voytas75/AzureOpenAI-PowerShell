@@ -14,6 +14,11 @@ function Get-EnvironmentVariable {
 
     .EXAMPLE
     $APIVersion = Get-EnvironmentVariable -VariableName "API_AZURE_OPENAI_APIVERSION"
+
+    .NOTES
+        Author: Wojciech Napierala
+        Date: 2024-04
+
     #>
     [CmdletBinding()]
     param(

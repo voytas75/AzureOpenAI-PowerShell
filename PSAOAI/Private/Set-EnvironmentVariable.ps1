@@ -17,6 +17,11 @@ function Set-EnvironmentVariable {
 
     .EXAMPLE
     Set-EnvironmentVariable -VariableName "API_AZURE_OPENAI_APIVERSION" -PromptMessage "Please enter the API version" -Secure
+
+    .NOTES
+        Author: Wojciech Napierala
+        Date: 2024-04
+
     #>
 
     param(

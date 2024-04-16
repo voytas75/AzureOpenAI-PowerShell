@@ -39,6 +39,11 @@ function Get-PSAOAIChatBody {
     
     .OUTPUTS
     Hashtable of parameters for the API request.
+
+    .NOTES
+        Author: Wojciech Napierala
+        Date: 2024-04
+
     #>    
     param(
         [Parameter(Mandatory = $true)]

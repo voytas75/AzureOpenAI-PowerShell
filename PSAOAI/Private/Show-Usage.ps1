@@ -16,6 +16,11 @@ function Show-Usage {
         
         .OUTPUTS
         String. This function outputs the usage statistics to the console and returns a string representation of the usage.
+
+        .NOTES
+        Author: Wojciech Napierala
+        Date: 2024-04
+
         #> 
     param(
         [Parameter(Mandatory = $true)]

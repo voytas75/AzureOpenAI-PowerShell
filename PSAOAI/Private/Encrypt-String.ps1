@@ -13,6 +13,10 @@ function Encrypt-String {
         PS C:\> $SecureText = ConvertTo-SecureString -String "Hello, World!" -AsPlainText -Force
         PS C:\> $EncryptedText = Encrypt-String -SecureText $SecureText
         PS C:\> Write-Host $EncryptedText
+    
+    .NOTES
+        Author: Wojciech Napierala
+        Date: 2024-04
     #>
 
     param (

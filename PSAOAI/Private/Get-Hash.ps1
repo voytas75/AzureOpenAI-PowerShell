@@ -20,8 +20,8 @@ function Get-Hash {
     This example generates a HMACMD5 hash of the string "Hello, World!".
 
     .NOTES
-    Author: Your Name
-    Date:   Current Date
+        Author: Wojciech Napierala
+        Date: 2024-04
 #>
     [CmdletBinding()]
     param(

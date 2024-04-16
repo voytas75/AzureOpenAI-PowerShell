@@ -12,6 +12,11 @@ The ErrorRecord object to be formatted and outputted. This parameter is mandator
 
 .EXAMPLE
 Format-Error -ErrorVar $Error
+
+.NOTES
+    Author: Wojciech Napierala
+    Date: 2024-04
+
 #>
     param(
         [Parameter(Mandatory = $true)]

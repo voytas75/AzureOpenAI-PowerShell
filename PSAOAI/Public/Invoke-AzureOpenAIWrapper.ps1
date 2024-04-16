@@ -41,6 +41,10 @@ function Invoke-AzureOpenAIWrapper {
 
     .EXAMPLE
     PS> .\Invoke-AzureOpenAIWrapper.ps1 -serviceName "serviceName" -Prompt "Hello, world!" -user "user" -ApiVersion "v1" -SystemPromptFileName "ArtFusion2.txt" -Deployment "deployment" -model "pixart" -pollinations -pollinationspaint -ImageLoops 5
+    
+    .NOTES
+    Author: Wojciech Napierala
+    Date:   2023-06
     #>
 
     [CmdletBinding()]

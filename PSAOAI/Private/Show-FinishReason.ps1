@@ -16,6 +16,11 @@
         
         .OUTPUTS
         None. This function does not return any output. It only prints the finish reason to the console.
+
+        .NOTES
+        Author: Wojciech Napierala
+        Date: 2024-04
+
         #> 
         param(
             [Parameter(Mandatory = $true)]

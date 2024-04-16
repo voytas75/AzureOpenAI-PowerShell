@@ -8,6 +8,10 @@ function Clear-PSAOAIEnv {
 
     .EXAMPLE
     Clear-PSAOAIEnv
+
+    .NOTES
+    Author: Wojciech Napierala
+    Date:   2023-06
     #>    
     param()
     # Informing the user about the upcoming operation

@@ -16,6 +16,11 @@ function Set-ParametersForSwitches {
 
     .OUTPUTS
     Outputs a Hashtable of the adjusted parameters.
+
+    .NOTES
+        Author: Wojciech Napierala
+        Date: 2024-04
+
     #>
     param(
         [switch]$Creative,

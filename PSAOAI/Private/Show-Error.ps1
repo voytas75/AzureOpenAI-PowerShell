@@ -15,6 +15,11 @@ function Show-Error {
     
     .OUTPUTS
     None. This function manages the errors and outputs the error details to the console.
+
+    .NOTES
+        Author: Wojciech Napierala
+        Date: 2024-04
+
     #> 
     param(
         [Parameter(Mandatory = $true)]

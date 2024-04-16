@@ -12,6 +12,11 @@
 
     .EXAMPLE
     $userMessage = Format-Message -Message $OneTimeUserPrompt
+
+    .NOTES
+        Author: Wojciech Napierala
+        Date: 2024-04
+
     #>
         param(
             [Parameter(Mandatory = $true)]

@@ -20,6 +20,11 @@ Get-Url -Endpoint "https://api.openai.com" -Deployment "myDeployment" -APIVersio
 
 .OUTPUTS
 Outputs a string representing the URL for the Azure OpenAI API request.
+
+.NOTES
+    Author: Wojciech Napierala
+    Date: 2024-04
+
 #>
     param (
         [Parameter(Mandatory = $true)]
