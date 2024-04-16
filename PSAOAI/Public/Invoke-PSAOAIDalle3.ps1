@@ -73,7 +73,7 @@ function Invoke-PSAOAIDalle3 {
 
         [string]$user,
 
-        [string]$ApiVersion = "2023-12-01-preview",
+        [string]$ApiVersion = (get-apiversion -preview | select-object -first 1),
 
         [string]$SavePath = [Environment]::GetFolderPath([Environment+SpecialFolder]::MyPictures),
 
@@ -81,130 +81,8 @@ function Invoke-PSAOAIDalle3 {
 
         [int]$n = 1,
 
-        [int]$timeoutSec = 60
+        [int]$timeoutSec = 240
     )
-
-    function Get-Headers {
-        <#
-        .SYNOPSIS
-        This function constructs and returns the headers for the API call.
-
-        .DESCRIPTION
-        The Get-Headers function takes an API key variable as input, checks if it is valid and then constructs the headers for the API call.
-
-        .PARAMETER ApiKeyVariable
-        The API key variable to be validated and used in the headers.
-
-        .EXAMPLE
-        Get-Headers -ApiKeyVariable "MyApiKeyVariable"
-
-        This command constructs the headers using the "MyApiKeyVariable" API key variable.
-        #>
-        [CmdletBinding()]
-        param (
-            [Parameter(Mandatory = $true)]
-            [ValidateNotNullOrEmpty()]
-            [string]$ApiKeyVariable
-        )
-
-        # Construct an empty headers dictionary
-        $headers = [ordered]@{
-            "api-key" = ""
-        }
-
-        # Try to validate the API key and construct the headers
-        try {
-            # If the API key variable is valid
-            if (Test-UserEnvironmentVariable -VariableName $ApiKeyVariable) {
-                # Get the API key from the environment variables
-                $ApiKey = [System.Environment]::GetEnvironmentVariable($ApiKeyVariable, "user")
-                # Add the API key to the headers
-                $headers["api-key"] = $ApiKey
-                # Add the Content-Type to the headers
-                $headers["Content-Type"] = "application/json"
-            } 
-        }
-        # If an error occurs during the validation or construction of the headers
-        catch {
-            # Write an error message
-            Write-Error "API key '$ApiKeyVariable' not found in environment variables. Please set the environment variable before running this script."
-        }
-
-        # Return the constructed headers
-        return $headers
-    }
-    function Test-UserEnvironmentVariable {
-        <#
-        .SYNOPSIS
-        This function checks if a user environment variable exists.
-
-        .DESCRIPTION
-        Given a variable name, it checks if it exists in the environment variables.
-        If it does, it returns true, otherwise it returns false.
-
-        .PARAMETER VariableName
-        The name of the environment variable to check.
-
-        .EXAMPLE
-        Test-UserEnvironmentVariable -VariableName "MyVariableName"
-
-        This command checks if the "MyVariableName" environment variable exists.
-        #>
-        param (
-            [Parameter(Mandatory = $true)]
-            [string]$VariableName
-        )
-    
-        # Get the environment variable
-        $envVariable = Get-EnvironmentVariable -VariableName $VariableName        
-        
-        # Check if the environment variable exists
-        if ($envVariable) {
-            # If it exists, write a verbose message and return true
-            Write-Verbose "The user environment variable '$VariableName' is set."
-            return $true
-        }
-        else {
-            # If it doesn't exist, write a verbose message and return false
-            Write-Verbose "The user environment variable '$VariableName' is not set."
-            return $false
-        }
-    }
-    
-    # This function displays the error message and performs any necessary error logging.
-    function Show-Error {
-        <#
-        .SYNOPSIS
-        This function displays an error message and performs any necessary error logging.
-
-        .DESCRIPTION
-        This function takes an error message as a parameter, displays it on the console, and performs any necessary error logging. 
-        The error logging mechanism is not implemented in this function but can be added.
-
-        .PARAMETER ErrorMessage
-        The error message to be displayed. This parameter is mandatory.
-        #>
-
-        param(
-            [Parameter(Mandatory = $true)]
-            [string]$ErrorMessage # The error message to be displayed
-        )
-
-        # Display the error message using Write-Error cmdlet
-        Write-Error $ErrorMessage
-        # Log error to file or other logging mechanism (Not implemented in this function but can be added here)
-    }
-
-    # This function constructs and returns the URL for the API call
-    function Get-Url {
-        param (
-            [Parameter(Mandatory = $true)]
-            [string]$apiVersion
-        )
-
-        $urlImages = "$azureEndpoint/openai/deployments/$model/images/generations?api-version=$apiVersion"
-        return $urlImages
-    }
 
     # This function constructs and returns the body for the API request
     function Get-BodyJSON {
@@ -244,6 +122,27 @@ function Invoke-PSAOAIDalle3 {
         return ($body | ConvertTo-Json)
     }
     
+    while (-not $APIVersion) {
+        $APIVersion = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API Version"
+    }
+
+    while (-not $Endpoint) {
+        # Get the endpoint from the environment variable
+        $Endpoint = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the Endpoint"
+    }
+
+    while (-not $Deployment) {
+        # Get the deployment from the environment variable
+        $Deployment = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_D3_DEPLOYMENT -PromptMessage "Please enter the Deployment"
+    }
+
+    while ([string]::IsNullOrEmpty($ApiKey)) {
+        if (-not ($ApiKey = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API Key" -Secure)) {
+            Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_KEY -VariableValue $null
+            $ApiKey = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API Key" -Secure
+        }
+    }
+
     if ($VerbosePreference -eq 'Continue') {
         Write-Host "Parameters and values:"
         Write-Host "Prompt: $prompt"
@@ -255,18 +154,19 @@ function Invoke-PSAOAIDalle3 {
         Write-Host "Style: $style"
     }
 
-    # Define the API version and Azure endpoint
-    $azureEndpoint = "https://${serviceName}.openai.azure.com"
-    $azureEndpoint = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_ENDPOINT
-    Write-Verbose $azureEndpoint
     # Create the JSON request body for the API call
     $requestBodyJSON = get-BodyJSON -prompt $prompt -n $n -user $user -size $size -response_format $response_format -quality $quality -style $style
 
-    # Define the headers for the API call
-    $headers = Get-Headers -ApiKey (Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key" -Secure) -Secure
+    Write-Verbose $requestBodyJSON
 
+    # Define the headers for the API call
+    $headers = Get-Headers -ApiKey $script:API_AZURE_OPENAI_KEY -Secure
+    
     # Define the URI for the API call
-    $URI = Get-Url -apiVersion $ApiVersion
+    $URI = Get-PSAOAIUrl -apiVersion $ApiVersion -Mode Dalle3 -Endpoint $Endpoint -Deployment $Deployment
+
+    Write-Verbose $URI
+
 
     # Use a try-catch block to handle potential errors in the API call
     try {
@@ -344,12 +244,7 @@ function Invoke-PSAOAIDalle3 {
     }
     catch {
         # If any error occurs during the process, the error details (file, line, character, and message) are printed to the console.
-        Write-Host "[e] Error in file: $($_.InvocationInfo.ScriptName)" -ForegroundColor DarkRed
-        Write-Host "[e] Error in line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor DarkRed
-        Write-Host "[e] Error at char: $($_.InvocationInfo.OffsetInLine)" -ForegroundColor DarkRed
-        Write-Host "[e] An error occurred:" -NoNewline
-        Write-Host " $($_.Exception.Message)" -ForegroundColor DarkRed
-        Write-Host ""
+        Show-Error $_
     }
 
 }

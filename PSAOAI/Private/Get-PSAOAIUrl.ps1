@@ -32,7 +32,7 @@ Outputs a string representing the URL for the Azure OpenAI API request.
         [string]$APIVersion, # The version of the Azure OpenAI API to be used
 
         [Parameter(Mandatory = $true)]
-        [ValidateSet("Chat", "Completion", "Dalle3")]
+        [ValidateSet("Chat", "Completion", "Dalle3", "Embedding")]
         [string]$Mode
     )
 
@@ -45,7 +45,12 @@ Outputs a string representing the URL for the Azure OpenAI API request.
             # Construct and return the URL for the API request
             return "${Endpoint}/openai/deployments/${Deployment}/completions?api-version=${APIVersion}"
         }
-        'Dalle3' {  }
+        'Dalle3' { 
+            return "${Endpoint}/openai/deployments/${Deployment}/images/generations?api-version=${apiVersion}"
+        }
+        'Embedding' {
+            return "${Endpoint}/openai/deployments/${Deployment}/embeddings?api-version=${ApiVersion}"
+        }
         Default {}
     }
 }

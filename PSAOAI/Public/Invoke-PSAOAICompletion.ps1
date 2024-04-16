@@ -264,6 +264,8 @@ function Invoke-PSAOAICompletion {
         # Call functions to execute API request and output results
         $headers = Get-Headers -ApiKey $script:API_AZURE_OPENAI_KEY -Secure
 
+        #$headers | ConvertTo-Json
+
         if ($usermessage) {
             $prompt = Format-Message -Message $usermessage
         }
