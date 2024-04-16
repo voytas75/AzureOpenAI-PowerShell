@@ -195,7 +195,7 @@ function Invoke-PSAOAIEmbedding {
         $response = Invoke-ApiRequest -Url $url -Headers $headers -BodyJson $bodyJson
 
         if ($response) {
-            Show-ResponseMessage -Content $response -Stream "output"
+            return (Show-ResponseMessage -Content $response -Stream "output")
             Show-Usage -Usage $response.usage
         }
     }
