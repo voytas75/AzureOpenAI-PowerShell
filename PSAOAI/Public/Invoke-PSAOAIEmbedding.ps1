@@ -1,41 +1,41 @@
 function Invoke-PSAOAIEmbedding {
     <#
     .SYNOPSIS
-    This script makes an API request to an AZURE OpenAI and outputs the response message embedding.
-    
+    Executes an API request to Azure OpenAI and returns the response message embedding.
+
     .DESCRIPTION
-    This script defines functions to make an API request to an AZUER OpenAI and output the response message. The user can input their own messages.
-    Get a vector representation of a given input that can be easily consumed by machine learning models and other algorithms.
-    
+    This function sends an API request to Azure OpenAI and retrieves the response message embedding. It allows users to input their own messages and returns a vector representation of the input that can be utilized by machine learning models and other algorithms.
+
     .PARAMETER ApiVersion
-    The version of the AZURE OpenAI API to use.
-    
+    Specifies the version of the Azure OpenAI API to be used.
+
     .PARAMETER Endpoint
-    The endpoint URL for the OpenAI API.
-    
+    Defines the endpoint URL for the OpenAI API.
+
     .PARAMETER Deployment
-    The name of the OpenAI deployment to use.
-    
+    Specifies the name of the OpenAI deployment to be used.
+
     .PARAMETER User
-    The name of the user making the API request.
+    Identifies the user executing the API request.
 
     .LINK
     Azure OpenAI Service Documentation: https://learn.microsoft.com/en-us/azure/cognitive-services/openai/
     Azure OpenAI Service REST API reference for embedding: https://learn.microsoft.com/en-us/azure/cognitive-services/openai/reference#embeddings
 
     .EXAMPLE
-    PS C:\> Invoke-AzureOpenAIEmbedding `
+    PS C:\> Invoke-PSAOAIEmbedding `
     -ApiVersion "2023-06-01-preview" `
     -Endpoint "https://example.openai.azure.com" `
-    -Deployment "example_model_ada_1" `
+    -Deployment "embedding_model" `
     -User "BobbyK"
+    -Message "Hello, World!"
     
-    This example makes an API request to an OpenAI embedding and outputs the response message.
-    
+    This example demonstrates how to execute an API request to an OpenAI embedding and retrieve the response message.
+
     .NOTES
     Author: Wojciech Napierała
     Date:   2023-06-27
-    Repo: https://github.com/voytas75/AzureOpenAI-PowerShell
+    Repository: https://github.com/voytas75/AzureOpenAI-PowerShell
     #>
     
     [CmdletBinding()]
@@ -52,7 +52,6 @@ function Invoke-PSAOAIEmbedding {
         [string]$Message
 
     )
-    
     function Get-EmbeddingInput {
         <#
         .SYNOPSIS
