@@ -179,21 +179,29 @@ function Invoke-PSAOAIEmbedding {
     }
 
     try {
+        # Retrieve the headers using the API key
         $headers = Get-Headers -ApiKeyVariable $script:API_AZURE_OPENAI_KEY -Secure
     
+        # If no message is provided, get the embedding input
         if (-not $Message) {
             $Message = Get-EmbeddingInput
         }
 
+        # Get the body of the request using the embedding input and user
         $body = Get-PSAOAIEmbededBody -EmbeddingInput $Message -User $User
 
+        # Construct the URL for the request
         $url = Get-PSAOAIUrl -Mode Embedding -Endpoint $Endpoint -Deployment $Deployment -ApiVersion $ApiVersion
         Write-Verbose $url
+        
+        # Convert the body to JSON format
         $bodyJson = $body | ConvertTo-Json
         Write-Verbose $bodyJson
 
+        # Invoke the API request with the constructed URL, headers, and body
         $response = Invoke-ApiRequest -Url $url -Headers $headers -BodyJson $bodyJson
 
+        # If a response is received, show the usage and return the response message
         if ($response) {
             Show-Usage -Usage $response.usage
             return (Show-ResponseMessage -Content $response -Stream "output")
@@ -201,6 +209,7 @@ function Invoke-PSAOAIEmbedding {
         }
     }
     catch {
+        # If an error occurs, show the error
         Show-Error $_
     }
 }
