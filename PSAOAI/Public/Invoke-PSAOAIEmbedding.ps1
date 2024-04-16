@@ -199,7 +199,6 @@ function Invoke-PSAOAIEmbedding {
             Show-ResponseMessage -Content $response -Stream "output"
             Show-Usage -Usage $response.usage
         }
-    
     }
     catch {
         Show-Error $_
