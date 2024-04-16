@@ -130,8 +130,8 @@ function Invoke-PSAOAIEmbedding {
             [string]$Stream
         )
     
-        Write-Host ""
-        Write-Host "Response message embedding ($Stream):"
+        #Write-Host ""
+        #Write-Host "Response message embedding ($Stream):"
         return $Content.data.embedding
     }
    
@@ -152,9 +152,9 @@ function Invoke-PSAOAIEmbedding {
             $Usage
         )
     
-        Write-Output ""
-        Write-Output "Usage:"
-        Write-Output $Usage
+        Write-Host ""
+        Write-Host "Usage:"
+        return $Usage
     }
     
     while (-not $APIVersion) {
@@ -195,8 +195,9 @@ function Invoke-PSAOAIEmbedding {
         $response = Invoke-ApiRequest -Url $url -Headers $headers -BodyJson $bodyJson
 
         if ($response) {
-            return (Show-ResponseMessage -Content $response -Stream "output")
             Show-Usage -Usage $response.usage
+            return (Show-ResponseMessage -Content $response -Stream "output")
+            
         }
     }
     catch {
