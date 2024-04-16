@@ -132,7 +132,7 @@ function Invoke-PSAOAIEmbedding {
     
         Write-Output ""
         Write-Output "Response message embedding ($Stream):"
-        Write-Output $Content.data.embedding
+        return $Content.data.embedding
     }
    
     function Show-Usage {
