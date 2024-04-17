@@ -90,10 +90,10 @@ function Invoke-PSAOAIChatCompletion {
         [string]$usermessage,
         [Parameter(Mandatory = $false)]
         [switch]$OneTimeUserPrompt,
-        [Parameter(ParameterSetName = 'SystemPrompt_Mode', Mandatory = $true)]
-        [Parameter(ParameterSetName = 'SystemPromptFileName_Mode', Mandatory = $true)]
+        [Parameter(ParameterSetName = 'SystemPrompt_Mode', Mandatory = $false)]
+        [Parameter(ParameterSetName = 'SystemPromptFileName_Mode', Mandatory = $false)]
         [ValidateSet("Precise", "Creative")]
-        [string]$Mode,
+        [string]$Mode = "Precise",
         [Parameter(ParameterSetName = 'SystemPrompt_TempTop', Mandatory = $false)]
         [Parameter(ParameterSetName = 'SystemPromptFileName_TempTop', Mandatory = $false)]
         [Parameter(ParameterSetName = 'temptop')]

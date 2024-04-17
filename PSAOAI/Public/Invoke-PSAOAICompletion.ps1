@@ -117,9 +117,9 @@ function Invoke-PSAOAICompletion {
         [string]$User = "",
         [Parameter(Mandatory = $false)]
         [string]$model,
-        [Parameter(ParameterSetName = 'Mode', Mandatory = $true)]
+        [Parameter(ParameterSetName = 'Mode', Mandatory = $false)]
         [ValidateSet("Precise", "Creative")]
-        [string]$Mode,
+        [string]$Mode = "Precise",
         [Parameter(Mandatory = $false)]
         [switch]$simpleresponse,
         [Parameter(Mandatory = $false)]
