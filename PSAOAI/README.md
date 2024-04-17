@@ -15,6 +15,8 @@ This module allows you to perform a variety of tasks such as managing, and inter
 
 Whether you're looking to automate tasks, generate insightful data, or simply explore the capabilities of Azure OpenAI, the PSAOAI module is a valuable addition to your PowerShell toolkit.
 
+![PSAOAI](https://raw.githubusercontent.com/voytas75/AzureOpenAI-PowerShell/master/images/PSAOAI.png "PowerShell Azure OpenAI (PSAOAI) Module")
+
 ## PSAOAI module features
 
 - (Chat) Completion
