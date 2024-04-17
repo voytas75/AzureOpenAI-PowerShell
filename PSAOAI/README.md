@@ -17,11 +17,11 @@ Whether you're looking to automate tasks, generate insightful data, or simply ex
 
 ## PSAOAI module features
 
-- Web crawling functionality to retrieve HTML content from specified URLs
-- Ability to extract and save images from web pages
-- Extraction and storage of contact information from web pages
-- Retrieval and storage of HTML head data
-- Cache folder creation and data folder setup
+- (Chat) Completion
+- Embedding
+- Generate Image (DALL-E 3)
+- Secure API KEY
+- Log responses
 
 ## Installation
 
@@ -87,70 +87,6 @@ Get-Command -Module PowerShellAZUREOpenAI
     PSWC -Url "https://example.com" -Depth 2 -resolve
     ```
 
-### ShowCacheFolder
-
-- The `ShowCacheFolder` option is used to open the default log and data folder (user's document folder under the 'PSWebCrawler' directory) in Windows File Explorer:
-
-    ```powershell
-    PSWC -ShowCacheFolder
-    ```
-
-    More about log and data folder: [Default Log and Data Folder](#default-log-and-data-folder)
-
-### ShowAllElements
-
-- The `PSWC` command with the `ShowAllElements` and `Type` options extracts all elements from the specified `URL`, including Href elements, non-Href elements, domains, and internal links. The `Type` parameter in the command specifies which type of elements to extract. It can be set to one of the following values:
-
-  - **Href**: extracts only elements with an href attribute.
-  - **noHref**: extracts only elements without an href attribute.
-  - **onlyDomains**: extracts only the domains from the href attributes.
-  - **All**: extracts all elements from the specified `URL`.
-
-  To use this option, you can run the following command:
-
-  ```powershell
-  PSWC -ShowAllElements -Type All -Url 'https://www.example.com'
-  ```
-
-    This example extracts all elements from the URL "https://www.example.com"
-
-### GetImageUrls
-
-- The `GetImageUrls` option in `PSWC` retrieves the URLs of all images in an HTML document. The retrieved URLs are saved in a text file named *Images.txt* in the session folder. To use this option, run the command:
-
-  ```powershell
-  PSWC -GetImageUrls -url "https://example.com"
-  ```
-
-  The saved file path will be displayed in the console output.
-
-### GetHTMLMetadata
-
-- The `GetHTMLMetadata` option in the `PSWC` module retrieves metadata from the specified HTML content and displays it. The metadata includes the title, description, keywords, author, copyright, robots, viewport, and generator. Retrieved data are saved in a text file named *metadata.txt* in the session folder. To use this option, run the command:
-
-  ```powershell
-  PSWC -GetHTMLMetadata -url "https://example.com"
-  ```
-
-  The saved file path will be displayed in the console output.
-
-### GetContactInformation
-
-- The `GetContactInformation` option in the PSWebCrawler PowerShell module extracts contact information (emails, addresses, phone numbers) from an HTML document. Once the function is executed, it will return the extracted contact information in JSON format. Additionally, the option saves the extracted contact information to a file named *Contact.json* in the session folder. The session folder is created automatically and its path is logged in the "Settings.log" file. To call the option, use the following command:
-
-  ```powershell
-  PSWC -GetContactInformation -url "https://example.com"
-  ```
-
-  The saved file path will be displayed in the console output.
-
-### GetHeadersAndValues
-
-- The `GetHeadersAndValues` option in the PSWebCrawler PowerShell module extracts headers and their corresponding values from the `<head>` section of an HTML document. To use this option, you need to provide the URL of the website you want to crawl using the `url` parameter. The extracted headers and values are returned as a hashtable. You can save the output to a file by specifying the output folder using the `outputFolder` parameter. Without `outputFolder` data are saved the extracted contact information to a file named *HTMLhead.json* in default place, the session folder.  To call the option, use the following command:
-
-  ```powershell
-  PSWC -GetHeadersAndValues -url "https://example.com"
-  ```
 
 ## Default Log and Data Folder
 
@@ -172,13 +108,13 @@ We use [SemVer](http://semver.org/) for versioning.
 
 We welcome contributions from the community! Feel free to submit pull requests, report issues, or suggest new features to make the framework even more powerful and user-friendly.
 
-**Clone the Repository:** Clone the PSWebCrawler repository to your local machine.
+**Clone the Repository:** Clone the PSAOAI repository to your local machine.
 
 ### License
 
-The PSWebCrawler is released under the [MIT License](https://github.com/voytas75/PSWebCrawler/blob/master/LICENSE).
+The PSAOAI is released under the [MIT License](https://github.com/voytas75/AzureOpenAI-PowerShell/blob/master/PSAOAI/LICENSE).
 
 **Contact:**
-If you have any questions or need assistance, please feel free to reach out to us via [GitHub Issues](https://github.com/voytas75/PSWebCrawler/issues).
+If you have any questions or need assistance, please feel free to reach out to us via [GitHub Issues](https://github.com/voytas75/AzureOpenAI-PowerShell/issues).
 
 Join us on the journey to make PowerShell scripting a truly awesome experience!
