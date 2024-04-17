@@ -2,14 +2,16 @@
 
 ![AzureOpenAI-PowerShell](https://github.com/voytas75/AzureOpenAI-PowerShell/blob/master/images/MSOpenAI_830x200.jpg?raw=true "AzureOpenAI-PowerShell")
 
-Welcome to the GitHub repository for Azure OpenAI PowerShell Functions! This project provides a collection of PowerShell functions that allow you to interact with Azure OpenAI's powerful language models.
+Welcome to the GitHub repository for Azure OpenAI PowerShell Module and Functions! This project provides a collection of PowerShell functions that allow you to interact with Azure OpenAI's powerful language models.
 
 ## &nbsp;
 
-![PSAOAI](https://github.com/voytas75/AzureOpenAI-PowerShell/blob/master/images/PSAOAI256.png?raw=true "PowerShell AZURE OpenAI")
+:exclamation:
+
+![PSAOAI](https://github.com/voytas75/AzureOpenAI-PowerShell/blob/master/images/PSAOAI128.png?raw=true "PowerShell AZURE OpenAI")
 
 <dl>
-  <dt>:exclamation: <h3>Effortlessly interact Azure OpenAI with PowerShell AZURE OpenAI (PSAOAI) Module</h3></dt>
+  <dt><h3>Effortlessly interact Azure OpenAI with PowerShell AZURE OpenAI (PSAOAI) Module</h3></dt>
   <dd>
   Streamline your interaction with Azure OpenAI's language models using PowerShell AZURE OpenAI (PSAOAI)! This comprehensive module consolidates a collection of powerful functions, empowering you to:
 
@@ -18,10 +20,10 @@ Welcome to the GitHub repository for Azure OpenAI PowerShell Functions! This pro
 - Enhanced Productivity: Automate tasks and workflows, accelerating your development process with PSAOAI's functionalities.
 
 </dd>
-  <dd><a href="">Go to module page</a></dd>
+  <dd><a href="./PSAOAI/">Go to module page</a></dd>
 </dl>
 
-## &nbsp;
+##
 
 [What is Azure OpenAI Service?](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/overview)
 
