@@ -5,13 +5,13 @@
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/A0A6KYBUS)
 
-[![status](https://img.shields.io/badge/PROD-v0.0.2-green)](https://github.com/voytas75/AzureOpenAI-PowerShell/blob/master/PSAOAI/docs/ReleaseNotes.md) &nbsp; [![status](https://img.shields.io/badge/DEV-v0.0.3-red)](https://github.com/voytas75/AzureOpenAI-PowerShell/blob/master/PSAOAI/docs/ReleaseNotes.md) &nbsp; ![PowerShell version](https://img.shields.io/badge/PowerShell-v5.1-blue) &nbsp; [![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/PowerShellAZUREOpenAI)](https://www.powershellgallery.com/packages/PowerShellAZUREOpenAI) &nbsp; [![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/PSAOAI)](https://www.powershellgallery.com/packages/PowerShellAZUREOpenAI)
+[![status](https://img.shields.io/badge/PROD-v0.0.2-green)](https://github.com/voytas75/AzureOpenAI-PowerShell/blob/master/PSAOAI/docs/ReleaseNotes.md) &nbsp; [![status](https://img.shields.io/badge/DEV-v0.0.3-red)](https://github.com/voytas75/AzureOpenAI-PowerShell/blob/master/PSAOAI/docs/ReleaseNotes.md) &nbsp; ![PowerShell version](https://img.shields.io/badge/PowerShell-v5.1-blue) &nbsp; [![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/PSAOAI)](https://www.powershellgallery.com/packages/PSAOAI) &nbsp; [![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/PSAOAI)](https://www.powershellgallery.com/packages/PSAOAI)
 
 ## Overview
 
-The PSAOAI module is a powerful tool designed to interact with Azure OpenAI Services. It leverages the Azure OpenAI API to provide a seamless and efficient way to manage and utilize Azure OpenAI Services directly from your PowerShell environment.
+The PSAOAI (PowerShell Azure OpenAI) module is a powerful tool designed to interact with Azure OpenAI Services. It leverages the Azure OpenAI API to provide a seamless and efficient way to manage and utilize Azure OpenAI Services directly from your PowerShell environment.
 
-This module allows you to perform a variety of tasks such as creating, managing, and interacting with OpenAI models, generating text, and analyzing the output. It is designed to be user-friendly and efficient, making it easy for both beginners and experienced users to leverage the power of Azure OpenAI Services.
+This module allows you to perform a variety of tasks such as managing, and interacting with OpenAI models, generating text, and analyzing the output. It is designed to be user-friendly and efficient, making it easy for both beginners and experienced users to leverage the power of Azure OpenAI Services.
 
 Whether you're looking to automate tasks, generate insightful data, or simply explore the capabilities of Azure OpenAI, the PSAOAI module is a valuable addition to your PowerShell toolkit.
 
@@ -28,77 +28,59 @@ Whether you're looking to automate tasks, generate insightful data, or simply ex
 The module is available on [PowerShell Gallery](https://www.powershellgallery.com/packages/PowerShellAZUREOpenAI).
 
 ```powershell
-Install-Module -Name PowerShell-AZURE-OpenAI
+Install-Module -Name PSAOAI
 ```
 
 Import module:
 
 ```powershell
-Import-Module -Module PowerShellAZUREOpenAI
+Import-Module -Module PSAOAI
 ```
 
 To get all commands in installed module including cmdlets, functions and aliases:
 
 ```powershell
-Get-Command -Module PowerShellAZUREOpenAI
+Get-Command -Module PSAOAI
 ```
 
 ## Usage
 
 ### Chat Completion
 
-- `PSWC` (alias of `Start-PSWebCrawler`). When the `PSWC` command is run alone, it displays a menu with various options and examples for using the PSWebCrawler module. This menu provides examples of how to use the PSWC command with different parameters to initiate web crawling with various configurations, such as crawling web pages with specified depths, displaying cache folders, and extracting specific elements from web pages.
+```powershell
+"AZURE Logic App 'IF' element" | Invoke-PSAOAIChatCompletion -APIVersion "2023-06-01-preview" -Endpoint 
+"https://example.openai.azure.com" -Deployment "example_model_gpt35_!" -User "BobbyK" -Temperature 0.3 -TopP 1 
+-FrequencyPenalty 0 -PresencePenalty 0 -simpleresponse -SystemPrompt "Explain to me"
+```
 
-    Start module to display possible options and examples:
+### Completion
 
-    ```powershell
-    PSWC
-    ```
+```powershell
+Invoke-PSAOAIcompletion -usermessage "explain winform" -Deployment "35TURBO" -User "BobbyK" -simpleresponse
+```
 
-    or
+### Generation image
 
-    ```powershell
-    Start-PSWebCrawler
-    ```
+```powershell
+Invoke-PSAOAIDalle3 -Prompt "A finely detailed, broken marble figure head half-submerged in sandy terrain. The scene is 
+bathed in the illuminating glow of daylight. The artistic style of the image evokes the feel of Polish romanticism, 
+characterized by a realistic approach with an underlying emotional dimension and emphasis on symbolic compositions often seen 
+in Malczewski's works who was active before 1912. Please note, the marble figure head should be of no particular person, just 
+a generic, anonymous sculpture." -quality hd 
+```
 
-- When the `PSWC` command is used with the `url` and `depth` parameters, it initiates web crawling starting from the specified URL and crawling to the specified depth. This allows the user to extract various elements from the web pages, such as href elements, non-href elements, domains, and internal links, up to the specified depth. The command also logs and stores the extracted data in the default log folder (user' document folder), providing a record of the crawling process and the extracted elements for further analysis or reference:
+### Embeddings
 
-    ```powershell
-    PSWC -Url "https://example.com" -Depth 2
-    ```
-
-- The `onlyDomains` parameter, when set to true, instructs the web crawler to only crawl to the domains found in the href elements of the web page being crawled. This means that the crawler will restrict its exploration to the domains referenced by the links on the page, rather than following links to external domains:
-
-    ```powershell
-    PSWC -Url "https://example.com" -Depth 2 -onlyDomains
-    ```
-
-- The `outputFolder` parameter is used to specify the path where the log and data folders will be created when the `Url` and `Depth` parameters are used. When initiating a web crawl with the Url and `Depth` parameters, the `outputFolder` parameter allows you to define the location where the log and data folders will be stored for the crawl. This can be useful for organizing and managing the output of the web crawling operation. If the `outputFolder` parameter is not provided the log and data folders will be stored in the default location. The default location is the user's document folder under the 'PSWebCrawler' directory:
-
-    ```powershell
-    PSWC -Url "https://example.com" -Depth 2 -outputFolder "C:\temp\logs\"
-    ```
-
-    More about log and data folder: [Default Log and Data Folder](#default-log-and-data-folder)
-
-- The `resolve` parameter is used when initiating a web crawl with the `Url` and `Depth` parameters. When `resolve` switch is on, the web crawler will resolve the domain name of current processed URL to IP address:
-
-    ```powershell
-    PSWC -Url "https://example.com" -Depth 2 -resolve
-    ```
-
+```powershell
+$response = "Hello, World!" | Invoke-PSAOAIEmbedding -User "Gemini" -Verbose -Deployment "gpt-7" -simpleresponse
+$response
+```
 
 ## Default Log and Data Folder
 
-The PSWebCrawler module uses default folder for storing log files and data. If specific paths are not provided, the module uses `<User's document folder>/PSWebCrawler/` folder.
+The PSAOAI module uses default folder for storing log files and data. If specific paths are not provided, the module uses `<User's document folder>/PSAOAI/` folder.
 
-User can override these default paths by providing custom paths using `outputFolder` parameters when using the module's functions. For example:
-
-```powershell
-PSWC -Url 'https://example.com' -Depth 2 -outputFolder 'C:\Crawl\LOGandDATA\'    
-```
-
-*INFO*: In the PSWebCrawler PowerShell module, the default location for the log and data folder is the user's document folder. If the log and data folder does not exist, it will be created automatically when the module is imported.
+*INFO*: In the PSAOAI PowerShell module, the default location for the log and data folder is the user's document folder. If the log and data folder does not exist, it will be created automatically when the module is imported.
 
 ## Versioning
 

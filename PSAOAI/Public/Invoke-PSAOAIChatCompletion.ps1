@@ -67,7 +67,7 @@ function Invoke-PSAOAIChatCompletion {
     Indicates whether the simpleresponse parameter is enabled.
 
     .EXAMPLE
-    PS C:\> Invoke-AzureOpenAIChatCompletion -APIVersion "2023-06-01-preview" -Endpoint "https://example.openai.azure.com" -Deployment "example_model_gpt35_!" -User "BobbyK" -Temperature 0.6 -N 1 -FrequencyPenalty 0 -PresencePenalty 0 -TopP 0 -Stop $null -Stream $false
+    PS C:\> Invoke-PSAOAIChatCompletion -APIVersion "2023-06-01-preview" -Endpoint "https://example.openai.azure.com" -Deployment "example_model_gpt35_!" -User "BobbyK" -Temperature 0.6 -N 1 -FrequencyPenalty 0 -PresencePenalty 0 -TopP 0 -Stop $null -Stream $false
 
     This example illustrates how to send an API request to an Azure OpenAI chatbot and receive the response message.
 
