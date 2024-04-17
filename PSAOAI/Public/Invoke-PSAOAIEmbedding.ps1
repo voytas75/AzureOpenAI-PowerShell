@@ -49,7 +49,10 @@ function Invoke-PSAOAIEmbedding {
         [Parameter(Mandatory = $false)]
         [string]$User,
         [Parameter(Mandatory = $false, ValueFromPipeline)]
-        [string]$Message
+        [string]$Message,
+        [Parameter(Mandatory = $false)]
+        [switch]$simpleresponse
+
 
     )
     function Get-EmbeddingInput {
@@ -67,45 +70,6 @@ function Invoke-PSAOAIEmbedding {
         $EmbeddingInput = Read-Host "Insert message to embedding"
     
         return $EmbeddingInput
-    }
-    
-    function Invoke-ApiRequest {
-        <#
-        .SYNOPSIS
-        Makes the API request and returns the response.
-        
-        .DESCRIPTION
-        This function makes the API request using the provided URL, headers, and body JSON. It handles exceptions and returns the response.
-        
-        .PARAMETER Url
-        The URL for the API request.
-        
-        .PARAMETER Headers
-        The headers for the API request.
-        
-        .PARAMETER BodyJson
-        The JSON representation of the request body.
-        
-        .OUTPUTS
-        The response object from the API request.
-        #>
-        
-        param(
-            [Parameter(Mandatory = $true)]
-            [string]$Url,
-            [Parameter(Mandatory = $true)]
-            [hashtable]$Headers,
-            [Parameter(Mandatory = $true)]
-            [string]$BodyJson
-        )
-    
-        try {
-            $response = Invoke-RestMethod -Uri $Url -Method POST -Headers $Headers -Body $BodyJson -TimeoutSec 30 -ErrorAction Stop
-            return $response
-        }
-        catch {
-            Show-Error $_
-        }
     }
     
     function Show-ResponseMessage {
@@ -127,11 +91,15 @@ function Invoke-PSAOAIEmbedding {
             [Parameter(Mandatory = $true)]
             [System.Object]$Content,
             [Parameter(Mandatory = $true)]
-            [string]$Stream
-        )
+            [string]$Stream,
+            [Parameter(Mandatory = $false)]
+            [switch]$simpleresponse
     
-        #Write-Host ""
-        #Write-Host "Response message embedding ($Stream):"
+        )
+        if (-not $simpleresponse) {
+            Write-Host ""
+            Write-Host "Response message embedding ($Stream):"
+        }
         return $Content.data.embedding
     }
    
@@ -199,12 +167,14 @@ function Invoke-PSAOAIEmbedding {
         Write-Verbose $bodyJson
 
         # Invoke the API request with the constructed URL, headers, and body
-        $response = Invoke-ApiRequest -Url $url -Headers $headers -BodyJson $bodyJson
+        $response = Invoke-PSAOAIApiRequest -Url $url -Headers $headers -BodyJson $bodyJson -timeout 240
 
         # If a response is received, show the usage and return the response message
         if ($response) {
-            Show-Usage -Usage $response.usage
-            return (Show-ResponseMessage -Content $response -Stream "output")
+            if (-not $simpleresponse) {
+                Show-Usage -Usage $response.usage
+            }
+            return (Show-ResponseMessage -Content $response -Stream "output" -simpleresponse:$simpleresponse)
             
         }
     }

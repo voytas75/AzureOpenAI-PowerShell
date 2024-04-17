@@ -137,34 +137,6 @@ function Invoke-PSAOAICompletion {
 
         return $prompt
     }
-        
-    # Make API request and store response
-    function Invoke-ApiRequest {
-        param(
-            [Parameter(Mandatory = $true)]
-            [string]$url,
-            [Parameter(Mandatory = $true)]
-            [hashtable]$headers,
-            [Parameter(Mandatory = $true)]
-            [string]$bodyJSON,
-            $timeout = 240
-        )
-
-        Write-Verbose "Invoke-ApiRequest"
-
-        try {
-
-            Write-Verbose "Url: $url"
-            #Write-Verbose "Headers: $($headers | convertto-json)"
-            Write-Verbose "Body: $bodyJSON"
-
-            $response = Invoke-RestMethod -Uri $url -Method POST -Headers $headers -Body $bodyJSON -TimeoutSec $timeout -ErrorAction Stop
-            return $response
-        }
-        catch {
-            Format-Error -ErrorVar $_
-        }
-    }
     
     # Output response message
     function Show-ResponseMessage {
@@ -207,7 +179,7 @@ function Invoke-PSAOAICompletion {
         # Check if the simpleresponse switch is used
         if (-not $simpleresponse) {
             # Return the response message with the stream type
-            return ("Response assistant ($stream):`n${content}")
+            return ("Response assistant ($stream):`n$content")
         }
         else {
             # Return only the content
@@ -329,7 +301,7 @@ function Invoke-PSAOAICompletion {
             Write-Host "{MaxTokens:'$MaxTokens', temp:'$Temperature', top_p:'$TopP', fp:'$FrequencyPenalty', pp:'$PresencePenalty', user:'$User', n:'$N', stop:'$Stop', stream:'$Stream'} " -ForegroundColor Magenta
         }
         
-        $response = Invoke-ApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON
+        $response = Invoke-PSAOAIApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240
 
         $responseText = (Show-ResponseMessage -content $response.choices[0].text -stream "console"  -simpleresponse:$simpleresponse | out-String)
         
