@@ -79,6 +79,11 @@ function Invoke-PSAOAIDalle3 {
 
         [string]$ApiVersion = (get-apiversion -preview | select-object -first 1),
 
+        [Parameter(Mandatory = $false)]
+        [string]$Endpoint = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"),
+        [Parameter(Mandatory = $false)]
+        [string]$Deployment = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_D3_DEPLOYMENT -PromptMessage "Please enter the deployment"),
+
         [string]$SavePath = [Environment]::GetFolderPath([Environment+SpecialFolder]::MyPictures),
 
         [int]$ImageLoops = 1,

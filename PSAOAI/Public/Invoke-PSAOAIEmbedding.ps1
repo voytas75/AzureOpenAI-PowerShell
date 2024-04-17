@@ -40,20 +40,18 @@ function Invoke-PSAOAIEmbedding {
     
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $false)]
-        [string]$ApiVersion = (get-apiversion -preview | select-object -first 1),
-        [Parameter(Mandatory = $false)]
-        [string]$Endpoint,
-        [Parameter(Mandatory = $false)]
-        [string]$Deployment,
-        [Parameter(Mandatory = $false)]
-        [string]$User,
         [Parameter(Mandatory = $false, ValueFromPipeline)]
         [string]$Message,
         [Parameter(Mandatory = $false)]
-        [switch]$simpleresponse
-
-
+        [switch]$simpleresponse,
+        [Parameter(Mandatory = $false)]
+        [string]$Endpoint = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"),
+        [Parameter(Mandatory = $false)]
+        [string]$Deployment = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_C_DEPLOYMENT -PromptMessage "Please enter the deployment"),
+        [Parameter(Mandatory = $false)]
+        [string]$ApiVersion = (get-apiversion -preview | select-object -first 1),
+        [Parameter(Mandatory = $false)]
+        [string]$User
     )
     function Get-EmbeddingInput {
         <#
