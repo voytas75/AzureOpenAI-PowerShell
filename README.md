@@ -4,6 +4,25 @@
 
 Welcome to the GitHub repository for Azure OpenAI PowerShell Functions! This project provides a collection of PowerShell functions that allow you to interact with Azure OpenAI's powerful language models.
 
+## &nbsp;
+
+![PSAOAI](https://github.com/voytas75/AzureOpenAI-PowerShell/blob/master/images/PSAOAI256.png?raw=true "PowerShell AZURE OpenAI")
+
+<dl>
+  <dt>:exclamation: <h3>Effortlessly interact Azure OpenAI with PowerShell AZURE OpenAI (PSAOAI) Module</h3></dt>
+  <dd>
+  Streamline your interaction with Azure OpenAI's language models using PowerShell AZURE OpenAI (PSAOAI)! This comprehensive module consolidates a collection of powerful functions, empowering you to:
+
+- Simplify Management: PSAOAI centralizes all Azure OpenAI functions in one place, fostering efficient organization and access.
+- Effortless Interaction: Seamlessly interact with Azure OpenAI's language models using intuitive PowerShell commands.
+- Enhanced Productivity: Automate tasks and workflows, accelerating your development process with PSAOAI's functionalities.
+
+</dd>
+  <dd><a href="">Go to module page</a></dd>
+</dl>
+
+## &nbsp;
+
 [What is Azure OpenAI Service?](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/overview)
 
 <details>
