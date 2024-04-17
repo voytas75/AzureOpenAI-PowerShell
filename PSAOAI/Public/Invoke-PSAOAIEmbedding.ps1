@@ -35,7 +35,7 @@ function Invoke-PSAOAIEmbedding {
     .NOTES
     Author: Wojciech Napierała
     Date:   2023-06-27
-    Repository: https://github.com/voytas75/AzureOpenAI-PowerShell
+    Repository: https://github.com/voytas75/AzureOpenAI-PowerShell/PSAOAI
     #>
     
     [CmdletBinding()]
