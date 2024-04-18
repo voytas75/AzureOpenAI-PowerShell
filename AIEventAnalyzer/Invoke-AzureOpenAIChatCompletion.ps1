@@ -1048,7 +1048,8 @@ function Invoke-AzureOpenAIChatCompletion {
 
 }
 
-<#
+function Get-EnvironmentVariable {
+    <#
     .SYNOPSIS
     This function retrieves the value of a specified environment variable. If the variable does not exist, it prompts the user to provide a value and sets the variable.
 
@@ -1064,7 +1065,6 @@ function Invoke-AzureOpenAIChatCompletion {
     .EXAMPLE
     $APIVersion = Get-EnvironmentVariable -VariableName "API_AZURE_OPENAI_APIVERSION" -PromptMessage "Please enter the API version"
     #>
-function Get-EnvironmentVariable {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
@@ -1099,7 +1099,8 @@ function Get-EnvironmentVariable {
     return $VariableValue
 }
     
-<#
+function Clear-AzureOpenAIAPIEnv {
+    <#
     .SYNOPSIS
     This function clears the Azure OpenAI API environment variables.
 
@@ -1109,7 +1110,6 @@ function Get-EnvironmentVariable {
     .EXAMPLE
     Clear-AzureOpenAIAPIEnv
     #>
-function Clear-AzureOpenAIAPIEnv {
     param()
     try {
         # Clear the environment variables related to Azure OpenAI API
@@ -1127,7 +1127,8 @@ function Clear-AzureOpenAIAPIEnv {
     }
 }
 
-<#
+function Get-Hash {
+    <#
     .SYNOPSIS
     This function generates a hash of a given string using the specified hash algorithm.
 
@@ -1151,7 +1152,6 @@ function Clear-AzureOpenAIAPIEnv {
     Author: Your Name
     Date:   Current Date
 #>
-function Get-Hash {
     [CmdletBinding()]
     param(
         # The string to be hashed

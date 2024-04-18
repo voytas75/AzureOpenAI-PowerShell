@@ -3,7 +3,7 @@
 > You never know what you're gonna get with an AI, just like a box of chocolates. You might get a whiz-bang algorithm that writes you a symphony in five minutes flat, or you might get a dud that can't tell a cat from a couch. But hey, that's the beauty of it all, you keep feedin' it data and see what kind of miraculous contraption it spits out next.
 
 This PowerShell script, `Start-AIEventAnalyzer.ps1`, is designed to analyze Windows event logs using AI. It prompts the user to select an action, a log to analyze, the severity level of the events, and the number of most recent events to analyze. The script then invokes an AI model to analyze the selected events and logs the results.
-This script utilizes the `Invoke-AzureOpenAIChatCompletion.ps1` file, which contains several functions that are essential for the operation of the AIEventAnalyzer.
+This script utilizes the [PSAOAI](../PSAOAI/README.md) ([PowerShell Gallery](https://www.powershellgallery.com/packages/PSAOAI/)) module, which contains functions essential for the operation of the AIEventAnalyzer.
 
 ## Using AI for Dynamic Event Data Analysis
 
@@ -30,11 +30,17 @@ This dynamic approach allows the AI to provide a wide range of analyses and insi
 
 Before running the `Start-AIEventAnalyzer.ps1` script, you need to set up your environment to use Azure OpenAI. Here are the steps to follow:
 
-1. **Azure OpenAI Service**: You need to have an active Azure subscription and access to Azure OpenAI Service.
+1. **PSAOAI module**: Install [PSAOAI](../PSAOAI/README.md) ([PowerShell Gallery](https://www.powershellgallery.com/packages/PSAOAI/)) module.
+   
+   ```powershell
+   Install-Module -Name PSAOAI
+   ```
 
-2. **API Key**: You need to generate an API key from the Azure OpenAI Service. This key is used to authenticate your requests to the service.
+2. **Azure OpenAI Service**: You need to have an active Azure subscription and access to Azure OpenAI Service.
 
-3. **Environment Variables**: You need to set up the following environment variables in your system:
+3. **API Key**: You need to generate an API key from the Azure OpenAI Service. This key is used to authenticate your requests to the service.
+
+4. **Environment Variables**: You need to set up the following environment variables in your system:
 
     - `API_AZURE_OPENAI_KEY`: This should be set to the API key you generated from the Azure OpenAI Service.
     - `API_AZURE_OPENAI_ENDPOINT`: This should be set to the endpoint URL of the Azure OpenAI Service. Typically, it is in the format `https://<RESOURCE_NAME>.openai.azure.com`.

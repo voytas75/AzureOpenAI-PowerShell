@@ -1,6 +1,7 @@
 using namespace System.Diagnostics
 
-<#
+function LogData {
+  <#
 .SYNOPSIS
 This function logs the data into a specified file in a specified folder.
 
@@ -23,7 +24,6 @@ This parameter accepts the type of the data that needs to be logged. The type ca
 .EXAMPLE
 LogData -LogFolder "C:\Logs" -FileName "log.txt" -Data "Some data to log" -Type "user"
 #>
-function LogData {
   [CmdletBinding()]
   param (
     [Parameter(Mandatory = $true)]
@@ -51,7 +51,8 @@ function LogData {
   Add-Content -Path $logFilePath -Value $logEntry
 }
 
-<#
+function Invoke-AIEventAnalyzer {
+  <#
 .SYNOPSIS
 This function uses Azure OpenAI to interpret the input using a language model and the user's query.
 
@@ -68,7 +69,6 @@ This parameter accepts the natural language query to interpret the input object.
 .EXAMPLE
 Invoke-AICopilot -InputObject $InputObject -NaturalLanguageQuery "Show only processes using more than 500MB of memory"
 #>
-function Invoke-AIEventAnalyzer {
   [CmdletBinding()]
   param (
     [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
@@ -100,14 +100,16 @@ function Invoke-AIEventAnalyzer {
     $inputString = $inputObjects | Out-String
 
     # Call the Invoke-AzureOpenAIChatCompletion function to interpret the input using a language model and the user's query
-    $response = Invoke-AzureOpenAIChatCompletion -SystemPrompt $NaturalLanguageQuery -OneTimeUserPrompt $inputString -Precise -simpleresponse -LogFile $LogFile
+    $response = Invoke-PSAOAIChatCompletion -SystemPrompt $NaturalLanguageQuery -usermessage $inputString -OneTimeUserPrompt -Mode Precise -simpleresponse -LogFile $LogFile
 
     # Return the response from the Azure OpenAI Chat Completion function
     return $response 
   }
 }
 
-<#
+# This function is used to clear the LLMDataJSON
+function Clear-LLMDataJSON {
+  <#
 .SYNOPSIS
 This function clears the LLMDataJSON.
 
@@ -121,9 +123,6 @@ A string of data that needs to be cleared.
 $data = "{extra characters}[actual data]{extra characters}"
 Clear-LLMDataJSON -data $data
 #>
-# This function is used to clear the LLMDataJSON
-function Clear-LLMDataJSON {
-  # Define the parameters for the function
   param (
     # The data parameter is mandatory and should be a string
     [Parameter(Mandatory = $true)]
@@ -174,7 +173,8 @@ function Get-EventSeverity {
   }
 }
 
-<#
+function Get-EventLogInfo {
+  <#
 .SYNOPSIS
    This function retrieves the count of events from a specified Windows Event Log based on the severity level.
 
@@ -192,14 +192,13 @@ function Get-EventSeverity {
    Get-EventLogInfo -logName "System" -severityLevel "Information"
    This command retrieves the count of "Information" level events from the "System" Windows Event Log.
 #>
-function Get-EventLogInfo {
   param (
-      [Parameter(Mandatory=$true)]
-      [string]$logName,
+    [Parameter(Mandatory = $true)]
+    [string]$logName,
 
-      [Parameter(Mandatory=$true)]
-      [ValidateSet("Critical", "Error", "Warning", "Information", "Verbose", "SuccessAudit", "FailureAudit")]
-      [string]$severityLevel
+    [Parameter(Mandatory = $true)]
+    [ValidateSet("Critical", "Error", "Warning", "Information", "Verbose", "SuccessAudit", "FailureAudit")]
+    [string]$severityLevel
   )
 
   # Create an object of the specified Windows Event Log
@@ -211,7 +210,6 @@ function Get-EventLogInfo {
   # Return the count of the filtered events
   return $filteredEvents.Count
 }
-
 
 function Get-LogFileDetails {
   param (
@@ -269,7 +267,8 @@ function Format-ContinuousText {
   return $text -replace "`n", " " # Replace newline characters
 }
 
-<#
+function Update-PromptData {
+  <#
 .SYNOPSIS
 This function updates a given prompt with additional instructions for both experienced and less experienced professionals.
 
@@ -287,7 +286,6 @@ This example updates the $promptAnalyze variable.
 $promptTroubleshoot = Update-PromptData -inputPrompt $promptTroubleshoot
 This example updates the $promptTroubleshoot variable.
 #>
-function Update-PromptData {
   param (
     [Parameter(Mandatory = $true)]
     [string]$inputPrompt
@@ -347,14 +345,12 @@ function Get-SummarizeSession {
   Write-Host $summary -ForegroundColor White
 }
 
-
 function Start-AIEventAnalyzer {
   [CmdletBinding()]
   param (
     [Parameter()]
     [string]$LogFolder
   )
-
 
   if ([string]::IsNullOrEmpty($LogFolder)) {
     $LogFolder = Join-Path -Path ([Environment]::GetFolderPath("MyDocuments")) -ChildPath "AIEventAnalyzer"
@@ -698,15 +694,6 @@ Example of a JSON response with two records:
   } while ($chosenActionIndex -notmatch '^\d+$' -or [int]$chosenActionIndex -lt 1 -or [int]$chosenActionIndex -gt $actions.Length)
   
   Write-Verbose $chosenActionIndex
-  
-  #  if () {
-  #    $chosenActionIndex = 1
-  #    Write-Verbose "No valid user's input when choosing an action. Index = 1"
-  #    Write-Verbose "IsNullOrEmpty: $([string]::IsNullOrEmpty($chosenActionIndex) | out-string)"
-  #    Write-Verbose "Less then 1: $($chosenActionIndex -lt 1 | out-string)"
-  #    Write-Verbose "Greater then $($actions.Length): $($chosenActionIndex -gt $actions.Length | out-string)"
-  #  }
-  #  Write-Verbose $chosenActionIndex
 
   # Get the chosen action and corresponding prompt
   $chosenAction = $actions[$chosenActionIndex - 1]
@@ -1007,10 +994,12 @@ function Show-Banner {
 "@ -ForegroundColor White
 }
 
-
 Clear-Host
 Show-Banner
 
-
-# Load the Invoke-AzureOpenAIChatCompletion script
-. $PSScriptRoot\Invoke-AzureOpenAIChatCompletion.ps1 
+$moduleName = "PSAOAI"
+if (Get-Module -ListAvailable -Name $moduleName) {
+    Import-module -name PSAOAI
+} else {
+    Write-Host "You need to install '$moduleName' module. USe: 'Install-Module PSAOAI'"
+}
