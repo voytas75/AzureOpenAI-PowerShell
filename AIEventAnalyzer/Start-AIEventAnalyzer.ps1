@@ -1,4 +1,45 @@
-using namespace System.Diagnostics
+<#PSScriptInfo
+
+.VERSION 1.0
+
+.GUID 4ff39349-66db-44eb-a12f-eb4249b0f24b
+
+.AUTHOR Voytas
+
+.COMPANYNAME
+
+.COPYRIGHT
+
+.TAGS Events,AZURE,OpenAI
+
+.LICENSEURI
+
+.PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIEventAnalyzer
+
+.ICONURI
+
+.EXTERNALMODULEDEPENDENCIES PSAOAI
+
+.REQUIREDSCRIPTS
+
+.EXTERNALSCRIPTDEPENDENCIES
+
+.RELEASENOTES
+
+
+.PRIVATEDATA
+
+#>
+
+<#
+
+.DESCRIPTION
+ Analyze Windows event logs using AZURE OpenAI
+
+ #>
+ using namespace System.Diagnostics
+ 
+ Param()
 
 function LogData {
   <#
@@ -999,7 +1040,7 @@ Show-Banner
 
 $moduleName = "PSAOAI"
 if (Get-Module -ListAvailable -Name $moduleName) {
-    Import-module -name PSAOAI
+    [void](Import-module -name PSAOAI)
 } else {
     Write-Host "You need to install '$moduleName' module. USe: 'Install-Module PSAOAI'"
 }
