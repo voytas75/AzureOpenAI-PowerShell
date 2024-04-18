@@ -20,7 +20,7 @@ Welcome to the GitHub repository for Azure OpenAI PowerShell Module and Function
 - Enhanced Productivity: Automate tasks and workflows, accelerating your development process with PSAOAI's functionalities.
 
 </dd>
-  <dd><a href="./PSAOAI/">Go to module page</a></dd>
+  <dd><a href="./PSAOAI/README.md">Go to module page</a></dd>
 </dl>
 
 ##
