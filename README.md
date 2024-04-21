@@ -6,7 +6,7 @@ Welcome to the GitHub repository for Azure OpenAI PowerShell Module and Function
 
 ## &nbsp;
 
-:exclamation:
+> :exclamation:
 
 ![PSAOAI](https://github.com/voytas75/AzureOpenAI-PowerShell/blob/master/images/PSAOAI128.png?raw=true "PowerShell AZURE OpenAI")
 
