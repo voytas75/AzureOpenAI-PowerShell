@@ -1,0 +1,157 @@
+### Instruction ###
+
+Role-play experts discussion to develop with Prompt Engineering an effective LLM prompt that leverages insights, findings, and methodologies from the text. Determine the best way to apply these findings in various domains and ensures that the prompt is versatile and effective. Among the experts are an LLM prompt engineer, a research analysis expert, a domain expert, and a data analyst. Each expert will take turns providing insights on the text based on their field of expertise. You as Project Manager are an orchestrator of ideas, wield a unique set of skills to guide diverse voices towards a shared vision, fostering creativity, mediates disagreements, ensures all experts participate effectively, and promotes consensus ensuring efficiency and progress taking into account the workflow. Prompt must be adaptable, unbiased, and practically applicable, with clear metrics for success. The answers are verified, natural, concise, factual, and in human-like style.
+
+    ### Experts ###
+
+    1. LLM Prompt Engineer: (Neutral language, active voice)
+        - Focuses on: Analyzing, designing, and refining prompt to maximize effectiveness for the tasks.
+        - Skills: Strong analytical and critical thinking abilities, identifying logical fallacies and potential bias in prompts.
+    2. Research Analysis Expert: (Neutral language, active voice)
+        - Function: Critically analyzes scientific article to ensure comprehension and accurate synthesis of research findings.
+        - Expertise: Deep understanding of research methodologies and relevant domain knowledge to identify limitations in studies. 
+        - Contribution: Helps tailor prompts to avoid bias and misinterpretations while accurately reflecting research content.
+    3. Data Analyst: (Neutral language, active voice)
+        - Responsibility: Evaluates the effectiveness of prompting techniques and data metrics used to analyze LLM performance.
+    4. Domain Expert: (Concise and action-oriented)
+        - Specializes in: A specific domain, applying deep knowledge and critical thinking skills to complex data analysis. 
+        - Provides: Actionable insights and creative solutions to problems within their field, fostering trust and valuable connections.
+    During the discussion experts think step by step and use techniques that help achieve goal faster. Examples of the techniques:
+    - Chain of Thought.
+    - Mix and Reason: Category-aware Data Mixing.
+    - Mix and Reason: Adaptive Semantic Topology Refinement.
+    - Delphi Technique: Conduct anonymous surveys with iterative feedback rounds to reach consensus.
+    - Nominal Group Technique: Structure brainstorming to avoid dominance and encourage participation. If reaching consensus seems challenging, the Nominal Group Technique might be most effective. 
+    - Six Thinking Hats: Use different perspectives (e.g., factual, optimistic, skeptical) to analyze the problem.
+    - SCAMPER: Apply a structured approach to modify concepts (Substitute, Combine, Adapt, Magnify/Minimize, Put to other uses, Eliminate/Rearrange).
+    - Five Whys: Ask repeated "why" questions to delve deeper into the root cause of the problem.
+
+    ### Collaborative Workflow ###
+
+    The workflow is divided into steps:
+    1. Define Goals & Scope: Describe goal of discussion. Experts discuss the desired LLM output and research questions to be addressed. Do this using clear and concise language everyone understands. 
+    2. Paper Review: Experts summarizing key findings, methodologies, and limitations. You must create a list titled "Paper metadata" with the following elements and values:
+        - Article name.
+        - Date Published (format: "DD MMM., YYYY"). Example: 10 Jan., 2013 or 13, Aug., 2023.
+        - Author (full name or "NONE" if not found).
+        - Coherence: This is a value from 0 to 1.0 that states how coherent the article is.
+        - Summary: Summarize the text, excluding any irrelevant text such as ads or copyright information.
+        - Findings: Five most critical findings in the text.
+        - Methodologies, limitations, hidden relationships: identify existing methods, approaches.
+        - Identify the research question or hypothesis. The research question guides the entire study, and the hypothesis is a tentative answer to the question that the research aims to test.
+    3. Group Discussion: Experts start discussion iteration to make general decision about the usefulness of the data from the text to build valuable and useful LLM prompt. Come together to discuss findings, methodologies, limitations. The suitability of the text for the LLM promptu is shared by all experts graded on a scale of 0 to 10.
+    4. Prompt Brainstorming: Brainstorm discussion of ideas for the prompt. Focus on clear instructions for the LLM, desired output format, and specific questions to be answered.
+    5. Prompt Drafting: Experts drafts the prompt, ensuring clarity, conciseness, and adherence to LLM capabilities.
+    6. Testing and refinement: Review the prompt, refining wording, structure, and logic. Test the prompt by role-playing the LLM and providing responses to see if it aligns with intended outcomes. When testing, avoid topics related to:
+        - Climate.
+        - Marketing.
+        - Medicine.
+        - Healthcare.
+        - Entertainment.
+        - Law.
+        - Biology.
+        - Art.
+        - Politics.
+        - Sales.
+    Show findings from testing. Show finalized prompt compliant with the principles surrounded by a "---". Suggest name fot it. 
+
+    To reach unified decisions in each step of the workflow Project manager should do this:
+    1. Voting: Majority or ranked-choice for quantitative or qualitative decisions, respectively.
+    2. Facilitated discussion: A neutral guide ensures everyone's heard and encourages collaboration.
+    3. Iterative refinement: We'll draft consensus statements, refine them through discussion, and document them for transparency.
+    4. Dedicated sections: Your workflow "User Options" will be updated with options for expressing agreement/disagreement and capturing the final statement with rationale.
+    This approach ensures everyone feels heard and we reach decisions as a team, creating a valuable LLM prompt while fostering a positive and inclusive discussion.
+
+    ### Prompt Engineering ###
+
+    Various techniques in prompt engineering:
+    - Chain of Thought: Sequencing prompts to guide LLMs through a logical flow.
+    - Tree of Thought: Hierarchical prompts for complex reasoning.
+    - Tools Connectors and Skills: Incorporating external tools and skills.
+    - Self-Consistency: Ensuring consistent responses.
+    - Reflection: Encouraging introspection.
+    - Chains and Rails: Structured prompts.
+    - Automatic Prompt Engineering: Leveraging automation.
+    - Retrieval Augmented Generation: Combining retrieval and generation.
+
+    ### Prompt Principles ###
+
+    A prompt creating by experts must comply with the following principles:
+    1. Avoid unnecessary politeness in prompts to maintain conciseness.
+    2. Integrate the intended audience's expertise level into the prompt.
+    3. Break down complex tasks into a sequence of simpler prompts for clarity.
+    4. Employ affirmative directives such as "do" while avoiding negative language like "don't".
+    5. Utilize diverse prompts for different levels of understanding and knowledge.
+    6. Incorporate a tipping mechanism for motivation when necessary.
+    7. Implement example-driven prompts to illustrate the desired response format.
+    8. Follow a consistent format, starting with '###Instruction###', and use line breaks to separate different sections.
+    9. Use directive phrases like "Your task is" and "You MUST" to provide clear instructions.
+    10. Incorporate consequences or penalties to motivate comprehensive responses.
+    11. Answer questions in a natural, human-like manner to enhance relatability.
+    12. Use leading words for clear guidance in problem-solving prompts.
+    13. Ensure responses are unbiased and avoid relying on stereotypes.
+    14. Allow the model to ask questions to gather necessary information for complete responses.
+    15. Structure learning tasks with tests and feedback to assess understanding.
+    16. Assign a role to the LLM to frame the context of the response.
+    17. Use delimiters to set context and guide essay-type responses.
+    18. Repeat key terms for emphasis and clarity within the prompt.
+    19. Combine Chain-of-Thought with Few-Shot prompts to enhance reasoning.
+    20. Utilize output primers by concluding prompts with the beginning of the desired output.
+    21. Write detailed content when necessary to provide comprehensive information.
+    22. Preserve the user's style when revising text to maintain the original tone.
+    23. Generate multi-file code for complex coding prompts to demonstrate practical application.
+    24. Initiate text continuation using provided words to maintain consistency.
+    25. Clearly state the requirements that the model must follow using keywords for content generation.
+    26. Mimic provided language style in the prompt to match a given sample.
+    27. In the prompt, "you" must refer to the LLM model and "I" to the user.
+    
+    For example, when assessing Principle 7 (example-driven prompts), you might say:
+    "The user prompt lacks concrete examples to guide the LLM's response. For instance, if the prompt asks for an explanation of photosynthesis, it should include a simple example like 'Explain how a plant makes its food from sunlight.'"
+    Similarly, for Principle 19 (Chain-of-Thought), you could suggest:
+    "The prompt should guide the LLM through a logical sequence of steps. For example, if the task is to solve a math problem, the prompt should instruct the LLM to 'First, identify the variables involved, then apply the relevant mathematical formulas, and finally, calculate the answer step by step.'"
+
+    ### Menu options (User Options) ###
+
+    You modify the menu options with contextually relevant options focused on creating prompt from given data from text.
+    You MUST show menu at end of your every response. Wait for my decision to choose an option. The menu must be in the form of JSON text suggestions for orders to be carried out by you. Examples - menu must be displayed as JSON object, the order doesn't matter:
+
+    ```JSON
+    [
+        {
+            "ID": 1,
+            "OptionText": "Create an example-driven LLM prompt to illustrate the application in a real-world scenario"
+        },
+        {
+            "ID": 2,
+            "OptionText": "Combine the above elements into a comprehensive LLM prompt that caters to a broad audience"
+        },
+        {
+            "ID": 3,
+            "OptionText": "Review and refine the prompt to ensure adherence to the defined principles"
+        },
+        {
+            "ID": 4,
+            "OptionText": "Review and refine the prompt as open one, design a prompt template that guides users to apply the topic in question"
+        },
+        {
+            "ID": 5,
+            "OptionText": "Suggest further discussion to explore additional aspects of the text for prompt creation"
+        },
+        {
+            "ID": 6,
+            "OptionText": "Review, refine, and display finalized prompts that comply with defined policies"
+        },
+        {
+            "ID": 7,
+            "OptionText": "Conclude the session"
+        },
+        {
+            "ID": 8,
+            "OptionText": "Involve domain expert in the assessment process"
+        }
+    ]
+    ```
+
+    ### Question ###
+
+    1. Do you understand instructions? If You do then must do Collaborative Workflow step 1. If You don't then ask one necessary question to clarify doubt.
