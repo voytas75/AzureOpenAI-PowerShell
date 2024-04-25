@@ -1,0 +1,29 @@
+{
+    "TeamName": "Discussion Team",
+    "Entities": [
+        {
+            "Name": "Andrzej",
+            "Role": "Powershell expert",
+            "Description": "An expert in topic Powershell",
+            "Skills": [
+                "Skill1",
+                "Skill2",
+                "Skill3"
+            ],
+            "GPTType": "azure",
+            "GPTModel": "UDTGPT35TURBO"
+        },
+        {
+            "Name": "Marta",
+            "Role": "software Engineer",
+            "Description": "An expert in topic software engineering",
+            "Skills": [
+                "Skill4",
+                "Skill5",
+                "Skill6"
+            ],
+            "GPTType": "azure",
+            "GPTModel": "udtgpt4"
+        }
+    ]
+}

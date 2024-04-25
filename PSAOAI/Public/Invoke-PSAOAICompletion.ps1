@@ -83,9 +83,9 @@ function Invoke-PSAOAICompletion {
     #>    
     [CmdletBinding(DefaultParameterSetName = 'Mode')]
     param(
-        [Parameter(ValueFromPipeline)]
+        [Parameter(Position = 0, ValueFromPipeline)]
         [string]$usermessage,
-        [Parameter(Mandatory = $false)]
+        [Parameter(Position = 1, Mandatory = $false)]
         [int]$MaxTokens = "800",
         [Parameter(ParameterSetName = 'SamplingParameters', Mandatory = $false, HelpMessage = "What sampling temperature to use, between 0 and 2. Higher values means the model will take more risks. Try 0.9 for more creative applications, and 0 (argmax sampling) for ones with a well-defined answer. We generally recommend altering this or top_p but not both.")]
         [double]$Temperature = 1,
@@ -113,20 +113,20 @@ function Invoke-PSAOAICompletion {
         [bool]$echo = $false,
         [Parameter(Mandatory = $false)]
         [string]$completion_config = $null,        
-        [Parameter(Mandatory = $false)]
+        [Parameter(Position = 3, Mandatory = $false)]
         [string]$User = "",
         [Parameter(Mandatory = $false)]
         [string]$model,
-        [Parameter(ParameterSetName = 'Mode', Mandatory = $false)]
+        [Parameter(Position = 2, ParameterSetName = 'Mode', Mandatory = $false)]
         [ValidateSet("Precise", "Creative")]
         [string]$Mode = "Precise",
-        [Parameter(Mandatory = $false)]
+        [Parameter(Position = 5, Mandatory = $false)]
         [switch]$simpleresponse,
         [Parameter(Mandatory = $false)]
         [string]$APIVersion = (get-apiversion -preview | select-object -first 1),
         [Parameter(Mandatory = $false)]
         [string]$Endpoint = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"),
-        [Parameter(Mandatory = $false)]
+        [Parameter(Position = 4, Mandatory = $false)]
         [string]$Deployment = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_C_DEPLOYMENT -PromptMessage "Please enter the deployment")
     )
     

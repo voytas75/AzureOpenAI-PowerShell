@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [unreleased]
 
+### Added
+
+- Posiotional parameters
+
 ## [0.0.2] - 2024.04.17
 
 ### Added
