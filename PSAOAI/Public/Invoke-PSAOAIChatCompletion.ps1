@@ -93,7 +93,7 @@ function Invoke-PSAOAIChatCompletion {
         [Parameter(ParameterSetName = 'SystemPrompt_Mode', Mandatory = $false)]
         [Parameter(ParameterSetName = 'SystemPromptFileName_Mode', Mandatory = $false)]
         [ValidateSet("UltraPrecise", "Precise", "Focused", "Balanced", "Informative", "Creative", "Surreal")]
-        [string]$Mode = "Focused",
+        [string]$Mode,
         [Parameter(ParameterSetName = 'SystemPrompt_TempTop', Mandatory = $false)]
         [Parameter(ParameterSetName = 'SystemPromptFileName_TempTop', Mandatory = $false)]
         [Parameter(ParameterSetName = 'temptop')]
@@ -109,7 +109,7 @@ function Invoke-PSAOAIChatCompletion {
         [Parameter(Mandatory = $false)]
         [switch]$simpleresponse,
         [Parameter(Mandatory = $false)]
-        [string]$APIVersion = (get-apiversion -preview | select-object -first 1),
+        [string]$APIVersion = (Get-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_APIVERSION),
         [Parameter(Mandatory = $false)]
         [string]$Endpoint = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"),
         [Parameter(Mandatory = $false)]
@@ -394,8 +394,8 @@ function Invoke-PSAOAIChatCompletion {
         }
         default {
             # Code for default case
-            [double]$Temperature = 1
-            [double]$TopP = 1
+            [double]$Temperature = $Temperature
+            [double]$TopP = $TopP
         }
     }
 

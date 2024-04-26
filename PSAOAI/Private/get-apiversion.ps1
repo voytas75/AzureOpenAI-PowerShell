@@ -54,28 +54,33 @@ function Get-APIVersion {
         $Preview = $true
     }
 
-    # If Preview is specified, send a GET request to the 'preview' URL and add the API versions to the array
-    if ($Preview) {
-        $responsePreview = Invoke-RestMethod -Uri $urlPreview -Method Get
-        foreach ($file in $responsePreview) {
-            # If the file is a directory (i.e., an API version)
-            if ($file.type -eq "dir") {
-                # Add the name of the directory (i.e., the API version) to the array
-                $apiVersions += $file.Name
+    try {
+        # If Preview is specified, send a GET request to the 'preview' URL and add the API versions to the array
+        if ($Preview) {
+            $responsePreview = Invoke-RestMethod -Uri $urlPreview -Method Get
+            foreach ($file in $responsePreview) {
+                # If the file is a directory (i.e., an API version)
+                if ($file.type -eq "dir") {
+                    # Add the name of the directory (i.e., the API version) to the array
+                    $apiVersions += $file.Name
+                }
             }
         }
-    }
 
-    # If Stable is specified, send a GET request to the 'stable' URL and add the API versions to the array
-    if ($Stable) {
-        $responseStable = Invoke-RestMethod -Uri $urlStable -Method Get
-        foreach ($file in $responseStable) {
-            # If the file is a directory (i.e., an API version)
-            if ($file.type -eq "dir") {
-                # Add the name of the directory (i.e., the API version) to the array
-                $apiVersions += $file.Name
+        # If Stable is specified, send a GET request to the 'stable' URL and add the API versions to the array
+        if ($Stable) {
+            $responseStable = Invoke-RestMethod -Uri $urlStable -Method Get
+            foreach ($file in $responseStable) {
+                # If the file is a directory (i.e., an API version)
+                if ($file.type -eq "dir") {
+                    # Add the name of the directory (i.e., the API version) to the array
+                    $apiVersions += $file.Name
+                }
             }
         }
+    } catch {
+        Write-Error "Failed to retrieve API versions: $_"
+        return
     }
 
     # Sort the API versions by date, ignoring the '-preview' suffix

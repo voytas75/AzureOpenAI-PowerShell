@@ -49,7 +49,7 @@ function Invoke-PSAOAIEmbedding {
         [Parameter(Mandatory = $false)]
         [string]$Deployment = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_C_DEPLOYMENT -PromptMessage "Please enter the deployment"),
         [Parameter(Mandatory = $false)]
-        [string]$ApiVersion = (get-apiversion -preview | select-object -first 1),
+        [string]$ApiVersion = (Get-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_APIVERSION),
         [Parameter(Mandatory = $false)]
         [string]$User
     )

@@ -77,7 +77,7 @@ function Invoke-PSAOAIDalle3 {
 
         [string]$user,
 
-        [string]$ApiVersion = (get-apiversion -preview | select-object -first 1),
+        [string]$ApiVersion = (Get-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_APIVERSION),
 
         [Parameter(Mandatory = $false)]
         [string]$Endpoint = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"),

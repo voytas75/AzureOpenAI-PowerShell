@@ -60,9 +60,13 @@ $script:API_AZURE_OPENAI_C_DEPLOYMENT = "PSAOAI_API_AZURE_OPENAI_C_DEPLOYMENT" #
 $script:API_AZURE_OPENAI_D3_DEPLOYMENT = "PSAOAI_API_AZURE_OPENAI_D3_DEPLOYMENT" # Dall-e 3
 $script:API_AZURE_OPENAI_E_DEPLOYMENT = "PSAOAI_API_AZURE_OPENAI_E_DEPLOYMENT" # Embedding
 $script:API_AZURE_OPENAI_KEY = "PSAOAI_API_AZURE_OPENAI_KEY"
+$script:PSAOAI_BANNER = "PSAOAI_BANNER"
 
+# Setting the environment variable for the API version
+Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_APIVERSION -VariableValue $(get-apiversion -preview | select-object -first 1) -PromptMessage "API Version"
+#write-host (Get-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_APIVERSION )
 #Set-EnvironmentVariable -VariableName "PSAOAI_BANNER" -VariableValue "1"
-if ( [string]::IsNullOrEmpty((Get-EnvironmentVariable -VariableName "PSAOAI_BANNER"))) {
+if ( [string]::IsNullOrEmpty((Get-EnvironmentVariable -VariableName $script:PSAOAI_BANNER))) {
     Get-PSAOAIBanner
 
     # Greet the user upon module initiation

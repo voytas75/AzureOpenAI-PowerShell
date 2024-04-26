@@ -119,11 +119,11 @@ function Invoke-PSAOAICompletion {
         [string]$model,
         [Parameter(Position = 2, ParameterSetName = 'Mode', Mandatory = $false)]
         [ValidateSet("UltraPrecise", "Precise", "Focused", "Balanced", "Informative", "Creative", "Surreal")]
-        [string]$Mode = "Focused",
+        [string]$Mode,
         [Parameter(Position = 5, Mandatory = $false)]
         [switch]$simpleresponse,
         [Parameter(Mandatory = $false)]
-        [string]$APIVersion = (get-apiversion -preview | select-object -first 1),
+        [string]$APIVersion = (Get-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_APIVERSION),
         [Parameter(Mandatory = $false)]
         [string]$Endpoint = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"),
         [Parameter(Position = 4, Mandatory = $false)]
@@ -277,8 +277,8 @@ function Invoke-PSAOAICompletion {
 
             default {
                 # Focused
-                [double]$Temperature = 0.2
-                [double]$TopP = 0.8
+                [double]$Temperature = $Temperature
+                [double]$TopP = $TopP
             }
         }
 
