@@ -92,8 +92,8 @@ function Invoke-PSAOAIChatCompletion {
         [switch]$OneTimeUserPrompt,
         [Parameter(ParameterSetName = 'SystemPrompt_Mode', Mandatory = $false)]
         [Parameter(ParameterSetName = 'SystemPromptFileName_Mode', Mandatory = $false)]
-        [ValidateSet("Precise", "Creative")]
-        [string]$Mode = "Precise",
+        [ValidateSet("UltraPrecise", "Precise", "Focused", "Balanced", "Informative", "Creative", "Surreal")]
+        [string]$Mode = "Focused",
         [Parameter(ParameterSetName = 'SystemPrompt_TempTop', Mandatory = $false)]
         [Parameter(ParameterSetName = 'SystemPromptFileName_TempTop', Mandatory = $false)]
         [Parameter(ParameterSetName = 'temptop')]
@@ -330,12 +330,67 @@ function Invoke-PSAOAIChatCompletion {
 
     switch ($Mode) {
         "Precise" {
+            $UltraPrecise = $false
             $Precise = $true
+            $Focused = $false
+            $Balanced = $false
+            $Informative = $false
             $Creative = $false
+            $Surreal = $false                
         }
         "Creative" {
-            $Creative = $true
+            $UltraPrecise = $false
             $Precise = $false
+            $Focused = $false
+            $Balanced = $false
+            $Informative = $false
+            $Creative = $true
+            $Surreal = $false                
+        }
+        "UltraPrecise" {
+            $UltraPrecise = $true
+            $Precise = $false
+            $Focused = $false
+            $Balanced = $false
+            $Informative = $false
+            $Creative = $false
+            $Surreal = $false                
+        }
+        "Focused" {
+            $UltraPrecise = $false
+            $Precise = $false
+            $Focused = $true
+            $Balanced = $false
+            $Informative = $false
+            $Creative = $false
+            $Surreal = $false                
+        }
+        "Balanced" {
+            $UltraPrecise = $false
+            $Precise = $false
+            $Focused = $false
+            $Balanced = $true
+            $Informative = $false
+            $Creative = $false
+            $Surreal = $false                
+        }
+        "Informative" {
+            $UltraPrecise = $false
+            $Precise = $false
+            $Focused = $false
+            $Balanced = $false
+            $Informative = $true
+            $Creative = $false
+            $Surreal = $false                
+        }
+        "Surreal" {
+            $UltraPrecise = $false
+            $Precise = $false
+            $Focused = $false
+            $Balanced = $false
+            $Informative = $false
+            $Creative = $false
+            $Surreal = $true                
         }
         default {
             # Code for default case
@@ -345,10 +400,17 @@ function Invoke-PSAOAIChatCompletion {
     }
 
     # Adjust parameters based on switches.
-    if ($Creative -or $Precise) {
-        $parameters = Set-ParametersForSwitches -Creative:$Creative -Precise:$Precise
+    #if ($Creative -or $Precise) {
+    if ($UltraPrecise -or $Precise -or $Focused -or $Balanced -or $Informative -or $Creative -or $Surreal) {
+        $parameters = Set-ParametersForSwitches -Creative:$Creative -Precise:$Precise -UltraPrecise:$UltraPrecise -Focused:$Focused -Balanced:$Balanced -Informative:$Informative -Surreal:$Surreal
         $Temperature = $parameters['Temperature']
         $TopP = $parameters['TopP']
+    }
+    elseif ($Temperature -and $TopP) {
+        $parameters = @{
+            'Temperature' = $Temperature
+            'TopP'        = $TopP
+        }
     }
     else {
         $parameters = @{

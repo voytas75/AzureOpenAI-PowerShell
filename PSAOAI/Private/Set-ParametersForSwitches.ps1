@@ -23,25 +23,52 @@ function Set-ParametersForSwitches {
 
     #>
     param(
+        [switch]$UltraPrecise,
+        [switch]$Precise,
+        [switch]$Focused,
+        [switch]$Balanced,
+        [switch]$Informative,
         [switch]$Creative,
-        [switch]$Precise
+        [Switch]$Surreal
+
     )
     
     # Initialize parameters with default values
     $parameters = @{
-        'Temperature' = 1.0
-        'TopP'        = 1.0
+        #Focused
+        'Temperature' = 0.2
+        'TopP'        = 0.8
     }
 
     # If Creative switch is enabled, adjust parameters for creative output
     if ($Creative) {
         $parameters['Temperature'] = 0.7
+        $parameters['TopP'] = 0.8
+    }
+    elseif ($Surreal) {
+        $parameters['Temperature'] = 1.0
+        $parameters['TopP'] = 0.1
+    }
+    elseif ($UltraPrecise) {
+        $parameters['Temperature'] = 0.1
         $parameters['TopP'] = 0.95
+    }
+    elseif ($Focused) {
+        $parameters['Temperature'] = 0.2
+        $parameters['TopP'] = 0.8
+    }
+    elseif ($Balanced) {
+        $parameters['Temperature'] = 0.5
+        $parameters['TopP'] = 0.5
+    }
+    elseif ($Informative) {
+        $parameters['Temperature'] = 0.4
+        $parameters['TopP'] = 0.7
     }
     # If Precise switch is enabled, adjust parameters for precise output
     elseif ($Precise) {
-        $parameters['Temperature'] = 0.3
-        $parameters['TopP'] = 0.8
+        $parameters['Temperature'] = 0.2
+        $parameters['TopP'] = 0.9
     }
 
     # Return the adjusted parameters

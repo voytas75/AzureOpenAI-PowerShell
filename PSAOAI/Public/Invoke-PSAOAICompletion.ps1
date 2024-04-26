@@ -118,8 +118,8 @@ function Invoke-PSAOAICompletion {
         [Parameter(Mandatory = $false)]
         [string]$model,
         [Parameter(Position = 2, ParameterSetName = 'Mode', Mandatory = $false)]
-        [ValidateSet("Precise", "Creative")]
-        [string]$Mode = "Precise",
+        [ValidateSet("UltraPrecise", "Precise", "Focused", "Balanced", "Informative", "Creative", "Surreal")]
+        [string]$Mode = "Focused",
         [Parameter(Position = 5, Mandatory = $false)]
         [switch]$simpleresponse,
         [Parameter(Mandatory = $false)]
@@ -212,23 +212,79 @@ function Invoke-PSAOAICompletion {
         # Adjust parameters based on switches.
         switch ($Mode) {
             "Precise" {
+                $UltraPrecise = $false
                 $Precise = $true
+                $Focused = $false
+                $Balanced = $false
+                $Informative = $false
                 $Creative = $false
+                $Surreal = $false                
             }
             "Creative" {
-                $Creative = $true
+                $UltraPrecise = $false
                 $Precise = $false
+                $Focused = $false
+                $Balanced = $false
+                $Informative = $false
+                $Creative = $true
+                $Surreal = $false                
             }
+            "UltraPrecise" {
+                $UltraPrecise = $true
+                $Precise = $false
+                $Focused = $false
+                $Balanced = $false
+                $Informative = $false
+                $Creative = $false
+                $Surreal = $false                
+            }
+            "Focused" {
+                $UltraPrecise = $false
+                $Precise = $false
+                $Focused = $true
+                $Balanced = $false
+                $Informative = $false
+                $Creative = $false
+                $Surreal = $false                
+            }
+            "Balanced" {
+                $UltraPrecise = $false
+                $Precise = $false
+                $Focused = $false
+                $Balanced = $true
+                $Informative = $false
+                $Creative = $false
+                $Surreal = $false                
+            }
+            "Informative" {
+                $UltraPrecise = $false
+                $Precise = $false
+                $Focused = $false
+                $Balanced = $false
+                $Informative = $true
+                $Creative = $false
+                $Surreal = $false                
+            }
+            "Surreal" {
+                $UltraPrecise = $false
+                $Precise = $false
+                $Focused = $false
+                $Balanced = $false
+                $Informative = $false
+                $Creative = $false
+                $Surreal = $true                
+            }
+
             default {
-                # Code for default case
-                [double]$Temperature = 1
-                [double]$TopP = 1
+                # Focused
+                [double]$Temperature = 0.2
+                [double]$TopP = 0.8
             }
         }
 
         # Adjust parameters based on switches.
-        if ($Creative -or $Precise) {
-            $parameters = Set-ParametersForSwitches -Creative:$Creative -Precise:$Precise
+        if ($UltraPrecise -or $Precise -or $Focused -or $Balanced -or $Informative -or $Creative -or $Surreal) {
+            $parameters = Set-ParametersForSwitches -Creative:$Creative -Precise:$Precise -UltraPrecise:$UltraPrecise -Focused:$Focused -Balanced:$Balanced -Informative:$Informative -Surreal:$Surreal
             $Temperature = $parameters['Temperature']
             $TopP = $parameters['TopP']
         }
