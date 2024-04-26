@@ -88,7 +88,7 @@ function Invoke-PSAOAIChatCompletion {
         [string]$SystemPromptFileName,
         [Parameter(Position = 1, Mandatory = $true, ValueFromPipeline = $true)]
         [string]$usermessage,
-        [Parameter(Mandatory = $false)]
+        [Parameter(Position = 3, Mandatory = $false)]
         [switch]$OneTimeUserPrompt,
         [Parameter(Position = 2, ParameterSetName = 'SystemPrompt_Mode', Mandatory = $false)]
         [Parameter(Position = 2, ParameterSetName = 'SystemPromptFileName_Mode', Mandatory = $false)]
@@ -106,13 +106,13 @@ function Invoke-PSAOAIChatCompletion {
         [string]$logfile,
         [Parameter(Mandatory = $false)]
         [string]$usermessagelogfile,
-        [Parameter(Position = 3, Mandatory = $false)]
+        [Parameter(Position = 4, Mandatory = $false)]
         [switch]$simpleresponse,
         [Parameter(Mandatory = $false)]
         [string]$APIVersion = (Get-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_APIVERSION),
         [Parameter(Mandatory = $false)]
         [string]$Endpoint = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"),
-        [Parameter(Position = 4, Mandatory = $false)]
+        [Parameter(Position = 6, Mandatory = $false)]
         [string]$Deployment = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_CC_DEPLOYMENT -PromptMessage "Please enter the deployment"),
         [Parameter(Position = 5, Mandatory = $false)]
         [string]$User = "",
