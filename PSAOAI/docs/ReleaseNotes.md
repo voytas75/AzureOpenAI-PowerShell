@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 - Posiotional parameters
 - [#1](https://github.com/voytas75/AzureOpenAI-PowerShell/issues/1)
+- Error handling: [#2](https://github.com/voytas75/AzureOpenAI-PowerShell/issues/2)
 
 ### Fix
 
