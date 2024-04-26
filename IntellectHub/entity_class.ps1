@@ -23,12 +23,12 @@ class Entity {
     }
 
     # Method to invoke external function from another PowerShell module
-    [string] InvokeCompletion([string] $moduleName, [string] $functionName, [object[]] $arguments) {
+    [string] InvokeCompletion([string] $moduleName, [string] $functionName, [object[]] $arguments, [switch]$Verbose) {
         # Import the module
         if (-not (Get-Module -Name $moduleName)) {
             Import-Module -Name $moduleName -ErrorAction Stop
         }
         # Invoke the function
-        return (& $functionName @arguments)
+        return (& $functionName @arguments -Verbose:$Verbose)
     }
 }

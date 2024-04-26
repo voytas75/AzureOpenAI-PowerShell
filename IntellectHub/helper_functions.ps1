@@ -144,3 +144,201 @@ function Get-ExpertsFromJson {
     # Return the experts
     return $jsonData
 }
+
+# Main function to start discussion
+function StartDiscussion {
+    param(
+        [string] $configFilePath,
+        $usermessage
+    )
+
+    # Load configuration from file
+    $entities = LoadConfigurationFromFile -filePath $configFilePath
+    $entities
+    # Start CLI interface for discussion
+    # Implement CLI commands for starting discussion, adding entities, etc.
+
+    # Example: Send data to GPT and receive response
+    $prompt = @'
+    How to in powershell using regex get all powershell code between "<empty line>```powershell","```<empty line>" and save it to separate file. there may be more then one blocks of code. Example of text to test regex:
+    ###example###
+    I would like to add a suggestion to enhance the function's flexibility. It might be beneficial to include a parameter for specifying the log file path, so users can direct the output to a location of their choice without modifying the function's code. Here's an updated version of the function with this improvement:
+
+    ```powershell
+    function Write-Log {
+        param(
+            [Parameter(Mandatory=$true)]
+            [string]$Message,
+            [string]$Level = "Info",
+            [string]$LogPath = "C:\Logs\log.txt"
+        )
+    
+        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        $log = "[{0}] [{1}] {2}" -f $timestamp, $Level, $Message
+    
+        Write-Output $log | Out-File -FilePath $LogPath -Append
+    }
+    ```
+    
+    Now, users can specify a different log path when calling the function, like so:
+    
+    ```powershell
+    Write-Log -Message "This is a log message" -LogPath "D:\CustomLogs\mylog.txt"
+    ```
+    
+    This will write the log message to "D:\CustomLogs\mylog.txt" instead of the default location.
+    ###end of example###
+'@
+    $prompt = @"
+User want to create powershell application to collaboration, knowledge sharing, problem-solving between experts as standalone gpt models. it be used by IT professionals, developers. This can include only text interface chat. no security measures for now. i need ideas for further development. user see this app in this way 'user can define team by json file, the team start discussion to reach user goal, i.e. write powershell function, or develop ideas for option for existing application. the team is group of independent gpt models what is better then one gpt with advanced prompt. so in general i want to build multi gpt team to help with work'. now we only try to make functions and ideas for options of application and eaven technical way of doing something like how to main engine should look like, where store the configuration data.
+
+Here's ideas list:
+
+- **Team Management**: Create and manage teams via a JSON file, with each team having its own members and projects.
+- **Real-Time Collaboration**: Implement text-based chat for instant communication.
+- **AI-Powered Suggestions**: Use GPT models to provide suggestions based on discussions and industry practices.
+- **Customizable Prompts**: Allow customization of discussion prompts to focus on specific goals.
+- **Code Generation**: Generate code snippets based on team discussions to aid development.
+- **file-Based Storage**: Use files storage for accessibility and collaboration.
+- **Role-Based Access Control**: Define roles and permissions to secure sensitive information.
+- **User-Friendly Interface**: Design an intuitive interface for ease of use.
+- **Gamification and Rewards**: Motivate team members with points or rewards.
+- **Search and Knowledge Base**: Implement search functionality and create a knowledge base for shared solutions.
+- **Automation and Analytics**: Automate tasks, handle errors intelligently, and analyze user activity.
+- **Collaborative Editing and Documenting**: Allow real-time code editing and collaborative document creation.
+"@
+    $prompt = $usermessage
+    PSWriteColor\Write-Color -Text $prompt -Color Blue -BackGroundColor Cyan
+    #$response = Invoke-PSAOAICompletion -usermessage $prompt -MaxTokens 500 -mode Creative -simpleresponse
+
+    # Start discussion between the two entities
+    ManageDiscussion -entityA $entities[0] -entityB $entities[1] -usermessage $prompt
+
+    # Process and display response
+    #Write-Output $response
+}
+
+# Function to manage discussion between two entities
+function ManageDiscussion {
+    param(
+        [Entity] $entityA, 
+        [Entity] $entityB, 
+        $userMessage = "", 
+        [string]$model)
+
+    $Discussion = ""
+
+    $entityAsaid = "{0} said:" -f $entityA.Name
+    $EntityAsay = "i am {0}. My role is {1}. " -f $entityA.Name, $entityA.Role
+
+    $entityBsaid = "{0} said:" -f $entityB.Name
+    $EntityBsay = "I am {0}. My role is {1}. " -f $entityB.Name, $entityB.Role
+
+    # Start discussion loop
+    for ($i = 0; $i -lt 5; $i++) {
+        # Example: Discussion loop runs 5 times
+        $Discussion += $EntityAsay
+
+
+        $promptEntityA += $userMessage
+        $promptEntityA += "History of discussion:`n###`n $discussion `n###`n" 
+
+
+        PSWriteColor\Write-Color -Text "$($entityA.Name) thinking..." -Color Blue -BackGroundColor Cyan -LinesBefore 1 -Encoding utf8 -ShowTime
+
+        PSWriteColor\Write-Color -Text "$($entityA.Name) usermessage: $promptEntityA" -Color Blue -BackGroundColor Cyan -LinesBefore 1 -Encoding utf8 -ShowTime
+
+
+        # Send prompt to Entity A
+        $responseFromA = Invoke-PSAOAICompletion -usermessage $promptEntityA -MaxTokens 800 -mode Creative -simpleresponse -Deployment $entityA.GPTModel -APIVersion "2024-03-01-preview"
+
+        PSWriteColor\Write-Color -Text "$($entityA.Name) respond:" -Color Blue -BackGroundColor Cyan -LinesBefore 1 -Encoding utf8 -ShowTime
+
+
+        $Discussion += $responseFromA
+
+        # Process response from Entity A
+        Write-Output $responseFromA
+
+        Extract-PowershellCodeBlocks -TextContent $responseFromA -Folder $script:TeamDiscussionDataFolder
+
+
+
+        $Discussion += $EntityBsay
+
+
+        PSWriteColor\Write-Color -Text "$($entityB.Name) thinking..." -Color Blue -BackGroundColor Cyan -LinesBefore 1 -Encoding utf8 -ShowTime
+
+        PSWriteColor\Write-Color -Text "$($entityB.Name) systemprompt: $userMessage  usermessage: History of discussion:`n###`n $discussion `n###`n" -Color Blue -BackGroundColor Cyan -LinesBefore 1 -Encoding utf8 -ShowTime
+
+
+        # Send prompt to Entity B
+        $responseFromB = Invoke-PSAOAIchatCompletion -SystemPrompt $userMessage -usermessage "History of discussion:`n###`n $discussion `n###`n" -OneTimeUserPrompt -simpleresponse -Mode Precise -Deployment $entityB.GPTModel  -APIVersion "2024-03-01-preview"
+
+        PSWriteColor\Write-Color -Text "$($entityB.Name) respond:" -Color Blue -BackGroundColor Cyan -LinesBefore 1 -Encoding utf8 -ShowTime
+
+
+        $Discussion += $responseFromB
+
+        # Process response from Entity B
+        Write-Output $responseFromB
+
+        Extract-PowershellCodeBlocks -TextContent $responseFromB -Folder $script:TeamDiscussionDataFolder
+
+    }
+    PSWriteColor\Write-Color -Text "Summary:" -Color DarkYellow  -BackGroundColor DarkGray -LinesBefore 1 -Encoding utf8 -ShowTime
+    Invoke-PSAOAIchatCompletion -SystemPrompt "Summarize and show key elements" -usermessage "Discussion history: `n###`n$Discussion`n###`n" -OneTimeUserPrompt -simpleresponse -Mode Precise -Deployment "udtgpt4p" -APIVersion "2024-03-01-preview"
+}
+
+function Build-EntityObject {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [Parameter(Mandatory = $true)]
+        [string]$Role,
+        [Parameter(Mandatory = $true)]
+        [string]$Description,
+        [Parameter(Mandatory = $true)]
+        [string[]]$Skills,
+        [Parameter(Mandatory = $true)]
+        [string]$GPTType,
+        [Parameter(Mandatory = $true)]
+        [string]$GPTModel
+    )
+
+    # Create a new instance of the Entity class
+    $EntityObject = New-Object Entity -ArgumentList $Name, $Role, $Description, $Skills, $GPTType, $GPTModel
+
+    # Return the main entity
+    return $EntityObject
+}
+
+# This function is used to clear the LLMDataJSON
+function Clear-LLMDataJSON {
+    <#
+  .SYNOPSIS
+  This function clears the LLMDataJSON.
+  
+  .DESCRIPTION
+  The Clear-LLMDataJSON function takes a string of data as input, finds the first instance of '[' and the last instance of ']', and returns the substring between these two characters. This effectively removes any characters before the first '[' and after the last ']'.
+  
+  .PARAMETER data
+  A string of data that needs to be cleared.
+  
+  .EXAMPLE
+  $data = "{extra characters}[actual data]{extra characters}"
+  Clear-LLMDataJSON -data $data
+  #>
+    param (
+      # The data parameter is mandatory and should be a string
+      [Parameter(Mandatory = $true)]
+      [string]$data
+    )
+    # Find the first occurrence of '[' and remove everything before it
+    $data = $data.Substring($data.IndexOf('{'))
+    # Find the last occurrence of ']' and remove everything after it
+    $data = $data.Substring(0, $data.LastIndexOf('}') + 1)
+    # Return the cleaned data
+    return $data
+  }
+  

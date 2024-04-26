@@ -1,0 +1,17 @@
+{
+    "title": "Step Title",
+    "isRequired": true,
+    "description": "Description of the step.",
+    "examples": [
+        "Example of how this step is applied in a discussion.",
+        "Another example illustrating the importance of this step."
+    ],
+    "importance": "Explanation of why this step is important.",
+    "steps": [
+        "Step 1: Detailed instruction or guideline for the first sub-step.",
+        "Step 2: Detailed instruction or guideline for the second sub-step.",
+        "Step 3: Detailed instruction or guideline for the third sub-step.",
+        "Step 4: Detailed instruction or guideline for the fourth sub-step.",
+        "Step 5: Detailed instruction or guideline for the fifth sub-step."
+    ]
+}

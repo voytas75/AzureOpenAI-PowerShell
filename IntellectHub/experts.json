@@ -1,74 +1,65 @@
 [
-    {
-      "ID": 1,
-      "Expert Type": "Domain Expert",
-      "Skills": [
-        "Deep Knowledge",
-        "Problem-Solving",
-        "Communication"
-      ]
-    },
-    {
-      "ID": 2,
-      "Expert Type": "Data Analyst",
-      "Skills": [
-        "Data Analysis",
-        "Data Visualization",
-        "Storytelling"
-      ]
-    },
-    {
-      "ID": 3,
-      "Expert Type": "Project Manager",
-      "Skills": [
-        "Organization",
-        "Communication",
-        "Problem-Solving"
-      ]
-    },
-    {
-      "ID": 4,
-      "Expert Type": "Creative Thinker",
-      "Skills": [
-        "Creativity",
-        "Brainstorming",
-        "Communication"
-      ]
-    },
-    {
-      "ID": 5,
-      "Expert Type": "Collaboration Expert",
-      "Skills": [
-        "Teamwork",
-        "Conflict Resolution",
-        "Active Listening"
-      ]
-    },
-    {
-      "ID": 6,
-      "Expert Type": "Change Management Expert",
-      "Skills": [
-        "Adaptability",
-        "Communication",
-        "Training and Development"
-      ]
-    },
-    {
-      "ID": 7,
-      "Expert Type": "UX Researcher",
-      "Skills": [
-        "User Research",
-        "Data Analysis",
-        "Communication"
-      ]
-    },
-    {
-      "ID": 8,
-      "Expert Type": "Accessibility Specialist",
-      "Skills": [
-        "Accessibility Guidelines",
-        "Testing and Evaluation",
-        "Collaboration"
-      ]
-    }
-  ]
+  {
+    "ID": 1,
+    "Expert Type": "Domain Expert",
+    "Skills": [
+      "Deep Knowledge",
+      "Problem-Solving",
+      "Communication"
+    ]
+  },
+  {
+    "ID": 2,
+    "Expert Type": "Data Analyst",
+    "Skills": [
+      "Data Analysis",
+      "Data Visualization",
+      "Storytelling"
+    ]
+  },
+  {
+    "ID": 3,
+    "Expert Type": "Creative Thinker",
+    "Skills": [
+      "Creativity",
+      "Brainstorming",
+      "Communication"
+    ]
+  },
+  {
+    "ID": 4,
+    "Expert Type": "Collaboration Expert",
+    "Skills": [
+      "Teamwork",
+      "Conflict Resolution",
+      "Active Listening"
+    ]
+  },
+  {
+    "ID": 5,
+    "Expert Type": "Change Management Expert",
+    "Skills": [
+      "Adaptability",
+      "Communication",
+      "Training and Development"
+    ]
+  },
+  {
+    "ID": 6,
+    "Expert Type": "UX Researcher",
+    "Skills": [
+      "User Research",
+      "Data Analysis",
+      "Communication"
+    ]
+  },
+  {
+    "ID": 7,
+    "Expert Type": "Accessibility Specialist",
+    "Skills": [
+      "Accessibility Guidelines",
+      "Testing and Evaluation",
+      "Collaboration"
+    ]
+  }
+]

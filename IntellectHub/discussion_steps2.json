@@ -1,0 +1,46 @@
+{
+    "DiscussionSteps": [
+        {
+            "Step": 1,
+            "Description": "Define the Goal",
+            "Details": "Clearly define the objective of the discussion in a concise text prompt. This will focus the GPT models on generating relevant responses.",
+            "isRequired": true
+        },
+        {
+            "Step": 2,
+            "Description": "Provide Context",
+            "Details": "Offer background information or relevant data sets to prime the GPT models and ensure they have a shared understanding of the topic.",
+            "isRequired": false
+        },
+        {
+            "Step": 3,
+            "Description": "Ask Open-Ended Questions",
+            "Details": "Craft well-structured, open-ended questions that encourage GPT models to elaborate and share their knowledge. Examples include 'What are the key considerations for X?' or 'Can you explain the concept of Y in detail?'",
+            "isRequired": true
+        },
+        {
+            "Step": 4,
+            "Description": "Refine Prompts Based on Responses",
+            "Details": "Analyze the GPT models' responses and formulate follow-up prompts that build upon their prior contributions. This guides the discussion progressively.",
+            "isRequired": true
+        },
+        {
+            "Step": 5,
+            "Description": "Identify Disagreements and Inconsistencies",
+            "Details": "Pay close attention to any conflicting information or differing perspectives presented by the GPT models. Prompt them to address these discrepancies for a more comprehensive understanding.",
+            "isRequired": false
+        },
+        {
+            "Step": 6,
+            "Description": "Summarize Key Points",
+            "Details": "Periodically summarize the main points of the discussion to ensure all GPT models are on the same page. You can also ask them to confirm the accuracy of the summary.",
+            "isRequired": true
+        },
+        {
+            "Step": 7,
+            "Description": "Conclude with Action Items",
+            "Details": "If reaching a specific decision is the goal, formulate clear action items based on the discussion outcomes. You can then request the GPT models to confirm or propose alternative actions.",
+            "isRequired": false
+        }
+    ]
+}
