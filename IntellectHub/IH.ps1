@@ -6,8 +6,8 @@ param(
 
 # Import PSaoAI module
 [System.Environment]::SetEnvironmentVariable("PSAOAI_BANNER", "0", "User")
-#Import-Module -Name PSaoAI
-Import-module "D:\dane\voytas\Dokumenty\visual_studio_code\github\AzureOpenAI-PowerShell\PSAOAI\PSAOAI.psd1" -Force 
+Import-Module -Name PSaoAI
+#Import-module "D:\dane\voytas\Dokumenty\visual_studio_code\github\AzureOpenAI-PowerShell\PSAOAI\PSAOAI.psd1" -Force 
 
 import-module PSWriteColor
 
@@ -191,7 +191,7 @@ $expertstojob = $entities | Where-Object { $_.Name -in $expertstojob.jobexperts 
 #$global:entities = $entities
 #$expertstojobFileFullName = Save-DiscussionResponse -TextContent $($expertstojob | ConvertTo-Json) -Folder $script:TeamDiscussionDataFolder
 if ($expertstojob) {
-    PSWriteColor\Write-Color -Text "Experts were choosed by $($mainEntity.Name) ($($mainEntity.Count))" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+    PSWriteColor\Write-Color -Text "Experts were choosed by $($mainEntity.Name) ($($expertstojob.Count))" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
     foreach ($experttojob in $expertstojob) {
         write-host $($experttojob.Name)
     }
