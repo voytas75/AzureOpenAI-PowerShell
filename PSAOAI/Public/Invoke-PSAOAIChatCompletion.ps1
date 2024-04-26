@@ -80,18 +80,18 @@ function Invoke-PSAOAIChatCompletion {
     #>
     [CmdletBinding(DefaultParameterSetName = 'SystemPrompt_Mode')]
     param(
-        [Parameter(ParameterSetName = 'SystemPrompt_Mode', Mandatory = $true)]
-        [Parameter(ParameterSetName = 'SystemPrompt_TempTop', Mandatory = $true)]
+        [Parameter(Position = 0, ParameterSetName = 'SystemPrompt_Mode', Mandatory = $true)]
+        [Parameter(Position = 0, ParameterSetName = 'SystemPrompt_TempTop', Mandatory = $true)]
         [string]$SystemPrompt,
         [Parameter(ParameterSetName = 'SystemPromptFileName_Mode', Mandatory = $true)]
         [Parameter(ParameterSetName = 'SystemPromptFileName_TempTop', Mandatory = $true)]
         [string]$SystemPromptFileName,
-        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+        [Parameter(Position = 1, Mandatory = $true, ValueFromPipeline = $true)]
         [string]$usermessage,
         [Parameter(Mandatory = $false)]
         [switch]$OneTimeUserPrompt,
-        [Parameter(ParameterSetName = 'SystemPrompt_Mode', Mandatory = $false)]
-        [Parameter(ParameterSetName = 'SystemPromptFileName_Mode', Mandatory = $false)]
+        [Parameter(Position = 2, ParameterSetName = 'SystemPrompt_Mode', Mandatory = $false)]
+        [Parameter(Position = 2, ParameterSetName = 'SystemPromptFileName_Mode', Mandatory = $false)]
         [ValidateSet("UltraPrecise", "Precise", "Focused", "Balanced", "Informative", "Creative", "Surreal")]
         [string]$Mode,
         [Parameter(ParameterSetName = 'SystemPrompt_TempTop', Mandatory = $false)]
@@ -106,15 +106,15 @@ function Invoke-PSAOAIChatCompletion {
         [string]$logfile,
         [Parameter(Mandatory = $false)]
         [string]$usermessagelogfile,
-        [Parameter(Mandatory = $false)]
+        [Parameter(Position = 3, Mandatory = $false)]
         [switch]$simpleresponse,
         [Parameter(Mandatory = $false)]
         [string]$APIVersion = (Get-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_APIVERSION),
         [Parameter(Mandatory = $false)]
         [string]$Endpoint = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"),
-        [Parameter(Mandatory = $false)]
+        [Parameter(Position = 4, Mandatory = $false)]
         [string]$Deployment = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_CC_DEPLOYMENT -PromptMessage "Please enter the deployment"),
-        [Parameter(Mandatory = $false)]
+        [Parameter(Position = 5, Mandatory = $false)]
         [string]$User = "",
         [Parameter(Mandatory = $false)]
         [int]$N = 1,
