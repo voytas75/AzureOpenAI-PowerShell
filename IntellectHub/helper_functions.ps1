@@ -564,3 +564,44 @@ $responsejson1
         return $false
     }
 }
+
+function Get-LLMResponse {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$usermessage,
+        $Entity,
+        $expert,
+        $goal,
+        $title,
+        $description,
+        $importance,
+        $steps,
+        $examples
+    )
+
+    Write-Verbose "Defining ${title} fot '$usermessage'"
+
+    $responsejson1 = @"
+{
+    `"$title`":  `"`"
+}
+"@
+    
+    $Message = @"
+You are expert '$($expert.'Expert Type')' with skills $($expert.skills -join ", "). You are a part of team of experts. Your task is make your view for $title $description  to user's project described as '$usermessage' and definied by Project Manager as '$goal'.
+You must suggest project goal for the given task '${usermessage}'. 
+Completion response your view for $title MUST be as json text object. You must response as JSON syntax only, other elements, like text beside JSON will be penalized. JSON text object syntax to follow:
+$responsejson1
+"@
+    Write-Verbose $Message
+    $arguments = @($Message, 500, "Focused", $Entity.name, $Entity.GPTModel, $true)
+    try {
+        $output = $Entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+        return $output
+    }
+    catch {
+        Write-Error -Message "Failed to defining $title"
+        return $false
+    }
+}
+

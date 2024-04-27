@@ -193,5 +193,18 @@ Write-Verbose "Project goal: $projectGoal"
 #endregion
 
 
+foreach ($discussionStep in $discussionSteps) {
+    if ($discussionStep.isRequired) {
+        $discussionStep.title
+        $discussionStep.description
+        $discussionStep.steps -join "`n"
+        foreach ($expertToJob in $expertstojob) {
+            Get-LLMResponse -usermessage $usermessage -entity $mainEntity -expert $expertToJob -goal $projectGoal -title $discussionStep.title -description $discussionStep.description -importance $discussionStep.importance -steps ($discussionStep.steps -join "`n") -examples $discussionStep.examples
+        }
+    }  
+}
+
+
+
 
 [System.Environment]::SetEnvironmentVariable("PSAOAI_BANNER", "1", "User")
