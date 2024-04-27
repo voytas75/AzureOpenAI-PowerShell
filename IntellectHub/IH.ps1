@@ -68,10 +68,6 @@ Catch {
     return $false
 }
 
-
-
-
-
 Try {
     # Get the current date and time
     $currentDateTime = Get-Date -Format "yyyyMMdd_HHmmss"
@@ -114,169 +110,88 @@ Catch {
     return $false
 }
 
-<#
-if ($entities -eq $null -or $entities.Count -eq 0) {
-    Write-Error -Message "No entities found. Please ensure that the entities are properly loaded from the JSON file."
-    return $false
-}
-else {
-    Write-Host "Entities loaded successfully. Total entities: $($entities.Count)"
-    foreach ($entity in $entities) {
-        Write-Host "Entity Name: $($entity.Name)"
-        #Write-Host "Entity Role: $($entity.Role)"
-        Write-Host "Entity Description: $($entity.Description)"
-        #Write-Host "Entity Skills: $($entity.Skills -join ', ')"
-        #Write-Host "Entity GPT Type: $($entity.GPTType)"
-        #Write-Host "Entity GPT Model: $($entity.GPTModel)"
-        Write-Host "----------------------------------------"
-    }
-}
-#>
 
+#region Project Folder Creation
+$script:ProjectFolderNameJson = Get-FolderNameTopic -Entity $mainEntity -usermessage $usermessage
+Write-Verbose ($script:ProjectFolderNameJson | out-string)
+
+$script:ProjectFolderFullNamePath = Create-FolderInGivenPath -FolderPath $script:TeamDiscussionDataFolder -FolderName (($script:ProjectFolderNameJson | ConvertFrom-Json).foldername | out-string)
+#$($($script:ProjectFolderNameJson | convertfrom-json).FolderName | out-string)
+if ($script:ProjectFolderFullNamePath) {
+    PSWriteColor\Write-Color -Text "Project folder was created '$script:ProjectFolderFullNamePath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+}
+#endregion
+
+#region Expert Recommendation
 Write-Verbose "Get-ExpertRecommendation"
 $output = Get-ExpertRecommendation -Entity $mainEntity -usermessage $usermessage -Experts $ExpertEntities
 
-Get-FolderNameTopic -Entity $mainEntity -usermessage $usermessage
+if ($output) {
+    PSWriteColor\Write-Color -Text "Experts recommendation finished" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+}
 
 Write-Verbose "first response of gpt to the topic:"
-Write-Color -Text  $output -Color Blue -BackGroundColor DarkYellow
+Write-Verbose $output
 
-Write-Verbose "first response of gpt to the topic - Test-IsValidJson:"
-if (-not (Test-IsValidJson $output)) {
-    Write-Verbose "start CleantojsonLLM"
-    CleantojsonLLM -dataString $output -entity $mainEntity
-    
+$attempts = 0
+$maxAttempts = 5
+
+while ($attempts -lt $maxAttempts -and -not (Test-IsValidJson $output)) {
+    Write-Verbose "The provided string is not a valid JSON. Cleaning process..."
+
     Write-Verbose "start Extract-JSON"
-    $output = Extract-JSON $output
-}
-Write-Verbose "check output"
-Write-Color -Text  $output -Color Blue -BackGroundColor DarkYellow
+    $output = Extract-JSON -inputString $output
 
+    #$output.gettype()
 
+    #$output[0]
 
-
-<#
-try {
-    Write-Color -Text "Function cleaning" -Color Magenta -BackGroundColor DarkGreen
-    Write-Verbose "Function cleaning"
-    $output = Clear-LLMDataJSOn $output  
-    Write-Color -Text  $output -Color Blue -BackGroundColor DarkYellow
-
-    Write-Verbose $($output | ConvertFrom-Json)
-
-    Write-Color -Text "Function extract json" -Color Magenta -BackGroundColor DarkGreen
-    Write-Verbose "Function extract json"
-    $output = Extract-JSON $output  
-    Write-Color -Text $output -Color Blue -BackGroundColor DarkYellow
+    if (-not (Test-IsValidJson $output)) {
+        <# Action to perform if the condition is true #>
     
-    Write-Verbose $($output | ConvertFrom-Json)
-    if (!(Test-IsValidJson $output)) {
-        throw "Invalid JSON string."
+        Write-Verbose "start CleantojsonLLM"
+        $output = CleantojsonLLM -dataString $output -entity $mainEntity
+    
+        $output
+
     }
+    $attempts++
 }
-catch {
-    CleantojsonLLM
+
+if ($attempts -eq $maxAttempts) {
+    PSWriteColor\Write-Color -Text "Maximum attempts reached. No experts recommendation. Exiting." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime 
+    return
 }
-#>
-#Write-Color -Text $output -Color Blue -BackGroundColor DarkYellow
+else {
+    Write-Verbose "Valid JSON string provided: $output"
+}
 
-#$jobexpertsFileFullName = Save-DiscussionResponse -TextContent $output -Folder $script:TeamDiscussionDataFolder
-
-
-#$expertstojob = Get-Content $jobexpertsFileFullName -Raw | ConvertFrom-Json
 $expertstojob = $output | ConvertFrom-Json
 $expertstojob = $ExpertEntities | Where-Object { $_.Name -in $expertstojob.jobexperts }
 
-
-#$global:entities = $entities
-#$expertstojobFileFullName = Save-DiscussionResponse -TextContent $($expertstojob | ConvertTo-Json) -Folder $script:TeamDiscussionDataFolder
 if ($expertstojob) {
-    PSWriteColor\Write-Color -Text "Experts were choosed by $($mainEntity.Name) ($($expertstojob.Count))" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+    PSWriteColor\Write-Color -Text "Experts were choosed by $($mainEntity.Name) ($($expertstojob.Count)): $($expertstojob.Name -join ", ")" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+    $script:ProjectGoalFileFulleNamepath = Save-DiscussionResponse -TextContent $output -Folder $script:ProjectFolderFullNamePath -type "ExpertsRecommendation"
     foreach ($experttojob in $expertstojob) {
-        write-host $($experttojob.Name)
+        write-Verbose $($experttojob.Name)
     }
 }
+#endregion
 
-
-
-
-
-#, @("-usermessage", "i am $($mainEntity.Name)", "-MaxTokens", 800, "-mode", "Creative", "-simpleresponse", "-Deployment", $mainEntity.GPTModel, "-APIVersion", "2024-03-01-preview"))
-# Use the output as needed
-
-
-
-#$functionName = "Invoke-PSAOAICompletion"
-#$response = & $functionName @arguments | Out-String
-#Write-Color -Text $response.trim() -Color Blue -BackGroundColor DarkYellow
-
-
-
-
-
-
-
-
-
-<#
-$prompt1 = @"
-Expand topic '{0}', and you MUST show it as a JSON object and only JSON. Any other response will be penalized. JSON structure example:
-
-``````json
-{{
-    `"title`": `"Define the Purpose`",
-    `"isRequired`": true or false,
-    `"description": `"The purpose is the reason or goal for which something is done or created.`",
-    `"examples`": [
-        `"The purpose of this meeting is to discuss our quarterly goals.`",
-        `"The purpose of the new marketing campaign is to increase brand awareness.`",
-        `"The purpose of this charity event is to raise funds for a good cause.`"
-    ],
-    `"importance`": `"Defining the purpose is important because it helps to give direction and focus to any task or project. It allows individuals and organizations to set clear goals and make decisions that align with those goals.`",
-    `"steps`": [
-        `"1. Identify the desired outcome: The first step in defining the purpose is to identify what you want to achieve or accomplish.`",
-        `"2. Consider the audience: Who is the purpose serving? It's important to consider the needs and interests of the audience when defining the purpose.`",
-        `"3. Be specific: The purpose should be specific and clearly defined. This will help to avoid confusion and ensure everyone is on the same page.`",
-        `"4. Use action-oriented language: Use strong and action-oriented language to define the purpose. This will help to motivate and inspire others to work towards the goal.`",
-        `"5. Review and revise: It's important to regularly review and revise the purpose to ensure it is still relevant and aligned with the overall goals and objectives.`"
-    ]
-}}
-``````
-
-"@
-
-foreach ($discussionStep in $discussionSteps) {
-    $prompt2 = "$($discussionStep.description): $($discussionStep.details)"
-    $prompt2 = $prompt2 -replace "`n", " " -replace "`r", " "
-    #$prompt1 -f $prompt2
-    $arguments = @($($prompt1 -f $prompt2), 800, "Creative", $mainEntity.name, $mainEntity.GPTModel, $true)
-    #$arguments
-    # Invoke an external function from another module
-    #$output = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
-    if ($output) {
-        Write-Color -Text  $output -Color Blue -BackGroundColor DarkYellow
-        Write-Color -Text "sleeping 5 sec." -Color White -BackGroundColor Green
-        Start-Sleep -Seconds 5
-        $outputAll += $output
+#region Define Project Goal
+$projectGoal = Define-ProjectGoal -usermessage $usermessage -Entity $mainEntity
+if ($projectGoal) {
     
-    } 
-    $output = ""
+    $script:ProjectGoalFileFulleNamepath = Save-DiscussionResponse -TextContent $projectGoal -Folder $script:ProjectFolderFullNamePath -type "ProjectGoal"
+    if (Test-Path $script:ProjectGoalFileFulleNamepath) {
+        PSWriteColor\Write-Color -Text "Project goal was definied '$script:ProjectGoalFileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+    }
+    
 }
-if ($outputAll) {
-    Save-DiscussionResponse -TextContent $outputAll -Folder $script:TeamDiscussionDataFolder
-}
-#>
+
+Write-Verbose "Project goal: $projectGoal"
+#endregion
 
 
-
-
-
-
-# Start discussion with configuration file
-#StartDiscussion -configFilePath "team.json" -usermessage $usermessage
-
-# Create instances of Entity for two entities
-#$entityA = New-Object Entity -ArgumentList "EntityA", "RoleA", "DescriptionA", @(), "GPTModelA"
-#$entityB = New-Object Entity -ArgumentList "EntityB", "RoleB", "DescriptionB", @(), "GPTModelB"
 
 [System.Environment]::SetEnvironmentVariable("PSAOAI_BANNER", "1", "User")

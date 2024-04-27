@@ -79,24 +79,35 @@ function Create-FolderInGivenPath {
         [string]$FolderName
     )
 
-    # Combine the Folder path with the folder name to get the full path
-    $FullFolderPath = Join-Path -Path $FolderPath -ChildPath $FolderName
+    try {
+        write-verbose "Create-FolderInGivenPath: $FolderPath"
+        write-verbose "Create-FolderInGivenPath: $FolderName"
 
-    # Check if the folder exists, if not, create it
-    if (!(Test-Path -Path $FullFolderPath)) {
-        New-Item -ItemType Directory -Path $FullFolderPath | Out-Null
+        # Combine the Folder path with the folder name to get the full path
+        $FullFolderPath = Join-Path -Path $FolderPath -ChildPath $FolderName.trim()
+
+        write-verbose "Create-FolderInGivenPath: $FullFolderPath"
+        write-verbose $FullFolderPath.gettype()
+        # Check if the folder exists, if not, create it
+        if (-not $(Test-Path -Path $FullFolderPath)) {
+            New-Item -ItemType Directory -Path $FullFolderPath | Out-Null
+        }
+
+        # Return the full path of the folder
+        return $FullFolderPath
     }
-
-    # Return the full path of the folder
-    return $FullFolderPath
+    catch {
+        Write-Error -Message "Failed to create folder at path: $FullFolderPath"
+        return $null
+    }
 }
-
 function Save-DiscussionResponse {
     param(
         [Parameter(Mandatory = $true)]
         [string]$TextContent,
         [Parameter(Mandatory = $false)]
-        [string]$Folder = "$([Environment]::GetFolderPath('MyDocuments'))\IH"
+        [string]$Folder = "$([Environment]::GetFolderPath('MyDocuments'))\IH",
+        $type = "discussionResponse"
     )
 
     # Check if the folder exists, if not, create it
@@ -105,12 +116,12 @@ function Save-DiscussionResponse {
     }
 
     # Save the discussion response to a file, using a unique name
-    $fileName = "discussionResponse" + [System.Guid]::NewGuid().ToString() + ".txt"
+    $fileName = $type + [System.Guid]::NewGuid().ToString() + ".txt"
     $filePath = Join-Path -Path $Folder -ChildPath $fileName
-    $TextContent | Out-File -FilePath $filePath -Encoding UTF8
+    $TextContent.trim() | Out-File -FilePath $filePath -Encoding UTF8
 
     # Print a message to indicate successful saving
-    Write-Host "Discussion response saved to $fileName"
+    Write-Verbose "Data '$type' saved to '$fileName'"
 
     # Return the full path of the file
     return $filePath
@@ -353,7 +364,7 @@ function Extract-JSON {
     Write-Verbose $($inputString | out-string)
 
     # Define a regular expression pattern to match JSON
-    $jsonPattern = '\{.*?\}|\[.*?\]'
+    $jsonPattern = '(?s)\{.*?\}|\[.*?\]'
 
     # Find JSON substring using regex
     $jsonSubstrings = $inputString | Select-String -Pattern $jsonPattern -AllMatches | ForEach-Object { $_.Matches.Value }
@@ -370,17 +381,17 @@ function Extract-JSON {
             # Parse JSON substring
             try {
                 $jsonObject = Test-IsValidJson $jsonSubstring
-                Write-Verbose "JSON extracted and parsed successfully."
+                Write-Verbose "Extract-JSON: JSON extracted and parsed successfully."
                 # Save parsed JSON into the array
                 $validJsonObjects += $jsonObject
             }
             catch {
-                Write-Verbose "Failed to parse JSON."
+                Write-Verbose "Extract-JSON: Failed to parse JSON."
             }
         }
     }
     else {
-        Write-Verbose "No JSON found in the string."
+        Write-Verbose "Extract-JSON: No JSON found in the string."
     }
 
     # Return the array of valid JSON objects
@@ -388,18 +399,19 @@ function Extract-JSON {
 }
 
 function Test-IsValidJson {
+    [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
         [string]$jsonString
     )
 
     try {
-        $jsonObject = $jsonString | ConvertFrom-Json -ErrorAction Stop
-        Write-Verbose "Valid JSON string."
-        return $jsonObject
+        $null = $jsonString | ConvertFrom-Json -ErrorAction Stop
+        #Write-Verbose "Valid JSON string."
+        return $jsonString
     }
     catch {
-        Write-Verbose "Invalid JSON string."
+        #Write-Verbose "Invalid JSON string."
         return $false
     }
 }
@@ -423,8 +435,8 @@ function Get-ExpertRecommendation {
     }
 '@
 
-$ExperCountToChoose = " three "
-$ExperCountToChoose = " "
+    $ExperCountToChoose = " three "
+    $ExperCountToChoose = " "
 
     $Message = @"
 User need help. The task is '${usermessage}'. Analyze the user's task to choose${ExperCountToChoose}of the most useful experts to get the job done. Response must be as text json object with only Name of choosed experts. You must response as JSON:
@@ -454,14 +466,14 @@ function CleantojsonLLM {
     )
 
     $responsejson1 = @'
-    {
-        "jobexperts":  [
-                          "{Name1}",
-                          "{Name2}",
-                          ...
-                          "{NameN}"
-                       ]
-    }
+{
+    "jobexperts":  [
+                    "{Name1}",
+                    "{Name2}",
+                    ...
+                    "{NameN}"
+                    ]
+}
 '@
 
     $Message = @"
@@ -500,29 +512,55 @@ function Get-FolderNameTopic {
         [string]$usermessage
     )
 
-    $responsejson1 = @'
-    {
-        "FolderName":  [
-                          "{FolderName}"
-                       ]
-    }
-'@
-
-$NameCountToChoose = " three "
-$nameCountToChoose = " one "
+    $responsejson1 = @"
+{
+    `"FolderName`":  `"`"
+}
+"@
 
     $Message = @"
-The task is '${usermessage}'. Analyze the task to suggest${NameCountToChoose}folder name. Folder name must have only characters, any white space will be penalized. Folder name must be as text json object. You must response as JSON syntax only, other response, like text deside JSON will be penalized:
+Suggest short and creative folder name for the given task '${usermessage}'. Folder name must have only characters, and any white spaces will be penalized. Completion response must be as json text object. You must response as JSON syntax only, other elements, like text beside JSON will be penalized. JSON text object syntax to follow:
 $responsejson1
 "@
     Write-Verbose $Message
-    $arguments = @($Message, 100, "Precise", $Entity.name, $Entity.GPTModel, $true)
+    $arguments = @($Message, 100, "UltraPrecise", $Entity.name, $Entity.GPTModel, $true)
     try {
         $output = $Entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
         return $output
     }
     catch {
         Write-Error -Message "Failed to get name recommendation"
+        return $false
+    }
+}
+
+function Define-ProjectGoal {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$usermessage,
+        $Entity
+    )
+
+    Write-Verbose "Defining project goal based on user message: $usermessage"
+
+    $responsejson1 = @"
+{
+    `"ProjectGoal`":  `"`"
+}
+"@
+    
+    $Message = @"
+You must suggest project goal for the given task '${usermessage}'. Completion response of project goal MUST be as json text object. You must response as JSON syntax only, other elements, like text beside JSON will be penalized. JSON text object syntax to follow:
+$responsejson1
+"@
+    Write-Verbose $Message
+    $arguments = @($Message, 300, "Precise", $Entity.name, $Entity.GPTModel, $true)
+    try {
+        $output = $Entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+        return $output
+    }
+    catch {
+        Write-Error -Message "Failed to defining project goal"
         return $false
     }
 }
