@@ -330,9 +330,9 @@ function Clear-LLMDataJSON {
   Clear-LLMDataJSON -data $data
   #>
     param (
-      # The data parameter is mandatory and should be a string
-      [Parameter(Mandatory = $true)]
-      [string]$data
+        # The data parameter is mandatory and should be a string
+        [Parameter(Mandatory = $true)]
+        [string]$data
     )
     # Find the first occurrence of '[' and remove everything before it
     $data = $data.Substring($data.IndexOf('{'))
@@ -340,5 +340,189 @@ function Clear-LLMDataJSON {
     $data = $data.Substring(0, $data.LastIndexOf('}') + 1)
     # Return the cleaned data
     return $data
-  }
+}
   
+
+function Extract-JSON {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$inputString
+    )
+
+    Write-Verbose "Extract-JSON: inputstring:"
+    Write-Verbose $($inputString | out-string)
+
+    # Define a regular expression pattern to match JSON
+    $jsonPattern = '\{.*?\}|\[.*?\]'
+
+    # Find JSON substring using regex
+    $jsonSubstrings = $inputString | Select-String -Pattern $jsonPattern -AllMatches | ForEach-Object { $_.Matches.Value }
+    Write-Verbose "Extract-JSON: jsonSubstrings:"
+    Write-Verbose $($jsonSubstrings | out-string)
+
+    # Initialize an array to hold valid JSON objects
+    $validJsonObjects = @()
+
+    # Check if JSON substring was found
+    if ($jsonSubstrings) {
+        # Loop through each JSON substring
+        foreach ($jsonSubstring in $jsonSubstrings) {
+            # Parse JSON substring
+            try {
+                $jsonObject = Test-IsValidJson $jsonSubstring
+                Write-Verbose "JSON extracted and parsed successfully."
+                # Save parsed JSON into the array
+                $validJsonObjects += $jsonObject
+            }
+            catch {
+                Write-Verbose "Failed to parse JSON."
+            }
+        }
+    }
+    else {
+        Write-Verbose "No JSON found in the string."
+    }
+
+    # Return the array of valid JSON objects
+    return $validJsonObjects
+}
+
+function Test-IsValidJson {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$jsonString
+    )
+
+    try {
+        $jsonObject = $jsonString | ConvertFrom-Json -ErrorAction Stop
+        Write-Verbose "Valid JSON string."
+        return $jsonObject
+    }
+    catch {
+        Write-Verbose "Invalid JSON string."
+        return $false
+    }
+}
+
+function Get-ExpertRecommendation {
+    param (
+        [Parameter(Mandatory = $true)]
+        [object]$Entity,
+        [Parameter(Mandatory = $true)]
+        [string]$usermessage,
+        $Experts
+    )
+
+    $responsejson1 = @'
+    {
+        "jobexperts":  [
+                          "{Name1}",
+                          "{Name2}",
+                          "{Name3}"
+                       ]
+    }
+'@
+
+$ExperCountToChoose = " three "
+$ExperCountToChoose = " "
+
+    $Message = @"
+User need help. The task is '${usermessage}'. Analyze the user's task to choose${ExperCountToChoose}of the most useful experts to get the job done. Response must be as text json object with only Name of choosed experts. You must response as JSON:
+$responsejson1
+
+List of available experts:
+$($Experts | convertto-json)
+"@
+    Write-Verbose $Message
+    $arguments = @($Message, 800, "Precise", $Entity.name, $Entity.GPTModel, $true)
+    try {
+        $output = $Entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+        return $output
+    }
+    catch {
+        Write-Error -Message "Failed to get expert recommendation"
+        return $false
+    }
+}
+
+function CleantojsonLLM {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$dataString,
+        [Parameter(Mandatory = $true)]
+        [object]$entity
+    )
+
+    $responsejson1 = @'
+    {
+        "jobexperts":  [
+                          "{Name1}",
+                          "{Name2}",
+                          ...
+                          "{NameN}"
+                       ]
+    }
+'@
+
+    $Message = @"
+###Instruction###
+
+You must clean data and leave only JSON text object without block code. If there is no json data then create it with structure:
+
+$responsejson1
+
+###Data to clean###
+
+$dataString
+"@ | out-string
+
+    Write-Color -Text "LLM cleaning" -Color Magenta -BackGroundColor DarkGreen
+    $arguments = @($Message, 800, "Precise", $entity.name, $entity.GPTModel, $true)
+    write-verbose ($arguments | Out-String)
+    try {
+        $output = $entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+        Write-Verbose $output
+        Write-Color -Text "Function cleaning" -Color Magenta -BackGroundColor DarkGreen
+        $output = Clear-LLMDataJSOn $output
+        return $output
+    }
+    catch {
+        Write-Error -Message "Failed to clean and invoke completion"
+        return $false
+    }
+}
+
+function Get-FolderNameTopic {
+    param (
+        [Parameter(Mandatory = $true)]
+        [object]$Entity,
+        [Parameter(Mandatory = $true)]
+        [string]$usermessage
+    )
+
+    $responsejson1 = @'
+    {
+        "FolderName":  [
+                          "{FolderName}"
+                       ]
+    }
+'@
+
+$NameCountToChoose = " three "
+$nameCountToChoose = " one "
+
+    $Message = @"
+The task is '${usermessage}'. Analyze the task to suggest${NameCountToChoose}folder name. Folder name must have only characters, any white space will be penalized. Folder name must be as text json object. You must response as JSON syntax only, other response, like text deside JSON will be penalized:
+$responsejson1
+"@
+    Write-Verbose $Message
+    $arguments = @($Message, 100, "Precise", $Entity.name, $Entity.GPTModel, $true)
+    try {
+        $output = $Entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+        return $output
+    }
+    catch {
+        Write-Error -Message "Failed to get name recommendation"
+        return $false
+    }
+}

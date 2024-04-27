@@ -1,3 +1,4 @@
+[CmdletBinding()]
 param(
     $usermessage
 )
@@ -93,7 +94,7 @@ Try {
     $expertsData = Get-Content -Path "experts.json" | ConvertFrom-Json
 
     # Initialize an empty array to store the entities
-    $entities = @()
+    $ExpertEntities = @()
 
     # Loop through each expert in the data
     foreach ($expert in $expertsData) {
@@ -101,11 +102,11 @@ Try {
         $entity = Build-EntityObject -Name $expert.'Expert Type' -Role "Expert" -Description "An expert in $($expert.'Expert Type')" -Skills $expert.Skills -GPTType "azure" -GPTModel "udtgpt35turbo"
 
         # Add the entity to the entities array
-        $entities += $entity
+        $ExpertEntities += $entity
     }
 
-    if ($entities) {
-        PSWriteColor\Write-Color -Text "Entities were created ($($entities.count))" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+    if ($ExpertEntities) {
+        PSWriteColor\Write-Color -Text "Entities were created ($($ExpertEntities.count))" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
     }
 }
 Catch {
@@ -132,54 +133,51 @@ else {
 }
 #>
 
-$responsejson1 = @'
-{
-    "jobexperts":  [
-                      "{Name1}",
-                      "{Name2}",
-                      "{Name3}"
-                   ]
+Write-Verbose "Get-ExpertRecommendation"
+$output = Get-ExpertRecommendation -Entity $mainEntity -usermessage $usermessage -Experts $ExpertEntities
+
+Get-FolderNameTopic -Entity $mainEntity -usermessage $usermessage
+
+Write-Verbose "first response of gpt to the topic:"
+Write-Color -Text  $output -Color Blue -BackGroundColor DarkYellow
+
+Write-Verbose "first response of gpt to the topic - Test-IsValidJson:"
+if (-not (Test-IsValidJson $output)) {
+    Write-Verbose "start CleantojsonLLM"
+    CleantojsonLLM -dataString $output -entity $mainEntity
+    
+    Write-Verbose "start Extract-JSON"
+    $output = Extract-JSON $output
 }
-'@
-
-$Message = "User need help. The task is '${usermessage}'. Analyze the user's task to choose three of the most useful experts to get the job done. Response must be as test json object with only Name of choosed experts. You must response as JSON:`n$responsejson1`nList of available experts:`n $($entities | convertto-json)`n"
-
-$arguments = @($Message, 800, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
-$output = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+Write-Verbose "check output"
+Write-Color -Text  $output -Color Blue -BackGroundColor DarkYellow
 
 
-#Write-Color -Text  $output -Color Blue -BackGroundColor DarkYellow
 
+
+<#
 try {
     Write-Color -Text "Function cleaning" -Color Magenta -BackGroundColor DarkGreen
-    $output = Clear-LLMDataJSOn $output    
-    #Write-Color -Text $output -Color Blue -BackGroundColor DarkYellow
+    Write-Verbose "Function cleaning"
+    $output = Clear-LLMDataJSOn $output  
+    Write-Color -Text  $output -Color Blue -BackGroundColor DarkYellow
+
+    Write-Verbose $($output | ConvertFrom-Json)
+
+    Write-Color -Text "Function extract json" -Color Magenta -BackGroundColor DarkGreen
+    Write-Verbose "Function extract json"
+    $output = Extract-JSON $output  
+    Write-Color -Text $output -Color Blue -BackGroundColor DarkYellow
     
+    Write-Verbose $($output | ConvertFrom-Json)
+    if (!(Test-IsValidJson $output)) {
+        throw "Invalid JSON string."
+    }
 }
 catch {
-    $Message = @"
-
-###Instruction###
-
-You must clean data and leave only JSON text object without block code. If there is no json data create it with structure:
-
-$responsejson1
-
-###Data to clean###
-
-$output
-"@
-    Write-Color -Text "LLM cleaning" -Color Magenta -BackGroundColor DarkGreen
-    $arguments = @($Message, 800, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
-    $output = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
-    
-    Write-Color -Text "Function cleaning" -Color Magenta -BackGroundColor DarkGreen
-    $output = Clear-LLMDataJSOn $output    
-    #Write-Color -Text $output -Color Blue -BackGroundColor DarkYellow
+    CleantojsonLLM
 }
-
-
-
+#>
 #Write-Color -Text $output -Color Blue -BackGroundColor DarkYellow
 
 #$jobexpertsFileFullName = Save-DiscussionResponse -TextContent $output -Folder $script:TeamDiscussionDataFolder
@@ -187,7 +185,9 @@ $output
 
 #$expertstojob = Get-Content $jobexpertsFileFullName -Raw | ConvertFrom-Json
 $expertstojob = $output | ConvertFrom-Json
-$expertstojob = $entities | Where-Object { $_.Name -in $expertstojob.jobexperts }
+$expertstojob = $ExpertEntities | Where-Object { $_.Name -in $expertstojob.jobexperts }
+
+
 #$global:entities = $entities
 #$expertstojobFileFullName = Save-DiscussionResponse -TextContent $($expertstojob | ConvertTo-Json) -Folder $script:TeamDiscussionDataFolder
 if ($expertstojob) {
