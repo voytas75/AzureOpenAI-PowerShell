@@ -47,7 +47,8 @@ class Entity {
         # Check if the class properties are valid
         if ($this.Name -and $this.Role -and $this.Description -and $this.Skills -and $this.GPTType -and $this.GPTModel) {
             return "OK"
-        } else {
+        }
+        else {
             throw "Invalid class properties"
         }
     }
@@ -63,13 +64,23 @@ class Entity {
     }
 
     # Method to invoke external function from another PowerShell module
-    [string] InvokeChatCompletion([string] $moduleName, [string] $functionName, [object[]] $arguments, [switch]$Verbose) {
+    [string] InvokeChatCompletion([string] $PSmoduleName, [string] $functionName, [object[]] $arguments, [switch]$Verbose) {
         # Import the module if it's not already imported
-        if (-not (Get-Module -Name $moduleName)) {
-            Import-Module -Name $moduleName -ErrorAction Stop
+        if (-not (Get-Module -Name $PSmoduleName)) {
+            Import-Module -Name $PSmoduleName -ErrorAction Stop
         }
         # Invoke the function from the imported module
         return (& $functionName @arguments -Verbose:$Verbose)
     }
     
+    [string] SendResource([string] $resource, [Entity] $destinationEntity, [string] $PSmoduleName, [string] $functionName) {
+        
+        write-host (Shorten-Text $resource)
+        # Invoke invokeCompletion to send the resource to the destination entity
+        $arguments = @($resource, 800, "Precise", $this.name, $this.GPTModel, $true)
+        $response = $this.invokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+        Write-Host "Response from $($destinationEntity.Name): $response"
+        return $response
+    }
 }
+

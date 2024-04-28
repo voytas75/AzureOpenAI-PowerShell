@@ -122,6 +122,8 @@ if ($script:ProjectFolderFullNamePath) {
 }
 #endregion
 
+#return 
+
 #region Expert Recommendation
 Write-Verbose "Get-ExpertRecommendation"
 $output = Get-ExpertRecommendation -Entity $mainEntity -usermessage $usermessage -Experts $ExpertEntities
@@ -192,6 +194,11 @@ if ($projectGoal) {
 Write-Verbose "Project goal: $projectGoal"
 #endregion
 
+# Ask each entity to provide its perspective
+$topic = "Give me your insight about '${usermessage}'"
+$mainEntity.SendResource($topic, $ExpertEntities[0],"PSAOAI", "Invoke-PSAOAICompletion")
+
+return 
 
 foreach ($discussionStep in $discussionSteps) {
     if ($discussionStep.isRequired) {

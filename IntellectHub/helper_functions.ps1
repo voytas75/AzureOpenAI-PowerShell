@@ -522,6 +522,12 @@ function Get-FolderNameTopic {
 Suggest short and creative folder name for the given task '${usermessage}'. Folder name must have only characters, and any white spaces will be penalized. Completion response must be as json text object. You must response as JSON syntax only, other elements, like text beside JSON will be penalized. JSON text object syntax to follow:
 $responsejson1
 "@
+
+$Message = @"
+###Instructions###
+Your task is to generate english JSON for a developer to use in code. The specific task is to create a JSON structure for the short and creative folder name with no whitespaces, based on description "write article in japanise about KQL basics in azure sentinel.". The response must be in JSON format ready to be copied and pasted into a code snippet. Every json value must be in english. Modify only the values, in the given JSON example structure: 
+{ "FolderName": "" }
+"@
     Write-Verbose $Message
     $arguments = @($Message, 100, "UltraPrecise", $Entity.name, $Entity.GPTModel, $true)
     try {
@@ -605,3 +611,29 @@ $responsejson1
     }
 }
 
+function Shorten-Text {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$text,
+        [Parameter(Mandatory = $false)]
+        [int]$wordscount = 100
+    )
+
+    # Split the text into words
+    $words = $text -split " "
+    write-Host "Shorten-Text: $($words.count) words"
+
+    # Check if the text has more words than the specified word count
+    if ($words.Count -gt $wordscount) {
+        # Show the first half and last half words based on the word count
+        $firstHalf = [math]::Floor($wordscount / 2)
+        $lastHalf = [math]::Ceiling($wordscount / 2)
+        $shortenedText = $words[0..($firstHalf-1)] + "`n...`n" + $words[-$lastHalf..-1]
+        write-Host "Text was shortened due to its length:"
+        return $shortenedText -join " "
+    }
+    else {
+        # If the text has fewer or equal words to the specified word count, return it as is
+        return $text
+    }
+}
