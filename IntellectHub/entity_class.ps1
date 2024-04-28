@@ -1,10 +1,10 @@
 <#
 .SYNOPSIS
-    This is a class definition for an Entity in PowerShell.
+    The Entity class in PowerShell represents an entity with specific properties and methods.
 
 .DESCRIPTION
-    The Entity class represents an entity with properties like Name, Role, Description, Skills, GPTType, and GPTModel.
-    It also includes a method to invoke external functions from other PowerShell modules.
+    The Entity class is a representation of an entity with properties such as Name, Role, Description, Skills, GPTType, and GPTModel. 
+    This class also includes methods to invoke external functions from other PowerShell modules and to send resources to other entities.
 
 .NOTES
     Author     : Wojciech Napierala
@@ -82,4 +82,3 @@ class Entity {
         return $response
     }
 }
-
