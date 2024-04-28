@@ -194,12 +194,6 @@ if ($projectGoal) {
 Write-Verbose "Project goal: $projectGoal"
 #endregion
 
-# Ask each entity to provide its perspective
-$topic = "Give me your insight about '${usermessage}'"
-$mainEntity.SendResource($topic, $ExpertEntities[0],"PSAOAI", "Invoke-PSAOAICompletion")
-
-return 
-
 foreach ($discussionStep in $discussionSteps) {
     if ($discussionStep.isRequired) {
         $discussionStep.title
@@ -207,6 +201,8 @@ foreach ($discussionStep in $discussionSteps) {
         $discussionStep.steps -join "`n"
         foreach ($expertToJob in $expertstojob) {
             Get-LLMResponse -usermessage $usermessage -entity $mainEntity -expert $expertToJob -goal $projectGoal -title $discussionStep.title -description $discussionStep.description -importance $discussionStep.importance -steps ($discussionStep.steps -join "`n") -examples $discussionStep.examples
+            # Ask each entity to provide its perspective
+            $mainEntity.SendResource($usermessage+" "+$($discussionStep.description), $expertToJob, "PSAOAI", "Invoke-PSAOAICompletion")
         }
     }  
 }

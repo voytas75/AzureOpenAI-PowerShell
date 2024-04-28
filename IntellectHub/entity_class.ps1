@@ -73,12 +73,19 @@ class Entity {
         [string] $PSmoduleName, 
         [string] $functionName
     ) {
-        
+        $Message = @"
+I am $($this.Name) and my role is $($this.Role). My skills are: $($this.Skills -join ", "). I have request to you.
+You act as $($destinationEntity.Role) named $($destinationEntity.Name). Description of your role is '$($destinationEntity.Description)'. Your skills are: $($destinationEntity.Skills -join ", "). Your specific task is to refer to the following description: "${resource}" in the following scope: Ask Open-Ended Questionsto. You MUST answer in a natural, human-like manner, providing a concise yet comprehensive explanation.         
+"@
+#Your specific task is generate english JSON for a developer to use in code. The specific task is to create a JSON structure for the  "${resource}". The response must be in JSON format ready to be copied and pasted into a code snippet. Every json value must be in english. Modify only the values, in the given JSON example structure: { "ExpertName": "", "Role": "", "Query": "", "Response": "" }
+#
+        #Write-Host $message
+
         write-host (Shorten-Text $resource)
         # Invoke invokeCompletion to send the resource to the destination entity
         $arguments = @($resource, 800, "Precise", $destinationEntity.name, $destinationEntity.GPTModel, $true)
-        $response = $this.invokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
-        Write-Host "Response from $($destinationEntity.Name): $response"
+        $response = $destinationEntity.invokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+        #Write-Host "Response from $($destinationEntity.Name): $response"
         return $response
     }
 }

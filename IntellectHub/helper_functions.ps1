@@ -585,7 +585,7 @@ function Get-LLMResponse {
         $examples
     )
 
-    Write-Verbose "Defining ${title} fot '$usermessage'"
+    #Write-Verbose "Defining ${title} for '$usermessage'"
 
     $responsejson1 = @"
 {
@@ -594,7 +594,8 @@ function Get-LLMResponse {
 "@
     
     $Message = @"
-You are expert '$($expert.'Expert Type')' with skills $($expert.skills -join ", "). You are a part of team of experts. Your task is make your view for $title $description  to user's project described as '$usermessage' and definied by Project Manager as '$goal'.
+You are expert '$($expert.Description)' with skills $($expert.skills -join ", "). You are a part of team of experts. Your task is make your view for $title - $description To user's project described as '$usermessage' and definied by Project Manager as a goal: 
+$($goal.trim())
 You must suggest project goal for the given task '${usermessage}'. 
 Completion response your view for $title MUST be as json text object. You must response as JSON syntax only, other elements, like text beside JSON will be penalized. JSON text object syntax to follow:
 $responsejson1
