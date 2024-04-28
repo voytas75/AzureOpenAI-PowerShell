@@ -54,7 +54,12 @@ class Entity {
     }
 
     # Method to invoke external function from another PowerShell module
-    [string] InvokeCompletion([string] $moduleName, [string] $functionName, [object[]] $arguments, [switch]$Verbose) {
+    [string] InvokeCompletion(
+        [string] $moduleName, 
+        [string] $functionName, 
+        [object[]] $arguments, 
+        [switch]$Verbose
+    ) {
         # Import the module if it's not already imported
         if (-not (Get-Module -Name $moduleName)) {
             Import-Module -Name $moduleName -ErrorAction Stop
@@ -73,7 +78,12 @@ class Entity {
         return (& $functionName @arguments -Verbose:$Verbose)
     }
     
-    [string] SendResource([string] $resource, [Entity] $destinationEntity, [string] $PSmoduleName, [string] $functionName) {
+    [string] SendResource(
+        [string] $resource, 
+        [Entity] $destinationEntity, 
+        [string] $PSmoduleName, 
+        [string] $functionName
+    ) {
         
         write-host (Shorten-Text $resource)
         # Invoke invokeCompletion to send the resource to the destination entity
