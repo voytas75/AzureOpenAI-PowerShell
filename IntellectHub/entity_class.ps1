@@ -42,17 +42,6 @@ class Entity {
         $this.GPTModel = $gptModel
     }
 
-    # Method to verify the class
-    [string] VerifyClass() {
-        # Check if the class properties are valid
-        if ($this.Name -and $this.Role -and $this.Description -and $this.Skills -and $this.GPTType -and $this.GPTModel) {
-            return "OK"
-        }
-        else {
-            throw "Invalid class properties"
-        }
-    }
-
     # Method to invoke external function from another PowerShell module
     [string] InvokeCompletion(
         [string] $moduleName, 
