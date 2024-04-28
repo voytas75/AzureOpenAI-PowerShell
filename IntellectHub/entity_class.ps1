@@ -77,7 +77,7 @@ class Entity {
         
         write-host (Shorten-Text $resource)
         # Invoke invokeCompletion to send the resource to the destination entity
-        $arguments = @($resource, 800, "Precise", $this.name, $this.GPTModel, $true)
+        $arguments = @($resource, 800, "Precise", $destinationEntity.name, $destinationEntity.GPTModel, $true)
         $response = $this.invokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
         Write-Host "Response from $($destinationEntity.Name): $response"
         return $response
