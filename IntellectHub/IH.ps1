@@ -209,5 +209,6 @@ foreach ($discussionStep in $discussionSteps) {
 
 
 
-
+#region Set Environment Variable
 [System.Environment]::SetEnvironmentVariable("PSAOAI_BANNER", "1", "User")
+#endregion

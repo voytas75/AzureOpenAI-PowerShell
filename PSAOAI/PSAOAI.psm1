@@ -52,6 +52,7 @@ catch {
     Write-Error "An error occurred while checking for updates: $_"
 }
 
+
 # Set constants for environment variable names
 $script:API_AZURE_OPENAI_APIVERSION = "PSAOAI_API_AZURE_OPENAI_APIVERSION"
 $script:API_AZURE_OPENAI_ENDPOINT = "PSAOAI_API_AZURE_OPENAI_ENDPOINT"

@@ -123,6 +123,8 @@ function Invoke-PSAOAICompletion {
         [Parameter(Position = 5, Mandatory = $false)]
         [switch]$simpleresponse,
         [Parameter(Mandatory = $false)]
+        [string]$LogFolder,
+        [Parameter(Mandatory = $false)]
         [string]$APIVersion = (Get-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_APIVERSION),
         [Parameter(Mandatory = $false)]
         [string]$Endpoint = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"),
@@ -186,7 +188,18 @@ function Invoke-PSAOAICompletion {
             return $content
         }
     }
-    
+
+    $logfileDirectory = Join-Path -Path ([Environment]::GetFolderPath("MyDocuments")) -ChildPath $script:modulename
+    if ($LogFolder) {
+        $logfileDirectory = $LogFolder
+    }
+
+    if (!(Test-Path -Path $logfileDirectory)) {
+        # Create the directory if it does not exist
+        New-Item -ItemType Directory -Path $logfileDirectory -Force | Out-Null
+    }
+
+
     while (-not $APIVersion) {
         $APIVersion = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API Version"
     }
@@ -301,6 +314,12 @@ function Invoke-PSAOAICompletion {
             $prompt = Get-Prompt
         }
 
+        $userMessageHash = Get-Hash -InputString $prompt -HashType MD5
+   
+        $logFullNamePath = Join-Path -Path $logfileDirectory -ChildPath "$($script:modulename)Completion-${userMessageHash}.txt"
+    
+        Write-LogMessage -Message "User message:`n$prompt" -LogFile $logFullNamePath
+
         #$prompt 
         #($prompt | Measure-Object -Word -Line -Character) | out-string
         
@@ -351,7 +370,7 @@ function Invoke-PSAOAICompletion {
         # If not a simple response, display chat completion and other details
         if (-not $simpleresponse) {
             Write-Host "[Completion]" -ForegroundColor Green
-            if ($logfile) {
+            if ($LogFolder) {
                 Write-Host "{Logfile:'${logfile}'} " -ForegroundColor Magenta
             }
             Write-Host "{MaxTokens:'$MaxTokens', temp:'$Temperature', top_p:'$TopP', fp:'$FrequencyPenalty', pp:'$PresencePenalty', user:'$User', n:'$N', stop:'$Stop', stream:'$Stream'} " -ForegroundColor Magenta
@@ -365,6 +384,8 @@ function Invoke-PSAOAICompletion {
             Show-FinishReason -finishReason $response.choices.finish_reason
             Show-Usage -usage $response.usage
         }
+        Write-LogMessage -Message "Text completion:`n$($responseText.trim())" -LogFile $logFullNamePath
+
         return $responseText
     }
     catch {
@@ -387,9 +408,10 @@ $Endpoint = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_ENDPOINT -Pr
 $Deployment = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment"
 # Get the API key from the environment variable
 $ApiKey = Get-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key"
-#>
 
-<# 
+
+
+
 top_p:
 In the context of the GPT model, the parameter top_p refers to the "top-p" or "nucleus" sampling technique. It is also known as "probability thresholding" or "penalized sampling." The top_p parameter is used during text generation to control the diversity and randomness of the generated output.
 
