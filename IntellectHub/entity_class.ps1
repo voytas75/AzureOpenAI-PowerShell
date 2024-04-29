@@ -22,8 +22,8 @@ class Entity {
     # The type of GPT used by the entity
     [string] $GPTType
     # The model of GPT used by the entity
-    [string] $GPTModel
-
+    [string] $GPTModel    
+    [array] $ConversationHistory
     # The constructor for the Entity class
     Entity(
         [string] $name, 
@@ -31,7 +31,7 @@ class Entity {
         [string] $description, 
         [string[]] $skills, 
         [string] $gptType,
-        [string] $gptModel
+        [string] $gptModel        
     ) {
         # Initialize the properties of the entity
         $this.Name = $name
@@ -77,8 +77,8 @@ class Entity {
 I am $($this.Name) and my role is $($this.Role). My skills are: $($this.Skills -join ", "). I have request to you.
 You act as $($destinationEntity.Role) named $($destinationEntity.Name). Description of your role is '$($destinationEntity.Description)'. Your skills are: $($destinationEntity.Skills -join ", "). Your specific task is to refer to the following description: "${resource}" in the following scope: Ask Open-Ended Questionsto. You MUST answer in a natural, human-like manner, providing a concise yet comprehensive explanation.         
 "@
-#Your specific task is generate english JSON for a developer to use in code. The specific task is to create a JSON structure for the  "${resource}". The response must be in JSON format ready to be copied and pasted into a code snippet. Every json value must be in english. Modify only the values, in the given JSON example structure: { "ExpertName": "", "Role": "", "Query": "", "Response": "" }
-#
+        #Your specific task is generate english JSON for a developer to use in code. The specific task is to create a JSON structure for the  "${resource}". The response must be in JSON format ready to be copied and pasted into a code snippet. Every json value must be in english. Modify only the values, in the given JSON example structure: { "ExpertName": "", "Role": "", "Query": "", "Response": "" }
+        #
         #Write-Host $message
 
         write-host (Shorten-Text $resource)
@@ -88,10 +88,10 @@ You act as $($destinationEntity.Role) named $($destinationEntity.Name). Descript
         #Write-Host "Response from $($destinationEntity.Name): $response"
         return $response
     }
-# Method to add an interaction to the conversation history
+    # Method to add an interaction to the conversation history
     [void] AddToConversationHistory([string] $prompt, [string] $response) {
         $interaction = [PSCustomObject]@{
-            Prompt = $prompt
+            Prompt   = $prompt
             Response = $response
         }
         $this.ConversationHistory += $interaction
@@ -119,4 +119,16 @@ You act as $($destinationEntity.Role) named $($destinationEntity.Name). Descript
         return $this.ConversationHistory[$startIndex..($this.ConversationHistory.Count - 1)]
     }
 
+    # Method to save the conversation history to a file
+    [void] SaveConversationHistoryToFile([string] $filePath, [string] $type) {
+        switch ($type) {
+            "CSV" {
+                $this.ConversationHistory | Export-Csv -Path $filePath -NoTypeInformation            
+            }
+            "JSON" {
+                $this.ConversationHistory | ConvertTo-Json -Depth 100 | Set-Content $filePath
+            }
+            Default {}
+        }        
+    }
 }

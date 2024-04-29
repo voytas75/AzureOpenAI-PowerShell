@@ -7,8 +7,8 @@ param(
 
 # Import PSaoAI module
 [System.Environment]::SetEnvironmentVariable("PSAOAI_BANNER", "0", "User")
-Import-Module -Name PSaoAI
-#Import-module "D:\dane\voytas\Dokumenty\visual_studio_code\github\AzureOpenAI-PowerShell\PSAOAI\PSAOAI.psd1" -Force 
+#Import-Module -Name PSaoAI
+Import-module "D:\dane\voytas\Dokumenty\visual_studio_code\github\AzureOpenAI-PowerShell\PSAOAI\PSAOAI.psd1" -Force 
 
 import-module PSWriteColor
 
@@ -182,6 +182,7 @@ if ($expertstojob) {
 
 #region Define Project Goal
 $projectGoal = Define-ProjectGoal -usermessage $usermessage -Entity $mainEntity
+$mainEntity.AddToConversationHistory($usermessage, $projectGoal)
 if ($projectGoal) {
     
     $script:ProjectGoalFileFulleNamepath = Save-DiscussionResponse -TextContent $projectGoal -Folder $script:ProjectFolderFullNamePath -type "ProjectGoal"
@@ -194,19 +195,26 @@ if ($projectGoal) {
 Write-Verbose "Project goal: $projectGoal"
 #endregion
 
-foreach ($discussionStep in $discussionSteps) {
-    if ($discussionStep.isRequired) {
-        $discussionStep.title
-        $discussionStep.description
-        $discussionStep.steps -join "`n"
-        foreach ($expertToJob in $expertstojob) {
-            Get-LLMResponse -usermessage $usermessage -entity $mainEntity -expert $expertToJob -goal $projectGoal -title $discussionStep.title -description $discussionStep.description -importance $discussionStep.importance -steps ($discussionStep.steps -join "`n") -examples $discussionStep.examples
-            # Ask each entity to provide its perspective
-            $mainEntity.SendResource($usermessage+" "+$($discussionStep.description), $expertToJob, "PSAOAI", "Invoke-PSAOAICompletion")
-        }
-    }  
-}
+foreach ($expertToJob in $expertstojob) {
+    foreach ($discussionStep in $discussionSteps) {
+        if ($discussionStep.isRequired) {
+            $discussionStep.title
+            $discussionStep.description
+            $discussionStep.steps -join "`n"
 
+            #Get-LLMResponse -usermessage $usermessage -entity $mainEntity -expert $expertToJob -goal $projectGoal -title $discussionStep.title -description $discussionStep.description -importance $discussionStep.importance -steps ($discussionStep.steps -join "`n") -examples $discussionStep.examples
+            # Ask each entity to provide its perspective
+            $PromptToExpert = @"
+Prepare you point of view in area: $($discussionStep.description), for project description: "$usermessage"
+You MUST answer in a natural, human-like manner, providing a concise yet comprehensive explanation.
+"@
+            $expertreposnse = $mainEntity.SendResource($PromptToExpert, $expertToJob, "PSAOAI", "Invoke-PSAOAICompletion")
+            $expertToJob.AddToConversationHistory($PromptToExpert, $expertreposnse)
+        }            
+    }
+    $expertDiscussionHistoryFullName = (Join-Path -Path $script:TeamDiscussionDataFolder -ChildPath $expertToJob.Name)+".json"
+    $expertToJob.SaveConversationHistoryToFile($expertDiscussionHistoryFullName, "JSON")
+}
 
 
 #region Set Environment Variable

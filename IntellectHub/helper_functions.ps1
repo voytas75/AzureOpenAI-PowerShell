@@ -429,14 +429,14 @@ function Get-ExpertRecommendation {
     {
         "jobexperts":  [
                           "{Name1}",
-                          "{Name2}",
-                          "{Name3}"
+                          ...
+                          "{NameN}"
                        ]
     }
 '@
 
     $ExperCountToChoose = " three "
-    $ExperCountToChoose = " "
+    $ExperCountToChoose = " two "
 
     $Message = @"
 User need help. The task is '${usermessage}'. Analyze the user's task to choose${ExperCountToChoose}of the most useful experts to get the job done. Response must be as text json object with only Name of choosed experts. You must response as JSON:
@@ -525,7 +525,7 @@ $responsejson1
 
 $Message = @"
 ###Instructions###
-Your task is to generate english JSON for a developer to use in code. The specific task is to create a JSON structure for the short and creative folder name with no whitespaces, based on description "write article in japanise about KQL basics in azure sentinel.". The response must be in JSON format ready to be copied and pasted into a code snippet. Every json value must be in english. Modify only the values, in the given JSON example structure: 
+Your task is to generate english JSON for a developer to use in code. The specific task is to create a JSON structure for the short and creative folder name with no whitespaces, based on description "${usermessage}". The response must be in JSON format ready to be copied and pasted into a code snippet. Every json value must be in english. Modify only the values, in the given JSON example structure: 
 { "FolderName": "" }
 "@
     Write-Verbose $Message
