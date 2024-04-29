@@ -88,4 +88,35 @@ You act as $($destinationEntity.Role) named $($destinationEntity.Name). Descript
         #Write-Host "Response from $($destinationEntity.Name): $response"
         return $response
     }
+# Method to add an interaction to the conversation history
+    [void] AddToConversationHistory([string] $prompt, [string] $response) {
+        $interaction = [PSCustomObject]@{
+            Prompt = $prompt
+            Response = $response
+        }
+        $this.ConversationHistory += $interaction
+    }
+
+    # Method to clear the conversation history
+    [void] ClearConversationHistory() {
+        $this.ConversationHistory = @()
+    }
+
+    # Method to retrieve the entire conversation history
+    [array] GetConversationHistory() {
+        return $this.ConversationHistory
+    }
+
+    # Method to retrieve the last n interactions from the conversation history
+    [array] GetLastNInteractions([int] $n) {
+        if ($n -le 0) {
+            return @()
+        }
+        if ($n -ge $this.ConversationHistory.Count) {
+            return $this.ConversationHistory
+        }
+        $startIndex = $this.ConversationHistory.Count - $n
+        return $this.ConversationHistory[$startIndex..($this.ConversationHistory.Count - 1)]
+    }
+
 }
