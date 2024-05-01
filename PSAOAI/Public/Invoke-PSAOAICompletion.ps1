@@ -371,7 +371,7 @@ function Invoke-PSAOAICompletion {
         if (-not $simpleresponse) {
             Write-Host "[Completion]" -ForegroundColor Green
             if ($LogFolder) {
-                Write-Host "{Logfile:'${logfile}'} " -ForegroundColor Magenta
+                Write-Host "{Logfolder:'${LogFolder}'} " -ForegroundColor Magenta
             }
             Write-Host "{MaxTokens:'$MaxTokens', temp:'$Temperature', top_p:'$TopP', fp:'$FrequencyPenalty', pp:'$PresencePenalty', user:'$User', n:'$N', stop:'$Stop', stream:'$Stream'} " -ForegroundColor Magenta
         }

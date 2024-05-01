@@ -126,7 +126,7 @@ function Save-DiscussionResponse {
     # Return the full path of the file
     return $filePath
 }
-function ReadDiscussionStepsFromJson {
+function Get-DiscussionStepsFromJson {
     param(
         [string] $FilePath
     )
@@ -398,24 +398,47 @@ function Extract-JSON {
     return $validJsonObjects
 }
 
+<#
+.SYNOPSIS
+This function tests if a given string is a valid JSON.
+
+.DESCRIPTION
+The function takes a string as input, trims it, and then tries to convert it to a JSON object. If the conversion is successful, the function returns the original string. If the conversion fails, the function returns $false.
+
+.PARAMETER jsonString
+The string to be tested for JSON validity.
+
+.EXAMPLE
+Test-IsValidJson -jsonString '{"name":"John", "age":30, "city":"New York"}'
+#>
 function Test-IsValidJson {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
         [string]$jsonString
     )
-
+    $jsonString = $jsonString.trim()
+    if ([string]::IsNullOrEmpty($jsonString)) {
+        Write-Host "JSON is empty"
+        return $false
+    }
+    Write-Verbose "Test-IsValidJson: jsonString: '$jsonString'"
     try {
         $null = $jsonString | ConvertFrom-Json -ErrorAction Stop
-        #Write-Verbose "Valid JSON string."
         return $jsonString
     }
     catch {
-        #Write-Verbose "Invalid JSON string."
         return $false
     }
 }
 
+<#
+.SYNOPSIS
+This function is a placeholder for the Get-ExpertRecommendation function.
+
+.DESCRIPTION
+The function is currently empty and needs to be implemented.
+#>
 function Get-ExpertRecommendation {
     param (
         [Parameter(Mandatory = $true)]
@@ -425,26 +448,32 @@ function Get-ExpertRecommendation {
         $Experts
     )
 
-    $responsejson1 = @'
-    {
-        "jobexperts":  [
-                          "{Name1}",
-                          ...
-                          "{NameN}"
-                       ]
-    }
-'@
 
-    $ExperCountToChoose = " three "
+    $ExperCountToChoose = " "
     $ExperCountToChoose = " two "
 
     $Message = @"
 User need help. The task is '${usermessage}'. Analyze the user's task to choose${ExperCountToChoose}of the most useful experts to get the job done. Response must be as text json object with only Name of choosed experts. You must response as JSON:
+{
+    "JobExperts":  [
+                      "",
+                      ...,
+                      ""
+                   ]
+}
+
+List of available experts:
+$($Experts | convertto-json)
+"@
+
+    $Message = @"
+Your role is a JSON Expert. The task is to analyze problem '${usermessage}' and choose${ExperCountToChoose}of the most useful experts from available to get the job done. MUST respond with json structure where 'jobexperts' are Name of choosed experts.
 $responsejson1
 
 List of available experts:
 $($Experts | convertto-json)
 "@
+
     Write-Verbose $Message
     $arguments = @($Message, 800, "Precise", $Entity.name, $Entity.GPTModel, $true)
     try {
@@ -523,7 +552,7 @@ Suggest short and creative folder name for the given task '${usermessage}'. Fold
 $responsejson1
 "@
 
-$Message = @"
+    $Message = @"
 ###Instructions###
 Your task is to generate english JSON for a developer to use in code. The specific task is to create a JSON structure for the short and creative folder name with no whitespaces, based on description "${usermessage}". The response must be in JSON format ready to be copied and pasted into a code snippet. Every json value must be in english. Modify only the values, in the given JSON example structure: 
 { "FolderName": "" }
@@ -536,37 +565,6 @@ Your task is to generate english JSON for a developer to use in code. The specif
     }
     catch {
         Write-Error -Message "Failed to get name recommendation"
-        return $false
-    }
-}
-
-function Define-ProjectGoal {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$usermessage,
-        $Entity
-    )
-
-    Write-Verbose "Defining project goal based on user message: $usermessage"
-
-    $responsejson1 = @"
-{
-    `"ProjectGoal`":  `"`"
-}
-"@
-    
-    $Message = @"
-You must suggest project goal for the given task '${usermessage}'. Completion response of project goal MUST be as json text object. You must response as JSON syntax only, other elements, like text beside JSON will be penalized. JSON text object syntax to follow:
-$responsejson1
-"@
-    Write-Verbose $Message
-    $arguments = @($Message, 300, "Precise", $Entity.name, $Entity.GPTModel, $true)
-    try {
-        $output = $Entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
-        return $output
-    }
-    catch {
-        Write-Error -Message "Failed to defining project goal"
         return $false
     }
 }
@@ -622,15 +620,15 @@ function Shorten-Text {
 
     # Split the text into words
     $words = $text -split " "
-    write-Host "Shorten-Text: $($words.count) words"
+    write-Verbose "Shorten-Text: $($words.count) words"
 
     # Check if the text has more words than the specified word count
     if ($words.Count -gt $wordscount) {
         # Show the first half and last half words based on the word count
         $firstHalf = [math]::Floor($wordscount / 2)
         $lastHalf = [math]::Ceiling($wordscount / 2)
-        $shortenedText = $words[0..($firstHalf-1)] + "`n...`n" + $words[-$lastHalf..-1]
-        write-Host "Text was shortened due to its length:"
+        $shortenedText = $words[0..($firstHalf - 1)] + "`n...`n" + $words[ - $lastHalf..-1]
+        write-Verbose "Text was shortened due to its length:"
         return $shortenedText -join " "
     }
     else {

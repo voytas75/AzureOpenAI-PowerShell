@@ -1,0 +1,58 @@
+{
+    "DiscussionSteps": [
+        {
+            "step": "1",
+            "isRequired": true,
+            "step_name": "Project Exploration",
+            "prompt": "Explore the project requirements thoroughly, identifying key objectives, desired functionalities, and any constraints or limitations. MUST fill in any missing information necessary to complete the task. Provide your analysis and understanding of the project specifications in JSON format."
+        },
+        {
+            "step": "2",
+            "isRequired": true,
+            "step_name": "Component Identification",
+            "prompt": "Identify the essential components necessary for realizing the project's objectives. Consider factors such as system architecture, data management, user interface elements, and external integrations. MUST fill in any missing information necessary to complete the task. Present your identified project components in JSON format."
+        },
+        {
+            "step": "3",
+            "isRequired": true,
+            "step_name": "Constraint Analysis",
+            "prompt": "Analyze potential constraints and assumptions implicit in the project requirements. Consider aspects such as resource limitations, technological dependencies, regulatory compliance, and scalability considerations. MUST fill in any missing information necessary to complete the task. Provide your analysis of constraints and assumptions in JSON format."
+        },
+        {
+            "step": "4",
+            "isRequired": true,
+            "step_name": "Design Blueprint",
+            "prompt": "Craft a detailed blueprint outlining the architectural design and functionality of the project. Incorporate design principles, scalability strategies, data flow mechanisms, and any other relevant details. MUST fill in any missing information necessary to complete the task. Present your design blueprint in JSON format."
+        },
+        {
+            "step": "5",
+            "isRequired": true,
+            "step_name": "Implementation Phase",
+            "prompt": "Translate the design blueprint into tangible project features. Utilize development best practices, coding standards, and version control systems to ensure efficient development. MUST fill in any missing information necessary to complete the task. Provide details of the implemented project features in JSON format."
+        },
+        {
+            "step": "6",
+            "isRequired": true,
+            "step_name": "Testing Procedures",
+            "prompt": "Conduct comprehensive testing procedures to validate the functionality, performance, and reliability of the project. Include unit tests, integration tests, acceptance tests, and any other relevant testing methodologies. MUST fill in any missing information necessary to complete the task. Present the results of the testing procedures in JSON format."
+        },
+        {
+            "step": "7",
+            "isRequired": true,
+            "step_name": "Documentation",
+            "prompt": "Document the project comprehensively, including its purpose, architecture, functionality, usage instructions, and troubleshooting guidelines. Ensure the documentation facilitates understanding and maintenance of the project. MUST fill in any missing information necessary to complete the task. Provide the project documentation in JSON format."
+        },
+        {
+            "step": "8",
+            "isRequired": true,
+            "step_name": "Review and Refinement",
+            "prompt": "Conduct a detailed review to assess the project's compliance with quality requirements and standards. Give your opinion, conduct a review, and use familiar analytics tools to improve. MUST fill in the missing information necessary to complete the task. Present the results of the review and refinement suggestions in JSON format."
+        },
+        {
+            "step": "9",
+            "isRequired": true,
+            "step_name": "Project Delivery",
+            "prompt": "Deliver the finalized design package. Include documentation, release notes, deployment instructions, and any other relevant artifacts. MUST fill in the missing information necessary to complete the task. Deliver finalized project deliverables in JSON format."
+        }
+    ]
+}
