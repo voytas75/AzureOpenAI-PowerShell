@@ -426,6 +426,22 @@ $OrchestratorAnswerCode
 $mainEntity.AddToConversationHistory($Message, $OrchestratorAnswerCode)
 
 
+$messagesystem = @"
+Given the provided context, generate content that aligns with the user's needs. The content could involve writing code, preparing a structural design, or composing an article. Ensure that the generated content is relevant and coherent based on the given context.
+"@
+
+$messageuser =@"
+$OrchestratorAnswerCode
+"@
+
+Write-Verbose $messagesystem
+Write-Verbose $messageuser
+#$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4")
+$arguments = @($messagesystem, $messageuser, "Precise", $true, $true, $mainEntity.name, "udtgpt4")
+$OrchestratorAnswer = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
+$OrchestratorAnswer
+$mainEntity.AddToConversationHistory($OrchestratorAnswerSugestPrompt, $OrchestratorAnswer)
+
 $OrchestratorDiscussionHistoryFullName = (Join-Path -Path $script:TeamDiscussionDataFolder -ChildPath $mainEntity.Name) + ".json"
 $mainEntity.SaveConversationHistoryToFile($OrchestratorDiscussionHistoryFullName, "JSON")
 
