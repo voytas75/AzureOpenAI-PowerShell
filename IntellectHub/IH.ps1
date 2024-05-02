@@ -9,8 +9,10 @@ param(
 [System.Environment]::SetEnvironmentVariable("PSAOAI_BANNER", "0", "User")
 #Import-Module -Name PSaoAI
 Import-module "D:\dane\voytas\Dokumenty\visual_studio_code\github\AzureOpenAI-PowerShell\PSAOAI\PSAOAI.psd1" -Force 
-
 import-module PSWriteColor
+
+$IHGUID = [System.Guid]::NewGuid().ToString()
+
 
 $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $entityClassPath = Join-Path -Path $scriptPath -ChildPath "entity_class.ps1"
@@ -173,7 +175,7 @@ $expertstojob = $ExpertEntities | Where-Object { $_.Name -in $expertstojob.jobex
 
 if ($expertstojob) {
     PSWriteColor\Write-Color -Text "Experts were choosed by $($mainEntity.Name) ($($expertstojob.Count)): $($expertstojob.Name -join ", ")" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
-    $script:ProjectGoalFileFulleNamepath = Save-DiscussionResponse -TextContent $output -Folder $script:ProjectFolderFullNamePath -type "ExpertsRecommendation"
+    $script:ProjectGoalFileFulleNamepath = Save-DiscussionResponse -TextContent $output -Folder $script:ProjectFolderFullNamePath -type "ExpertsRecommendation" -ihguid $ihguid
     foreach ($experttojob in $expertstojob) {
         write-Verbose $($experttojob.Name)
     }
@@ -235,7 +237,7 @@ catch {
 if ($projectGoal) {
     $mainEntity.AddToConversationHistory($Message, $projectGoal)
 
-    $script:ProjectGoalFileFulleNamepath = Save-DiscussionResponse -TextContent $projectGoal -Folder $script:ProjectFolderFullNamePath -type "ProjectGoal"
+    $script:ProjectGoalFileFulleNamepath = Save-DiscussionResponse -TextContent $projectGoal -Folder $script:ProjectFolderFullNamePath -type "ProjectGoal" -ihguid $ihguid 
     if (Test-Path $script:ProjectGoalFileFulleNamepath) {
         PSWriteColor\Write-Color -Text "Project goal was definied '$script:ProjectGoalFileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
     }

@@ -20,7 +20,8 @@ function Extract-PowershellCodeBlocks {
         [Parameter(Mandatory = $true)]
         [string]$TextContent,
         [Parameter(Mandatory = $false)]
-        [string]$Folder = "$([Environment]::GetFolderPath('MyDocuments'))\IH"
+        [string]$Folder = "$([Environment]::GetFolderPath('MyDocuments'))\IH",
+        [string]$ihguid
     )
 
     # Check if the folder exists, if not, create it
@@ -41,7 +42,7 @@ function Extract-PowershellCodeBlocks {
         if (![string]::IsNullOrEmpty($code)) {
 
             # Save the code to a file, using a unique name
-            $fileName = "code" + [System.Guid]::NewGuid().ToString() + ".ps1"
+            $fileName = "code" + $ihguid + ".ps1"
             $filePath = Join-Path -Path $Folder -ChildPath $fileName
             $code | Out-File -FilePath $filePath -Encoding UTF8
             # Print a message to indicate successful extraction
@@ -107,7 +108,8 @@ function Save-DiscussionResponse {
         [string]$TextContent,
         [Parameter(Mandatory = $false)]
         [string]$Folder = "$([Environment]::GetFolderPath('MyDocuments'))\IH",
-        $type = "discussionResponse"
+        $type = "discussionResponse",
+        [string]$ihguid
     )
 
     # Check if the folder exists, if not, create it
@@ -116,7 +118,7 @@ function Save-DiscussionResponse {
     }
 
     # Save the discussion response to a file, using a unique name
-    $fileName = $type + [System.Guid]::NewGuid().ToString() + ".txt"
+    $fileName = $type + $ihguid + ".txt"
     $filePath = Join-Path -Path $Folder -ChildPath $fileName
     $TextContent.trim() | Out-File -FilePath $filePath -Encoding UTF8
 
@@ -160,7 +162,8 @@ function Get-ExpertsFromJson {
 function StartDiscussion {
     param(
         [string] $configFilePath,
-        $usermessage
+        $usermessage,
+        [string]$ihguid
     )
 
     # Load configuration from file
@@ -223,7 +226,7 @@ Here's ideas list:
     #$response = Invoke-PSAOAICompletion -usermessage $prompt -MaxTokens 500 -mode Creative -simpleresponse
 
     # Start discussion between the two entities
-    ManageDiscussion -entityA $entities[0] -entityB $entities[1] -usermessage $prompt
+    ManageDiscussion -entityA $entities[0] -entityB $entities[1] -usermessage $prompt -ihguid $ihguid
 
     # Process and display response
     #Write-Output $response
@@ -235,7 +238,8 @@ function ManageDiscussion {
         [Entity] $entityA, 
         [Entity] $entityB, 
         $userMessage = "", 
-        [string]$model)
+        [string]$model),
+        [string]$ihguid
 
     $Discussion = ""
 
@@ -271,7 +275,7 @@ function ManageDiscussion {
         # Process response from Entity A
         Write-Output $responseFromA
 
-        Extract-PowershellCodeBlocks -TextContent $responseFromA -Folder $script:TeamDiscussionDataFolder
+        Extract-PowershellCodeBlocks -TextContent $responseFromA -Folder $script:TeamDiscussionDataFolder -ihguid $ihguid
 
 
 
@@ -294,7 +298,7 @@ function ManageDiscussion {
         # Process response from Entity B
         Write-Output $responseFromB
 
-        Extract-PowershellCodeBlocks -TextContent $responseFromB -Folder $script:TeamDiscussionDataFolder
+        Extract-PowershellCodeBlocks -TextContent $responseFromB -Folder $script:TeamDiscussionDataFolder -ihguid $ihguid
 
     }
     PSWriteColor\Write-Color -Text "Summary:" -Color DarkYellow  -BackGroundColor DarkGray -LinesBefore 1 -Encoding utf8 -ShowTime
