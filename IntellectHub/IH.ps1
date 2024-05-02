@@ -303,6 +303,13 @@ Summarize the provided response, encapsulating the main points, objectives, func
 $($expertreposnse.trim())
 "@
 
+$message = @"
+Your task is to compress the detailed project requirements provided by the GPT expert while highlighting key elements and retaining essential information. Make sure the summary is clear and concise. Output the compressed summary in JSON format.
+
+###Expert's response###
+$($expertreposnse.trim())
+"@
+
             Write-Verbose $message
             $arguments = @($Message, 800, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
             $OrchestratorSummary = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
@@ -382,7 +389,7 @@ $($OrchestratorDiscussionHistoryArray.response)
 Write-Verbose $OrchestratorAnswerSugestPrompt
 Write-Verbose $OrchestratorAnswer
 #$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4")
-$arguments = @($Message, "", "Precise", $true, $true, $mainEntity.name, "udtgpt4")
+$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4")
 $OrchestratorAnswer = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
 $OrchestratorAnswer
 $mainEntity.AddToConversationHistory($OrchestratorAnswerSugestPrompt, $OrchestratorAnswer)
