@@ -1,0 +1,58 @@
+{
+    "DiscussionSteps": [
+        {
+            "step": "1",
+            "step_name": "Project Exploration",
+            "isRequired": true,
+            "prompt": "In JSON format {\"ProjectName\": \"\", \"ProjectGoal\": \"\", \"StepName\":\"\", \"Objectives\": [ \"\", \"\" ], \"Functionalities\": [\"\", \"\" ], \"Constraints\": [\"\",\"\"],   \"OtherInformation\": [ \"\", \"\"]}, provide me with information about identifying key objectives of the project, desired functionalities of the project, and any constraints or limitations. MUST fill in any missing information necessary to complete the task."
+        },
+        {
+            "step": "2",
+            "step_name": "Component Identification",
+            "isRequired": true,
+            "prompt": "In JSON format {\"SystemArchitecture\": { \"Platform\": \"\", \"Integration\": \"\", \"Data Management\": \"\", \"User Interface Elements\": \"\", \"External Integrations\": \"\"}}, provide me with information about identify the essential components necessary for realizing the project's objectives. Consider factors such as system architecture, data management, user interface elements, and external integrations. MUST fill in any missing information necessary to complete the task."
+        },
+        {
+            "step": "3",
+            "step_name": "Constraint Analysis",
+            "isRequired": true,
+            "prompt": "In JSON format {\"constraints_and_assumptions\": { \"resources\": \"\", \"technology\": \"\", \"regulations\": \"\",              \"scalability\": \"\" }}, provide me with information about analyze potential constraints and assumptions implicit in the project requirements. Consider aspects such as resource limitations, technological dependencies, regulatory compliance, and scalability considerations. MUST fill in any missing information necessary to complete the task."
+        },
+        {
+            "step": "4",
+            "step_name": "Design Blueprint",
+            "isRequired": true,
+            "prompt": "In JSON format {\"blueprint_creation\": {\"considerations\": [\"\",...\"\"]}}, provide me with information about craft a detailed blueprint outlining the architectural design and functionality of the project. Incorporate design principles, scalability strategies, data flow mechanisms, and any other relevant details. MUST fill in any missing information necessary to complete the task."
+        },
+        {
+            "step": "5",
+            "step_name": "Implementation Phase",
+            "isRequired": true,
+            "prompt": "In JSON format {  \"feature_implementation\": {    \"process\": [      \"\", ... \"\"   ]  }}, provide me with information about translate the design blueprint into tangible project features. Utilize development best practices, coding standards, and version control systems to ensure efficient development. MUST fill in any missing information necessary to complete the task."
+        },
+        {
+            "step": "6",
+            "step_name": "Testing Procedures",
+            "isRequired": true,
+            "prompt": "In JSON format {  \"testing_procedures\": {    \"methods\": [      \"\",      \"\"    ]  }}, provide me with information about conduct comprehensive testing procedures to validate the functionality, performance, and reliability of the project. Include unit tests, integration tests, acceptance tests, and any other relevant testing methodologies. MUST fill in any missing information necessary to complete the task."
+        },
+        {
+            "step": "7",
+            "step_name": "Documentation",
+            "isRequired": true,
+            "prompt": "In JSON format {  \"project_documentation\": {    \"sections\": [      \"\",      \"\"    ],    \"considerations\": \"\"  }}, provide me with information about document the project comprehensively, including its purpose, architecture, functionality, usage instructions, and troubleshooting guidelines. Ensure the documentation facilitates understanding and maintenance of the project. MUST fill in any missing information necessary to complete the task."
+        },
+        {
+            "step": "8",
+            "step_name": "Review and Refinement",
+            "isRequired": true,
+            "prompt": "In JSON format {  \"quality_review\": {    \"process\": [      \"\",      \"\"    ],    \"your_opinion\": \"\",    \"analytics_tools\": [      \"\",      \"\"    ]  }}, provide me with information about conduct a detailed review to assess the project's compliance with quality requirements and standards. Give your opinion, conduct a review, and use familiar analytics tools to improve. MUST fill in the missing information necessary to complete the task."
+        },
+        {
+            "step": "9",
+            "step_name": "Project Delivery",
+            "isRequired": true,
+            "prompt": "In JSON format {    \"ProjectName\": \"\",    \"Deliverables\": {        \"FinalizedDesignPackage\": {            \"Documentation\": {                \"Purpose\": \"\",                \"Contents\": [\"\",\"\"]            },            \"ReleaseNotes\": {                \"Purpose\": \"\",                \"Contents\": [\"\",\"\"                ]            },            \"DeploymentInstructions\": {                \"Purpose\": \"\",                \"Contents\": [  \"\",\"\"              ]            },            \"OtherArtifacts\": [  \"\",\"\"          ]        }    }}, provide me with information about deliver the finalized design package. Include documentation, release notes, deployment instructions, and any other relevant artifacts. MUST fill in the missing information necessary to complete the task."
+        }
+    ]
+}

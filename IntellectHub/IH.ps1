@@ -47,7 +47,7 @@ Catch {
 }
 
 Try {
-    $discussionSteps = Get-DiscussionStepsFromJson -FilePath "discussion_steps4.json"
+    $discussionSteps = Get-DiscussionStepsFromJson -FilePath "discussion_steps5.json"
 
     if ($discussionSteps) {
         PSWriteColor\Write-Color -Text "Discussion steps was loaded ($($discussionSteps.count))" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
@@ -132,7 +132,7 @@ $output = Get-ExpertRecommendation -Entity $mainEntity -usermessage $usermessage
 
 if ($output) {
     PSWriteColor\Write-Color -Text "Experts recommendation finished" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
-}
+} 
 
 Write-Verbose "first response of gpt to the topic:"
 Write-Verbose $output
@@ -193,10 +193,10 @@ Completion response of project goal MUST be as json syntax only. Other elements,
 {
     "ProjectGoal":  ""
 }
-"@
+"@ | out-string
 
 $Message = @"
-The user has provided the following initial description of the Project. Review the description carefully and rewrite it in a more structured and detailed format. MUST fill in any missing information necessary to complete the task. Ensure to capture all key objectives, functionalities, constraints, and any other relevant information. The value of the parameter 'ProjectGoal' must be an imperative sentence. Present the revised project description in JSON format.
+The user has provided the following initial description of the Project. Review the description carefully and rewrite it in a more structured and detailed format. MUST fill in any missing information necessary to complete the task. Ensure to capture all key objectives, functionalities, constraints, and any other relevant information. The value of the parameter 'ProjectGoal' must be an imperative sentence. MUST present the revised project description in JSON format:
 {
     "ProjectName": "",
     "ProjectGoal": "",
@@ -224,12 +224,12 @@ The user has provided the following initial description of the Project. Review t
 
 ###Project###
 ${usermessage}
-"@
+"@ | out-string
 
 Write-Verbose "Defining project goal, message: '$Message'"
 $arguments = @($Message, 500, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
 try {
-    $projectGoal = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+    #$projectGoal = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
 }
 catch {
     Write-Error -Message "Failed to defining project goal"
@@ -248,9 +248,54 @@ if ($projectGoal) {
     $usermessageOryginal = $userMessage
     $usermessage = ($projectGoal | ConvertFrom-Json).ProjectGoal
 }
-
+else {
+    $projectGoal = $userMessage
+}
 Write-Verbose "Project goal: $projectGoal"
+
+
 #endregion
+
+#PSWriteColor\Write-Color -Text "Generate project goal" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+$message = @"
+Generate a project plan based on the user's description. Your task is to analyze the provided description and outline the necessary steps to achieve the project objectives. Consider factors such as data gathering, task execution, expert interaction, iteration, and final deliverables. Provide clear and detailed instructions for each step of the plan. MUST fill in any missing information necessary to complete the task. 
+
+User's description: $projectGoal
+"@ | out-string
+
+
+$message = @"
+You MUST generate a project plan based on the provided description. Analyze the description and outline the necessary steps to achieve the project objectives. Consider factors such as data gathering, task execution, expert interaction, iteration, and final deliverables. Provide clear and detailed instructions for each step of the plan. Fill in any missing information necessary to complete the task. Answer a question given in a natural, human-like manner. Output the summarized response in JSON format.
+{
+    "Project Name": ""
+    "Description": ""
+    "Imperative sentence": ""
+    "Project Plan":[
+        {
+            "Step 1": ""
+            "Description": ""
+            "Elements": [
+                "",
+                ...,
+                ""
+            ]            
+        }
+    ]
+}
+
+User's description: 
+$($projectGoal.trim())
+"@ | out-string
+
+#$projectGoal
+
+Write-Verbose $message
+$arguments = @($Message, 800, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
+#$OrchestratorProjectPlan = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+$mainEntity.AddToConversationHistory($message, $OrchestratorProjectPlan)
+Write-Verbose "OrchestratorProjectPlan: $OrchestratorProjectPlan"
+
+#return
 
 PSWriteColor\Write-Color -Text "Processing discussion..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
 $ExpertsDiscussionHistoryArray = @()
@@ -267,58 +312,94 @@ foreach ($expertToJob in $expertstojob) {
             $PromptToExpert = @"
 Prepare you point of view in area: $($discussionStep.description), for project description: "$usermessage"
 You MUST answer in a natural, human-like manner, providing a concise yet comprehensive explanation.
-"@
+"@ | out-string
 
             $PromptToExpert = @"
 You act as $($expertToJob.Description). Your task is to do step desribed as: 
 $($discussionStep.description) 
-for problemg: 
+for problem: 
 $usermessage
-"@
+"@ | out-string
 
-            $PromptToExpert = @"
-###Instrunction###
-$($discussionStep.prompt)
-The user provided the following initial description:
-$usermessage
+            if (-not [string]::IsNullOrEmpty($expertToJob.GetConversationHistory().RESPONSE)) {
+                $PromptToExpertHistory = @"
 
 ###Past Expert Answers###
-$($($expertToJob.GetConversationHistory()).Response)
-"@
+$($($expertToJob.GetLastNInteractions(1)).Response)
 
+"@
+                #$($($expertToJob.GetConversationHistory()).Response)
+            }
+
+
+            $PromptToExpert = @"
+$($discussionStep.prompt)
+$PromptToExpertHistory
+###Project### 
+$($projectGoal.trim())
+"@ | out-string
+
+            #$PromptToExpert
             #You MUST answer in a natural, human-like manner, providing a concise yet comprehensive explanation.
-            $expertreposnse = $mainEntity.SendResource($PromptToExpert, $expertToJob, "PSAOAI", "Invoke-PSAOAICompletion")
-            $expertToJob.AddToConversationHistory($PromptToExpert, $expertreposnse)
-            Write-Verbose "expertreposnse: $expertreposnse"
+            $expertreposnse = ""
+            $expertreposnse = $mainEntity.SendResource($PromptToExpert, $expertToJob, "PSAOAI", "Invoke-PSAOAIChatCompletion")
+            if ($expertreposnse) {
+                $expertreposnse 
+                $expertToJob.AddToConversationHistory($PromptToExpert, $expertreposnse)
+                Write-Verbose "expertreposnse: $expertreposnse"
+            }
 
             # summary of expert response by Orchestrator
-            PSWriteColor\Write-Color -Text "Process expert response..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -StartTab 1 -NoNewLine
+            #PSWriteColor\Write-Color -Text "Process expert response..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -StartTab 1 -NoNewLine
             $message = @"
 Summary and get key points for text:
 $($expertreposnse.trim())
-"@
+"@ | out-string
 
             $message = @"
 Summarize the provided response, encapsulating the main points, objectives, functionalities, constraints, and any other pertinent details. Ensure clarity and conciseness in the summary, presenting the essential information in a structured format. Output the summarized response in JSON format.
 
 ###Response###
 $($expertreposnse.trim())
-"@
+"@ | out-string
 
-$message = @"
+            $message = @"
 Your task is to compress the detailed project requirements provided by the GPT expert while highlighting key elements and retaining essential information. Make sure the summary is clear and concise. Output the compressed summary in JSON format.
 
 ###Expert's response###
 $($expertreposnse.trim())
-"@
+"@ | out-string
+            $arguments = @($Message, 2000, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
+            #$OrchestratorSummary = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+            if ($OrchestratorSummary) {
+                Write-Verbose $message
+                #Write-Host $Message
+                $OrchestratorSummary
+                $mainEntity.AddToConversationHistory($message, $OrchestratorSummary)
+                Write-Verbose "OrchestratorSummary: $OrchestratorSummary"
+            }
 
-            Write-Verbose $message
-            $arguments = @($Message, 800, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
-            $OrchestratorSummary = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
-            $mainEntity.AddToConversationHistory($message, $OrchestratorSummary)
-            Write-Verbose "OrchestratorSummary: $OrchestratorSummary"
+            #PSWriteColor\Write-Color -Text "generate version of user's project goal" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -StartTab 1 -NoNewLine
+            $message = @"
+###Instruction###
+In JSON format, provide me with information about: Given the provided context, generate content that aligns with the user's needs. The content could involve writing code, preparing a structural design, or composing an article. Ensure that the generated content is relevant and coherent based on the given context.
+$usermessage
 
-
+###Information###
+$($expertreposnse.trim())
+"@ | out-string
+            #Write-Host $Message
+            $arguments = @($Message, 2000, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
+            $OrchestratorVersionobjective = ""
+            #$OrchestratorVersionobjective = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+            if ($OrchestratorVersionobjective) { 
+                Write-Verbose $message
+                $OrchestratorVersionobjective
+                #Write-Host $message
+                Write-Verbose "OrchestratorVersionobjective: $OrchestratorVersionobjective"
+                $mainEntity.AddToConversationHistory($message, $OrchestratorVersionobjective)
+            }  
+            Start-Sleep -Seconds 3
         }            
     }
     $ExpertsDiscussionHistoryArray += $expertToJob.GetConversationHistory()
@@ -340,7 +421,7 @@ $usermessage
 
 ###Expert information###
 "$($OrchestratorDiscussionHistoryArray.response | convertto-json)" 
-"@
+"@ | out-string
 
 $Message = @"
 After receiving responses from all experts regarding the project's various steps, compile a comprehensive summary with key elements. Summarize the main objectives, functionalities, constraints, and any other significant details gathered from the experts' responses. Ensure that the summary encapsulates the essence of the project and provides a clear understanding of its scope and requirements. Present the summarized information in JSON format, which will serve as the basis for the final delivery of the project.
@@ -349,39 +430,51 @@ After receiving responses from all experts regarding the project's various steps
 $usermessage
 
 ###Expert information###
-$($OrchestratorDiscussionHistoryArray.response)
-"@
+$($ExpertsDiscussionHistoryArray.response)
+
+"@ | out-string
+#$($OrchestratorDiscussionHistoryArray.response)
 #"$($OrchestratorDiscussionHistoryArray.response | convertto-json)" 
 Write-Verbose $message
+$OrchestratorAnswer = ""
 $arguments = @($Message, 1000, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
 $OrchestratorAnswer = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $verbose)
-$OrchestratorAnswer
-$mainEntity.AddToConversationHistory($Message, $OrchestratorAnswer)
+if ($OrchestratorAnswer) {
+    $OrchestratorAnswer
+    $mainEntity.AddToConversationHistory($Message, $OrchestratorAnswer)
+}
+
 
 PSWriteColor\Write-Color -Text "CC Process finishing..." -Color Blue -BackGroundColor DarkCyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
 $Message = @"
 After receiving responses from all experts regarding the project's various steps, compile a comprehensive summary with key elements. Summarize the main objectives, functionalities, constraints, and any other significant details gathered from the experts' responses. Ensure that the summary encapsulates the essence of the project and provides a clear understanding of its scope and requirements. Present the summarized information in JSON format, which will serve as the basis for the final delivery of the project.
-"@
+"@ | out-string
 
 $messageUser = @"
-$($OrchestratorDiscussionHistoryArray.response)
-"@
+$($ExpertsDiscussionHistoryArray.response)
+"@ | out-string
 
 Write-Verbose $message
 Write-Verbose $messageUser
+$OrchestratorAnswer = ""
 $arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4")
 $OrchestratorAnswer = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
-$OrchestratorAnswer
-$mainEntity.AddToConversationHistory($Message, $OrchestratorAnswer)
+if ($OrchestratorAnswer) {
+    $OrchestratorAnswer
+    $mainEntity.AddToConversationHistory($Message, $OrchestratorAnswer)
+}
 
 
 PSWriteColor\Write-Color -Text "Suggesting prompt..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
-$Message = "Please provide an advanced prompt to execute the project, ensuring all necessary elements are included. $OrchestratorAnswer"
+$Message = "Please provide an advanced prompt to execute the project, ensuring all necessary elements are included. $OrchestratorAnswer" | out-string
 Write-Verbose $message
 $arguments = @($Message, 1000, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
 $OrchestratorAnswerSugestPrompt = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $verbose)
-$OrchestratorAnswerSugestPrompt
-$mainEntity.AddToConversationHistory($Message, $OrchestratorAnswerSugestPrompt)
+if ($OrchestratorAnswerSugestPrompt) {
+    $OrchestratorAnswerSugestPrompt
+    $mainEntity.AddToConversationHistory($Message, $OrchestratorAnswerSugestPrompt)
+}
+
 
 PSWriteColor\Write-Color -Text "Suggesting prompt - Process final delivery..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
 $messageUser = @"
@@ -390,13 +483,16 @@ $($OrchestratorDiscussionHistoryArray.response)
 
 Write-Verbose $OrchestratorAnswerSugestPrompt
 Write-Verbose $OrchestratorAnswer
-#$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4")
-$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4")
-$OrchestratorAnswer = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
-$OrchestratorAnswer
-$mainEntity.AddToConversationHistory($OrchestratorAnswerSugestPrompt, $OrchestratorAnswer)
-
-
+$arguments = @($OrchestratorAnswerSugestPrompt, 2000, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
+#$arguments = @($OrchestratorAnswerSugestPrompt, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4")
+$OrchestratorAnswer = ""
+$OrchestratorAnswer = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $verbose)
+#$OrchestratorAnswer = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
+#$OrchestratorAnswer = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $verbose)
+if ($OrchestratorAnswer) {
+    $OrchestratorAnswer
+    $mainEntity.AddToConversationHistory($OrchestratorAnswerSugestPrompt, $OrchestratorAnswer)
+}
 
 PSWriteColor\Write-Color -Text "Process final delivery..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
 $Message = @"
@@ -408,14 +504,14 @@ $usermessage
 
 ###PM information###
 $($OrchestratorAnswer.trim())
-"@
+"@ | out-string
 
 $Message = @"
 Based on the information provided throughout the project lifecycle, prepare for the final delivery of the project. Incorporate all relevant deliverables, including the finalized code, documentation, release notes, and deployment instructions. Ensure that the deliverables meet the client's expectations and are ready for deployment. Organize the final delivery package in a structured manner and present the details in desired format.
 
 ###Information###
 $($OrchestratorAnswer.trim())
-"@
+"@ | out-string
 
 # You MUST respond in a natural, human way, with a concise but comprehensive explanation and an example of how to solve the problem.
 ###Questions###  1. What is the best answer to user's topic? Suggest example will best suit to the problem
@@ -427,12 +523,12 @@ $mainEntity.AddToConversationHistory($Message, $OrchestratorAnswerCode)
 
 
 $messagesystem = @"
-Given the provided context, generate content that aligns with the user's needs. The content could involve writing code, preparing a structural design, or composing an article. Ensure that the generated content is relevant and coherent based on the given context.
-"@
+Given the provided context, you MUST generate content that aligns with the user's needs. The content could involve writing code, preparing a structural design, or composing an article. Ensure that the generated content is relevant and coherent based on the given context.
+"@ | out-string
 
-$messageuser =@"
+$messageuser = @"
 $OrchestratorAnswerCode
-"@
+"@ | out-string
 
 Write-Verbose $messagesystem
 Write-Verbose $messageuser
