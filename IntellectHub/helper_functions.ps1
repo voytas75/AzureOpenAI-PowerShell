@@ -239,7 +239,7 @@ function ManageDiscussion {
         [Entity] $entityB, 
         $userMessage = "", 
         [string]$model),
-        [string]$ihguid
+    [string]$ihguid
 
     $Discussion = ""
 
@@ -436,66 +436,59 @@ function Test-IsValidJson {
     }
 }
 
-<#
-.SYNOPSIS
-This function is a placeholder for the Get-ExpertRecommendation function.
-
-.DESCRIPTION
-The function is currently empty and needs to be implemented.
-#>
 function Get-ExpertRecommendation {
+    <#
+    .SYNOPSIS
+    This function provides expert recommendations based on the user's message.
+
+    .DESCRIPTION
+    The function takes in an entity, a user message, a list of experts, and an optional expert count. It then generates a recommendation of experts based on the user's message.
+
+    .PARAMETER Entity
+    The entity object that will be used to invoke the completion.
+
+    .PARAMETER usermessage
+    The user's message that will be used to generate the expert recommendation.
+
+    .PARAMETER Experts
+    The list of available experts.
+
+    .PARAMETER expertcount
+    The number of experts to recommend. If not provided, all available experts will be considered.
+    #>
     param (
         [Parameter(Mandatory = $true)]
         [object]$Entity,
         [Parameter(Mandatory = $true)]
         [string]$usermessage,
-        $Experts
+        [Parameter(Mandatory = $true)]
+        $Experts,
+        [Parameter(Mandatory = $false)]
+        [int]$expertcount
     )
 
+    # Prepare the count of experts to choose
+    $ExperCountToChoose = " $expertcount "
 
-    $ExperCountToChoose = " "
-    $ExperCountToChoose = " two "
-
+    # Prepare the message to be sent to the InvokeCompletion method
     $Message = @"
-User need help. The task is '${usermessage}'. Analyze the user's task to choose${ExperCountToChoose}of the most useful experts to get the job done. Response must be as text json object with only Name of choosed experts. You must response as JSON:
-{
-    "JobExperts":  [
-                      "",
-                      ...,
-                      ""
-                   ]
-}
-
-List of available experts:
+In JSON format {'JobExperts': ['', '']}, provide me with suggestion${ExperCountToChoose}of the most useful expert Names from available to get the job done. List of available experts:
 $($Experts | convertto-json)
-"@
+"@ | Out-String
 
-    $Message = @"
-Your role is a JSON Expert. The task is to analyze problem '${usermessage}' and choose${ExperCountToChoose}of the most useful experts from available to get the job done. MUST respond with json structure where 'jobexperts' are Name of choosed experts.
-$responsejson1
-
-List of available experts:
-$($Experts | convertto-json)
-"@
-
-$Message = @"
-In JSON format
-"JobExperts":  [
-    "",
-    ...,
-    ""
- ]
-}, provide me with suggestion${ExperCountToChoose}of the most useful experts from available to get the job done. MUST respond with json structure where 'jobexperts' are Name of choosed experts. List of available experts:
-$($Experts | convertto-json)
-"@
-
+    # Write the message to the verbose output
     Write-Verbose $Message
-    $arguments = @($Message, 1000, "Precise", $Entity.name, $Entity.GPTModel, $true)
+
+    # Prepare the arguments for the InvokeCompletion method
+    $arguments = @($Message, 400, "Precise", $Entity.name, $Entity.GPTModel, $true)
+
     try {
+        # Invoke the completion and get the output
         $output = $Entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
         return $output
     }
     catch {
+        # Write an error message if the expert recommendation fails
         Write-Error -Message "Failed to get expert recommendation"
         return $false
     }

@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    $usermessage
+    [string]$usermessage
 )
 
 # Import PSaoAI module
@@ -118,7 +118,7 @@ Try {
     }
 
     if ($ExpertEntities) {
-        PSWriteColor\Write-Color -Text "Entities were created ($($ExpertEntities.count))" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+        PSWriteColor\Write-Color -Text "Entities were created ($($ExpertEntities.count))" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
     }
 }
 Catch {
@@ -138,14 +138,13 @@ if ($script:ProjectFolderFullNamePath) {
 }
 #endregion
 
-#return 
-
 #region Expert Recommendation
 Write-Verbose "Get-ExpertRecommendation"
-$output = Get-ExpertRecommendation -Entity $mainEntity -usermessage $usermessage -Experts $ExpertEntities
+PSWriteColor\Write-Color -Text "Experts recommendation " -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
+$output = Get-ExpertRecommendation -Entity $mainEntity -usermessage $usermessage -Experts $ExpertEntities -expertcount 1
 
 if ($output) {
-    PSWriteColor\Write-Color -Text "Experts recommendation finished" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+    PSWriteColor\Write-Color -Text "Experts recommendation finished" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -StartTab 1
 } 
 
 Write-Verbose "first response of gpt to the topic:"
@@ -170,7 +169,7 @@ while ($attempts -lt $maxAttempts -and -not (Test-IsValidJson $output)) {
         Write-Verbose "start CleantojsonLLM"
         $output = CleantojsonLLM -dataString $usermessage -entity $mainEntity
     
-        Write-Host $output
+        #Write-Host $output
 
     }
     $attempts++
@@ -352,7 +351,7 @@ Your task is to compress the detailed project requirements provided by the GPT e
 ###Expert's response###
 $($expertreposnse.trim())
 "@ | out-string
-            $arguments = @($Message, 4000, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
+            $arguments = @($Message, 1000, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
 
             if ($OrchestratorSummary) {
                 Write-Verbose $message
@@ -368,7 +367,7 @@ $usermessage
 ###Information###
 $($expertreposnse.trim())
 "@ | out-string
-            $arguments = @($Message, 4000, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
+            $arguments = @($Message, 1000, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
             $OrchestratorVersionobjective = ""
 
             if ($OrchestratorVersionobjective) { 
@@ -391,7 +390,7 @@ PSWriteColor\Write-Color -Text "Discussion completed" -Color Blue -BackGroundCol
 #region ProcessFinishing
 PSWriteColor\Write-Color -Text "Process finishing..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
 $Message = @"
-#After receiving responses from all experts regarding the project's various steps, compile a comprehensive summary with key elements. Summarize the main objectives, functionalities, constraints, and any other significant details gathered from the experts' responses. Ensure that the summary encapsulates the essence of the project and provides a clear understanding of its scope and requirements. Present the summarized information in JSON format, which will serve as the basis for the final delivery of the project.
+After receiving responses from all experts regarding the project's various steps, compile a comprehensive summary with key elements. Summarize the main objectives, functionalities, constraints, and any other significant details gathered from the experts' responses. Ensure that the summary encapsulates the essence of the project and provides a clear understanding of its scope and requirements. Present the summarized information in JSON format, which will serve as the basis for the final delivery of the project.
 "@ | out-string
 
 $messageUser = @"
@@ -430,21 +429,24 @@ $($ExpertsDiscussionHistoryArray.response)
 #$($OrchestratorDiscussionHistoryArray.response)
 #"$($OrchestratorDiscussionHistoryArray.response | convertto-json)" 
 #Write-Verbose $message
-$OrchestratorAnswer = ""
+Write-Verbose $Message
+Write-Verbose $MessageUser
 #$arguments = @($Message, $messageUser, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
 $arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4p")
 $OrchestratorAnswer = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
 if ($OrchestratorAnswer) {
-    #Write-Host $Message
-    #Write-Host $MessageUser
     $OrchestratorAnswer
+    $script:OrchestratorAnswerFileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorAnswer -Folder $script:ProjectFolderFullNamePath -type "ProcessFinishing" -ihguid $ihguid 
+    if (Test-Path $script:OrchestratorAnswerFileFulleNamepath) {
+        PSWriteColor\Write-Color -Text "ProcessFinishing saved to '$script:OrchestratorAnswerFileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+    }
 }
 $mainEntity.AddToConversationHistory($Message, $MessageUser, $OrchestratorAnswer)
 #endregion ProcessFinishing
 
 
 #region Suggesting Prompt
-PSWriteColor\Write-Color -Text "Suggesting prompt..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+PSWriteColor\Write-Color -Text "Suggesting prompt..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
 $Message = @"
 You MUST suggest an advanced prompt to execute the Project, ensuring all key and necessary elements are included. Response in a natural, human-like manner.
 "@ | out-string
@@ -453,20 +455,24 @@ $MessageUser = @"
 ###Project###
 $OrchestratorAnswer
 "@ | out-string
+Write-Verbose $Message
+Write-Verbose $MessageUser
 $arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4p")
 $OrchestratorAnswerSugestPrompt = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
 
 if ($OrchestratorAnswerSugestPrompt) {
-    Write-Verbose $Message
-    Write-Verbose $MessageUser
     $OrchestratorAnswerSugestPrompt
+    $script:OrchestratorAnswerSugestPromptFileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorAnswerSugestPrompt -Folder $script:ProjectFolderFullNamePath -type "SuggestingPrompt" -ihguid $ihguid 
+    if (Test-Path $script:OrchestratorAnswerSugestPromptFileFulleNamepath) {
+        PSWriteColor\Write-Color -Text "SuggestingPrompt saved to '$script:OrchestratorAnswerSugestPromptFileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+    }
 }
 $mainEntity.AddToConversationHistory($Message, $MessageUser, $OrchestratorAnswerSugestPrompt)
 #endregion Suggesting Prompt
 
 
 #region Suggesting Prompt - Process Final Delivery
-PSWriteColor\Write-Color -Text "Suggesting prompt - Process final delivery..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+PSWriteColor\Write-Color -Text "Suggesting prompt - Process final delivery..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
 $messageSystem = @"
 $OrchestratorAnswerSugestPrompt
 "@
@@ -477,17 +483,22 @@ $OrchestratorAnswer
 
 Write-Verbose $messageSystem
 Write-Verbose $MessageUser
+
 $arguments = @($messageSystem, $MessageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4p")
 $OrchestratorSuggestPromptAnswer = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
 if ($OrchestratorSuggestPromptAnswer) {
     $OrchestratorSuggestPromptAnswer
+    $script:OrchestratorSuggestPromptAnswerFileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorSuggestPromptAnswer -Folder $script:ProjectFolderFullNamePath -type "SuggestingPromptResponse" -ihguid $ihguid 
+    if (Test-Path $script:OrchestratorSuggestPromptAnswerFileFulleNamepath) {
+        PSWriteColor\Write-Color -Text "Suggesting prompt - Process final delivery saved to '$script:OrchestratorSuggestPromptAnswerFileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+    }
 }
 $mainEntity.AddToConversationHistory($messageSystem, $MessageUser, $OrchestratorSuggestPromptAnswer)
 #endregion Suggesting Prompt - Process Final Delivery
 
 
 #region Final Delivery
-PSWriteColor\Write-Color -Text "Final delivery..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+PSWriteColor\Write-Color -Text "Final delivery..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
 $Message = @"
 ###Instruction###
 You are the Computer Code Orchestrator. Your task is to create computer language code as best solution for the Project. In order to choose the best solution, you have information from Project Manager - "PM information". 
@@ -509,22 +520,26 @@ $($OrchestratorAnswer.trim())
 
 # You MUST respond in a natural, human way, with a concise but comprehensive explanation and an example of how to solve the problem.
 ###Questions###  1. What is the best answer to user's topic? Suggest example will best suit to the problem
-Write-Verbose $message
-Write-Verbose $MessageUser
 #$arguments = @($Message, 4000, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
 #$OrchestratorAnswerCode = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $verbose)
+Write-Verbose $message
+Write-Verbose $MessageUser
 $arguments = @($Message, $MessageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4p")
 #$OrchestratorAnswer = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $verbose)
 $OrchestratorAnswerFinal = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
 if ($OrchestratorAnswerFinal) {
     $OrchestratorAnswerFinal
+    $script:OrchestratorAnswerFinalFileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorAnswerFinal -Folder $script:ProjectFolderFullNamePath -type "FinalDelivery" -ihguid $ihguid 
+    if (Test-Path $script:OrchestratorAnswerFinalFileFulleNamepath) {
+        PSWriteColor\Write-Color -Text "Final delivery saved to '$script:OrchestratorAnswerFinalFileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+    }
 }
-$mainEntity.AddToConversationHistory($Message, $MessageUser, $OrchestratorAnswer)
+$mainEntity.AddToConversationHistory($Message, $MessageUser, $OrchestratorAnswerFinal)
 #endregion Final Delivery
 
 
 #region Final Delivery 2
-PSWriteColor\Write-Color -Text "Final delivery 2..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+PSWriteColor\Write-Color -Text "Final delivery 2..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
 $messagesystem = @"
 Given the provided context, you MUST generate content that aligns with the user's needs. The content could involve writing code, preparing a structural design, or composing an article. Ensure that the generated content is relevant and coherent based on the given context.
 "@ | out-string
@@ -540,9 +555,76 @@ $arguments = @($messagesystem, $messageuser, "Precise", $true, $true, $mainEntit
 $OrchestratorAnswerFinal2 = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
 if ($OrchestratorAnswerFinal2) {
     $OrchestratorAnswerFinal2
+    $script:OrchestratorAnswerFinal2FileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorAnswerFinal2 -Folder $script:ProjectFolderFullNamePath -type "FinalDelivery2" -ihguid $ihguid 
+    if (Test-Path $script:OrchestratorAnswerFinal2FileFulleNamepath) {
+        PSWriteColor\Write-Color -Text "Final delivery 2 saved to '$script:OrchestratorAnswerFinal2FileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+    }
 }
-$mainEntity.AddToConversationHistory($messagesystem, $messageuser, $OrchestratorAnswer)
+$mainEntity.AddToConversationHistory($messagesystem, $messageuser, $OrchestratorAnswerFinal2)
 #endregion Final Delivery 2
+
+#region Summarize and Combine
+PSWriteColor\Write-Color -Text "Summarize and Combine..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
+$messagesystem = @"
+You have two different summaries about topic. You MUST combine them into a single, comprehensive summary that incorporates the key points from both.
+"@ | out-string
+
+$messageuser = @"
+
+###Summary 1###
+$($OrchestratorSuggestPromptAnswer.trim())
+
+###Summary 2###
+$($OrchestratorAnswerFinal2.trim())
+"@ | out-string
+
+Write-Verbose $messagesystem
+Write-Verbose $messageuser
+#$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4")
+$arguments = @($messagesystem, $messageuser, "Precise", $true, $true, $mainEntity.name, "udtgpt4p")
+$OrchestratorAnswerSummarizeAndCombine = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
+if ($OrchestratorAnswerSummarizeAndCombine) {
+    $OrchestratorAnswerSummarizeAndCombine
+    $script:OrchestratorAnswerSummarizeAndCombineFileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorAnswerSummarizeAndCombine -Folder $script:ProjectFolderFullNamePath -type "SummarizeAndCombine" -ihguid $ihguid 
+    if (Test-Path $script:OrchestratorAnswerSummarizeAndCombineFileFulleNamepath) {
+        PSWriteColor\Write-Color -Text "Summarize And Combine saved to '$script:OrchestratorAnswerSummarizeAndCombineFileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+    }
+}
+$mainEntity.AddToConversationHistory($messagesystem, $messageuser, $OrchestratorAnswerSummarizeAndCombine)
+#endregion Summarize and Combine
+
+#region Structured Response
+PSWriteColor\Write-Color -Text "Structured Response..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
+$messagesystem = @"
+Based on the following information about topic, You MUST create a response that includes sections that aligns with the user's needs.
+"@ | out-string
+
+$messageuser = @"
+
+###Information 1###
+$($OrchestratorSuggestPromptAnswer.trim())
+
+###Unformation 2###
+$($OrchestratorAnswerFinal2.trim())
+"@ | out-string
+
+Write-Verbose $messagesystem
+Write-Verbose $messageuser
+#$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4")
+$arguments = @($messagesystem, $messageuser, "Precise", $true, $true, $mainEntity.name, "udtgpt4p")
+$OrchestratorAnswerStructuredResponse = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
+if ($OrchestratorAnswerStructuredResponse) {
+    $OrchestratorAnswerStructuredResponse
+    $script:OrchestratorAnswerStructuredResponseFileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorAnswerStructuredResponse -Folder $script:ProjectFolderFullNamePath -type "StructuredResponse" -ihguid $ihguid 
+    if (Test-Path $script:OrchestratorAnswerStructuredResponseFileFulleNamepath) {
+        PSWriteColor\Write-Color -Text "Structured Response saved to '$script:OrchestratorAnswerStructuredResponseFileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+    }
+
+}
+$mainEntity.AddToConversationHistory($messagesystem, $messageuser, $OrchestratorAnswerStructuredResponse)
+#endregion Structured Response
+
+
 
 
 #region Save Conversation History
