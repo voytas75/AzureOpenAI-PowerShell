@@ -269,6 +269,7 @@ Write-Verbose "Project goal: $projectGoal"
 #endregion Define Project Goal
 
 #region Generate Project Goal
+
 #PSWriteColor\Write-Color -Text "Generate project goal" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
 $message = @"
 Generate a project plan based on the user's description. Your task is to analyze the provided description and outline the necessary steps to achieve the project objectives. Consider factors such as data gathering, task execution, expert interaction, iteration, and final deliverables. Provide clear and detailed instructions for each step of the plan. MUST fill in any missing information necessary to complete the task. 
@@ -304,7 +305,6 @@ $arguments = @($Message, 1000, "Precise", $mainEntity.name, $mainEntity.GPTModel
 $mainEntity.AddToConversationHistory($message, $OrchestratorProjectPlan)
 Write-Verbose "OrchestratorProjectPlan: $OrchestratorProjectPlan"
 #endregion Generate Project Goal
-
 
 #region Processing Discussion
 PSWriteColor\Write-Color -Text "Processing discussion..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
@@ -388,9 +388,16 @@ $OrchestratorDiscussionHistoryArray = $mainEntity.GetConversationHistory()
 PSWriteColor\Write-Color -Text "Discussion completed" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
 #endregion Processing Discussion
 
-
 #region ProcessFinishing
 PSWriteColor\Write-Color -Text "Process finishing..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
+$Message = @"
+#After receiving responses from all experts regarding the project's various steps, compile a comprehensive summary with key elements. Summarize the main objectives, functionalities, constraints, and any other significant details gathered from the experts' responses. Ensure that the summary encapsulates the essence of the project and provides a clear understanding of its scope and requirements. Present the summarized information in JSON format, which will serve as the basis for the final delivery of the project.
+"@ | out-string
+
+$messageUser = @"
+$($ExpertsDiscussionHistoryArray.response)
+"@ | out-string
+
 $Message = @"
 You are the data coordinator. Your task is to propose the best solution for the Project. In order to choose the best solution, you have information from experts - "Expert information". If this information is not sufficient, you have to fill in the gaps yourself with the necessary data. The answers of the experts are only a guideline for you on how the Project should be built.
 
@@ -434,25 +441,6 @@ if ($OrchestratorAnswer) {
 }
 $mainEntity.AddToConversationHistory($Message, $MessageUser, $OrchestratorAnswer)
 #endregion ProcessFinishing
-
-#PSWriteColor\Write-Color -Text "CC Process finishing..." -Color Blue -BackGroundColor DarkCyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
-#$Message = @"
-#After receiving responses from all experts regarding the project's various steps, compile a comprehensive summary with key elements. Summarize the main objectives, functionalities, constraints, and any other significant details gathered from the experts' responses. Ensure that the summary encapsulates the essence of the project and provides a clear understanding of its scope and requirements. Present the summarized information in JSON format, which will serve as the basis for the final delivery of the project.
-#"@ | out-string
-
-#$messageUser = @"
-#$($ExpertsDiscussionHistoryArray.response)
-#"@ | out-string
-
-#Write-Verbose $message
-#Write-Verbose $messageUser
-#$OrchestratorAnswer = ""
-#$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4")
-#$OrchestratorAnswer = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
-#if ($OrchestratorAnswer) {
-#    $OrchestratorAnswer
-#    $mainEntity.AddToConversationHistory($Message, $OrchestratorAnswer)
-#}
 
 
 #region Suggesting Prompt
