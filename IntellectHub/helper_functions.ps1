@@ -418,7 +418,7 @@ Test-IsValidJson -jsonString '{"name":"John", "age":30, "city":"New York"}'
 function Test-IsValidJson {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $false)]
         [string]$jsonString
     )
     $jsonString = $jsonString.trim()
@@ -478,8 +478,19 @@ List of available experts:
 $($Experts | convertto-json)
 "@
 
+$Message = @"
+In JSON format
+"JobExperts":  [
+    "",
+    ...,
+    ""
+ ]
+}, provide me with suggestion${ExperCountToChoose}of the most useful experts from available to get the job done. MUST respond with json structure where 'jobexperts' are Name of choosed experts. List of available experts:
+$($Experts | convertto-json)
+"@
+
     Write-Verbose $Message
-    $arguments = @($Message, 800, "Precise", $Entity.name, $Entity.GPTModel, $true)
+    $arguments = @($Message, 1000, "Precise", $Entity.name, $Entity.GPTModel, $true)
     try {
         $output = $Entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
         return $output
@@ -522,7 +533,7 @@ $dataString
 "@ | out-string
 
     Write-Color -Text "LLM cleaning" -Color Magenta -BackGroundColor DarkGreen
-    $arguments = @($Message, 800, "Precise", $entity.name, $entity.GPTModel, $true)
+    $arguments = @($Message, 1000, "Precise", $entity.name, $entity.GPTModel, $true)
     write-verbose ($arguments | Out-String)
     try {
         $output = $entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)

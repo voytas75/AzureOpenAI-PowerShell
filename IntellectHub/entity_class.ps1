@@ -99,6 +99,16 @@ You act as $($destinationEntity.Description) with skills $($destinationEntity.Sk
         $this.ConversationHistory += $interaction
     }
 
+    # Method to add an interaction to the conversation history
+    [void] AddToConversationHistory([string] $systemMessage, [string] $userMessage, [string] $response) {
+        $interaction = [PSCustomObject]@{
+            Prompt   = $($systemMessage+$userMessage)
+            Response = $response
+        }
+        $this.ConversationHistory += $interaction
+    }
+
+
     # Method to clear the conversation history
     [void] ClearConversationHistory() {
         $this.ConversationHistory = @()
