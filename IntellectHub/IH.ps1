@@ -196,6 +196,7 @@ if ($expertstojob) {
 #endregion
 
 #region Define Project Goal
+PSWriteColor\Write-Color -Text "Reviewing project goal..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
 Write-Verbose "Defining project goal based on user message: $usermessage"
 $projectGoal = ""
 
@@ -213,46 +214,25 @@ The user has provided the following initial description of the Project. Review t
 {
     "ProjectName": "",
     "ProjectGoal": "",
-    "Objectives": [
-        "",
-        ...
-        ""
-    ],
-    "Functionalities": [
-        "",
-        ...
-        ""
-    ],
-    "Constraints": [
-        "",
-        ...
-        ""
-    ],
-    "OtherInformation": [
-        "",
-        ...
-        ""
-    ]
+    "Description":""
 }
 
 ###Project###
-${usermessage}
+$($usermessage.trim())
 "@ | out-string
 
 Write-Verbose "Defining project goal, message: '$Message'"
 $arguments = @($Message, 500, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
 try {
-    #$projectGoal = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+    $projectGoal = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
 }
 catch {
     Write-Error -Message "Failed to defining project goal"
 }
 if ($projectGoal) {
-    $mainEntity.AddToConversationHistory($Message, $projectGoal)
-
     $script:ProjectGoalFileFulleNamepath = Save-DiscussionResponse -TextContent $projectGoal -Folder $script:ProjectFolderFullNamePath -type "ProjectGoal" -ihguid $ihguid 
     if (Test-Path $script:ProjectGoalFileFulleNamepath) {
-        PSWriteColor\Write-Color -Text "Project goal was definied '$script:ProjectGoalFileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+        PSWriteColor\Write-Color -Text "Reviewed project goal was saved '$script:ProjectGoalFileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
     }
     PSWriteColor\Write-Color -Text "User goal: " -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
     PSWriteColor\Write-Color -Text $usermessage -Color Blue -BackGroundColor Yellow -LinesBefore 0 -Encoding utf8 
@@ -265,10 +245,11 @@ else {
     $projectGoal = $userMessage
 }
 Write-Verbose "Project goal: $projectGoal"
+$mainEntity.AddToConversationHistory($Message, $projectGoal)
 #endregion Define Project Goal
 
+<#
 #region Generate Project Goal
-
 #PSWriteColor\Write-Color -Text "Generate project goal" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
 $message = @"
 Generate a project plan based on the user's description. Your task is to analyze the provided description and outline the necessary steps to achieve the project objectives. Consider factors such as data gathering, task execution, expert interaction, iteration, and final deliverables. Provide clear and detailed instructions for each step of the plan. MUST fill in any missing information necessary to complete the task. 
@@ -304,15 +285,16 @@ $arguments = @($Message, 1000, "Precise", $mainEntity.name, $mainEntity.GPTModel
 $mainEntity.AddToConversationHistory($message, $OrchestratorProjectPlan)
 Write-Verbose "OrchestratorProjectPlan: $OrchestratorProjectPlan"
 #endregion Generate Project Goal
+#>
 
 #region Processing Discussion
-PSWriteColor\Write-Color -Text "Processing discussion..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+PSWriteColor\Write-Color -Text "Running Project" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
 $ExpertsDiscussionHistoryArray = @()
 foreach ($expertToJob in $expertstojob) {
     PSWriteColor\Write-Color -Text "Processing by $($expertToJob.Name)..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -StartTab 1
     foreach ($discussionStep in $discussionSteps) {
         if ($discussionStep.isRequired) {
-            PSWriteColor\Write-Color -Text "Analyzing step: '$($discussionStep.step_name)'..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine -StartTab 2
+            PSWriteColor\Write-Color -Text "Analyzing step $($discussionStep.step): '$($discussionStep.step_name)'..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine -StartTab 2
             write-verbose "Discussion Step: $($discussionStep.step)" 
             write-verbose "Discussion Step name: $($discussionStep.step_name)"
 
@@ -448,10 +430,10 @@ $mainEntity.AddToConversationHistory($Message, $MessageUser, $OrchestratorAnswer
 #region Suggesting Prompt
 PSWriteColor\Write-Color -Text "Suggesting prompt..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
 $Message = @"
-You MUST suggest an advanced prompt to execute the Project, ensuring all key and necessary elements are included. Response in a natural, human-like manner.
+###Instruction###
+You act as Prompt Engineer. Your task is create an advanced GPT prompt to execute the Project. You must ensure that all key and necessary elements are included. Response in a natural, human-like manner.
 "@ | out-string
 $MessageUser = @"
-
 ###Project###
 $OrchestratorAnswer
 "@ | out-string
