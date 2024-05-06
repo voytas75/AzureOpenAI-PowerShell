@@ -61,5 +61,14 @@
       "Testing and Evaluation",
       "Collaboration"
     ]
+  },
+  {
+    "ID": 8,
+    "Expert Type": "Technical Expert",
+    "Skills": [
+      "Strong understanding of the technical aspects",
+      "Troubleshooting"
+    ]
   }
+
 ]
