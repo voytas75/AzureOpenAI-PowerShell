@@ -331,28 +331,34 @@ function Build-EntityObject {
 # This function is used to clear the LLMDataJSON
 function Clear-LLMDataJSON {
     <#
-  .SYNOPSIS
-  This function clears the LLMDataJSON.
-  
-  .DESCRIPTION
-  The Clear-LLMDataJSON function takes a string of data as input, finds the first instance of '[' and the last instance of ']', and returns the substring between these two characters. This effectively removes any characters before the first '[' and after the last ']'.
-  
-  .PARAMETER data
-  A string of data that needs to be cleared.
-  
-  .EXAMPLE
-  $data = "{extra characters}[actual data]{extra characters}"
-  Clear-LLMDataJSON -data $data
-  #>
+    .SYNOPSIS
+    This function cleans up a JSON string by removing any characters before the first '{' and after the last '}'.
+
+    .DESCRIPTION
+    The Clear-LLMDataJSON function takes a string of data as input, finds the first instance of '{' and the last instance of '}', and returns the substring between these two characters. This effectively removes any characters before the first '{' and after the last '}'.
+
+    .PARAMETER data
+    A string of data that needs to be cleaned. This should be a JSON string that may have extra characters at the beginning or end.
+
+    .EXAMPLE
+    $data = "{extra characters}[actual data]{extra characters}"
+    Clear-LLMDataJSON -data $data
+    #>
     param (
         # The data parameter is mandatory and should be a string
         [Parameter(Mandatory = $true)]
         [string]$data
     )
-    # Find the first occurrence of '[' and remove everything before it
-    $data = $data.Substring($data.IndexOf('{'))
-    # Find the last occurrence of ']' and remove everything after it
-    $data = $data.Substring(0, $data.LastIndexOf('}') + 1)
+    try {
+        # Find the first occurrence of '{' and remove everything before it
+        $data = $data.Substring($data.IndexOf('{'))
+        # Find the last occurrence of '}' and remove everything after it
+        $data = $data.Substring(0, $data.LastIndexOf('}') + 1)
+    }
+    catch {
+        Write-Error "Failed to clean the JSON string. Please ensure the input string is a valid JSON."
+        return $data
+    }
     # Return the cleaned data
     return $data
 }
@@ -423,12 +429,13 @@ function Test-IsValidJson {
     )
     $jsonString = $jsonString.trim()
     if ([string]::IsNullOrEmpty($jsonString)) {
-        Write-Host "JSON is empty"
+        #Write-Host "JSON is empty"
         return $false
     }
     Write-Verbose "Test-IsValidJson: jsonString: '$jsonString'"
     try {
         $null = $jsonString | ConvertFrom-Json -ErrorAction Stop
+        #Write-Host "JSON OK: $jsonString"
         return $jsonString
     }
     catch {
@@ -472,7 +479,7 @@ function Get-ExpertRecommendation {
 
     # Prepare the message to be sent to the InvokeCompletion method
     $Message = @"
-Only in RFC8259 compliant JSON serialized format '{"JobExperts": [""]}', provide user with information about${ExperCountToChoose}the most useful Expert names to get the Project done. Response without deviation.
+Only as RFC8259 compliant JSON serialized format '{"JobExperts": [""]}', provide user with information about${ExperCountToChoose}the most useful Expert names to get the Project done. Response without deviation.
 
 ###Project###
 $usermessage
@@ -482,7 +489,7 @@ $($Experts.foreach{"Name: "+$_.name, ", Experet description: "+$_.Description,",
 "@ | Out-String
 
     # Write the message to the verbose output
-    Write-Host $Message
+    #Write-Host $Message
 
     # Prepare the arguments for the InvokeCompletion method
     $arguments = @($Message, 500, "Focused", $Entity.name, $Entity.GPTModel, $true)
@@ -490,7 +497,7 @@ $($Experts.foreach{"Name: "+$_.name, ", Experet description: "+$_.Description,",
     try {
         # Invoke the completion and get the output
         $output = $Entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
-        Write-Host $output
+        #Write-Host $output
 
         return $output
     }
@@ -509,36 +516,23 @@ function CleantojsonLLM {
         [object]$entity
     )
 
-    $responsejson1 = @'
-{
-    "jobexperts":  [
-                    "{Name1}",
-                    "{Name2}",
-                    ...
-                    "{NameN}"
-                    ]
-}
-'@
-
     $Message = @"
 ###Instruction###
+In JSON format { "JobExperts":  [ "" ]}, provide information from Data about Expert names to get the Project done, without block code. 
 
-You must clean data and leave only JSON text object without block code. If there is no json data then create it with structure:
-
-$responsejson1
-
-###Data to clean###
-
+###Data###
 $dataString
 "@ | out-string
 
-    Write-Color -Text "LLM cleaning" -Color Magenta -BackGroundColor DarkGreen
-    $arguments = @($Message, 1000, "Precise", $entity.name, $entity.GPTModel, $true)
+    #Write-Host $Message
+    Write-Color -Text "Data cleaning" -Color Magenta -BackGroundColor DarkGreen
+    $arguments = @($Message, 1000, "UltraPrecise", $entity.name, $entity.GPTModel, $true)
     write-verbose ($arguments | Out-String)
     try {
         $output = $entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
         Write-Verbose $output
-        Write-Color -Text "Function cleaning" -Color Magenta -BackGroundColor DarkGreen
+        Write-Color -Text "Data cleaning" -Color Magenta -BackGroundColor DarkGreen
+        #Write-Host $output        
         $output = Clear-LLMDataJSOn $output
         return $output
     }
