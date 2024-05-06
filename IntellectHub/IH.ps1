@@ -141,7 +141,7 @@ if ($script:ProjectFolderFullNamePath) {
 #region Expert Recommendation
 Write-Verbose "Get-ExpertRecommendation"
 PSWriteColor\Write-Color -Text "Experts recommendation " -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
-$output = Get-ExpertRecommendation -Entity $mainEntity -usermessage $usermessage -Experts $ExpertEntities -expertcount 1
+$output = Get-ExpertRecommendation -Entity $mainEntity -usermessage $usermessage -Experts $ExpertEntities -expertcount 2
 
 if ($output) {
     PSWriteColor\Write-Color -Text "Experts recommendation finished" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -StartTab 1
@@ -155,7 +155,7 @@ $maxAttempts = 5
 
 while ($attempts -lt $maxAttempts -and -not (Test-IsValidJson $output)) {
     Write-Verbose "The provided string is not a valid JSON. Cleaning process..."
-
+    $output = Get-ExpertRecommendation -Entity $mainEntity -usermessage $usermessage -Experts $ExpertEntities -expertcount 2
     Write-Verbose "start Extract-JSON"
     $output = Extract-JSON -inputString $output
 
@@ -214,7 +214,7 @@ The user has provided the following initial description of the Project. Review t
 {
     "ProjectName": "",
     "ProjectGoal": "",
-    "Description":""
+    "Description": ""
 }
 
 ###Project###
@@ -414,7 +414,7 @@ $($ExpertsDiscussionHistoryArray.response)
 Write-Verbose $Message
 Write-Verbose $MessageUser
 #$arguments = @($Message, $messageUser, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
-$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4p")
+$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4turbo")
 $OrchestratorAnswer = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
 if ($OrchestratorAnswer) {
     $OrchestratorAnswer
@@ -439,7 +439,7 @@ $OrchestratorAnswer
 "@ | out-string
 Write-Verbose $Message
 Write-Verbose $MessageUser
-$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4p")
+$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4turbo")
 $OrchestratorAnswerSugestPrompt = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
 
 if ($OrchestratorAnswerSugestPrompt) {
@@ -466,7 +466,7 @@ $OrchestratorAnswer
 Write-Verbose $messageSystem
 Write-Verbose $MessageUser
 
-$arguments = @($messageSystem, $MessageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4p")
+$arguments = @($messageSystem, $MessageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4turbo")
 $OrchestratorSuggestPromptAnswer = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
 if ($OrchestratorSuggestPromptAnswer) {
     $OrchestratorSuggestPromptAnswer
@@ -506,7 +506,7 @@ $($OrchestratorAnswer.trim())
 #$OrchestratorAnswerCode = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $verbose)
 Write-Verbose $message
 Write-Verbose $MessageUser
-$arguments = @($Message, $MessageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4p")
+$arguments = @($Message, $MessageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4turbo")
 #$OrchestratorAnswer = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $verbose)
 $OrchestratorAnswerFinal = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
 if ($OrchestratorAnswerFinal) {
@@ -533,7 +533,7 @@ $($OrchestratorAnswer.trim())
 Write-Verbose $messagesystem
 Write-Verbose $messageuser
 #$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4")
-$arguments = @($messagesystem, $messageuser, "Precise", $true, $true, $mainEntity.name, "udtgpt4p")
+$arguments = @($messagesystem, $messageuser, "Precise", $true, $true, $mainEntity.name, "udtgpt4turbo")
 $OrchestratorAnswerFinal2 = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
 if ($OrchestratorAnswerFinal2) {
     $OrchestratorAnswerFinal2
@@ -563,7 +563,7 @@ $($OrchestratorAnswerFinal2.trim())
 Write-Verbose $messagesystem
 Write-Verbose $messageuser
 #$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4")
-$arguments = @($messagesystem, $messageuser, "Precise", $true, $true, $mainEntity.name, "udtgpt4p")
+$arguments = @($messagesystem, $messageuser, "Precise", $true, $true, $mainEntity.name, "udtgpt4turbo")
 $OrchestratorAnswerSummarizeAndCombine = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
 if ($OrchestratorAnswerSummarizeAndCombine) {
     $OrchestratorAnswerSummarizeAndCombine
@@ -593,7 +593,7 @@ $($OrchestratorAnswerFinal2.trim())
 Write-Verbose $messagesystem
 Write-Verbose $messageuser
 #$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4")
-$arguments = @($messagesystem, $messageuser, "Precise", $true, $true, $mainEntity.name, "udtgpt4p")
+$arguments = @($messagesystem, $messageuser, "Precise", $true, $true, $mainEntity.name, "udtgpt4turbo")
 $OrchestratorAnswerStructuredResponse = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
 if ($OrchestratorAnswerStructuredResponse) {
     $OrchestratorAnswerStructuredResponse

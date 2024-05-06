@@ -472,19 +472,26 @@ function Get-ExpertRecommendation {
 
     # Prepare the message to be sent to the InvokeCompletion method
     $Message = @"
-In JSON format {'JobExperts': ['', '']}, provide me with suggestion${ExperCountToChoose}of the most useful expert Names from available to get the job done. List of available experts:
-$($Experts | convertto-json)
+Only in RFC8259 compliant JSON serialized format '{"JobExperts": [""]}', provide user with information about${ExperCountToChoose}the most useful Expert names to get the Project done. Response without deviation.
+
+###Project###
+$usermessage
+
+##Experts###
+$($Experts.foreach{"Name: "+$_.name, ", Experet description: "+$_.Description,", Expert' skills: "+$($_.Skills -join ", ")+"`n"})
 "@ | Out-String
 
     # Write the message to the verbose output
-    Write-Verbose $Message
+    Write-Host $Message
 
     # Prepare the arguments for the InvokeCompletion method
-    $arguments = @($Message, 400, "Precise", $Entity.name, $Entity.GPTModel, $true)
+    $arguments = @($Message, 500, "Focused", $Entity.name, $Entity.GPTModel, $true)
 
     try {
         # Invoke the completion and get the output
         $output = $Entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+        Write-Host $output
+
         return $output
     }
     catch {
