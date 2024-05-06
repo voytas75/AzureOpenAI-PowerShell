@@ -52,7 +52,7 @@ Catch {
 
 #region Importing Discussion Steps
 Try {
-    $discussionSteps = Get-DiscussionStepsFromJson -FilePath "discussion_steps6.json"
+    $discussionSteps = Get-DiscussionStepsFromJson -FilePath "discussion_steps5.json"
 
     if ($discussionSteps) {
         PSWriteColor\Write-Color -Text "Discussion steps was loaded ($($discussionSteps.count))" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
@@ -141,8 +141,11 @@ if ($script:ProjectFolderFullNamePath) {
 #region Expert Recommendation
 Write-Verbose "Get-ExpertRecommendation"
 PSWriteColor\Write-Color -Text "Experts recommendation " -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
-$output = Get-ExpertRecommendation -Entity $mainEntity -usermessage $usermessage -Experts $ExpertEntities -expertcount 1
-#$output
+$output = Get-ExpertRecommendation -Entity $mainEntity -usermessage $usermessage -Experts $ExpertEntities -expertcount 2
+
+if ($output) {
+    PSWriteColor\Write-Color -Text "Experts recommendation finished" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -StartTab 1
+} 
 
 Write-Verbose "first response of gpt to the topic:"
 Write-Verbose $output
@@ -151,19 +154,18 @@ $attempts = 0
 $maxAttempts = 5
 
 while ($attempts -lt $maxAttempts -and -not (Test-IsValidJson $output)) {
-    Write-Verbose "The provided string is not a valid JSON. Cleaning process..."
-    $output = Get-ExpertRecommendation -Entity $mainEntity -usermessage $usermessage -Experts $ExpertEntities -expertcount 1
-    #$output
-    Write-Verbose "start Extract-JSON"
-    #$output = Extract-JSON -inputString $output
-    #$output
+    Write-Verbose "start CleantojsonLLM"
+    $output = CleantojsonLLM -dataString $output -entity $mainEntity
     if (-not (Test-IsValidJson $output)) {
-        Write-Verbose "start CleantojsonLLM"
-        $output = CleantojsonLLM -dataString $output -entity $mainEntity
-        #$output
+        Write-Verbose "start Extract-JSON"
+        #Write-Host $output
+        $output = Extract-JSON -inputString $output
     }
+
+    #Write-Verbose "The provided string is not a valid JSON. Cleaning process..."
+    #$output = Get-ExpertRecommendation -Entity $mainEntity -usermessage $output -Experts $ExpertEntities -expertcount 2
+    #Write-Host $output
     $attempts++
-    #$attempts -lt $maxAttempts -and  -not (Test-IsValidJson $output)
 }
 
 if ($attempts -eq $maxAttempts) {
@@ -179,13 +181,12 @@ $expertstojob = $ExpertEntities | Where-Object { $_.Name -in $expertstojob.jobex
 
 if ($expertstojob) {
     PSWriteColor\Write-Color -Text "Experts were choosed by $($mainEntity.Name) ($($expertstojob.Count)): $($expertstojob.Name -join ", ")" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
-    $script:ProjectGoalFileFulleNamepath = Save-DiscussionResponse -TextContent $output -Folder $script:TeamDiscussionDataFolder -type "ExpertsRecommendation" -ihguid $ihguid
+    $script:ProjectGoalFileFulleNamepath = Save-DiscussionResponse -TextContent $output -Folder $script:ProjectFolderFullNamePath -type "ExpertsRecommendation" -ihguid $ihguid
     foreach ($experttojob in $expertstojob) {
         write-Verbose $($experttojob.Name)
     }
-    PSWriteColor\Write-Color -Text "Experts recommendation finished" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -StartTab 1
 }
-#endregion Expert Recommendation
+#endregion
 
 #region Define Project Goal
 PSWriteColor\Write-Color -Text "Reviewing project goal..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
@@ -222,7 +223,7 @@ catch {
     Write-Error -Message "Failed to defining project goal"
 }
 if ($projectGoal) {
-    $script:ProjectGoalFileFulleNamepath = Save-DiscussionResponse -TextContent $projectGoal -Folder $script:TeamDiscussionDataFolder -type "ProjectGoal" -ihguid $ihguid 
+    $script:ProjectGoalFileFulleNamepath = Save-DiscussionResponse -TextContent $projectGoal -Folder $script:ProjectFolderFullNamePath -type "ProjectGoal" -ihguid $ihguid 
     if (Test-Path $script:ProjectGoalFileFulleNamepath) {
         PSWriteColor\Write-Color -Text "Reviewed project goal was saved '$script:ProjectGoalFileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
     }
@@ -313,7 +314,8 @@ $PromptToExpertHistory
 $($projectGoal.trim())
 "@ | out-string
 
-            $expertreposnse = $mainEntity.SendResource($PromptToExpert, $expertToJob, "PSAOAI", "Invoke-PSAOAIChatCompletion")
+            $expertreposnse = $mainEntity.SendResource($PromptToExpert, $expertToJob, "PSAOAI", "Invoke-PSAOAICompletion")
+            
             if ($expertreposnse) {
                 $expertToJob.AddToConversationHistory($PromptToExpert, $expertreposnse)
                 Write-Verbose "expertreposnse: $expertreposnse"
@@ -406,11 +408,11 @@ $($ExpertsDiscussionHistoryArray.response)
 Write-Verbose $Message
 Write-Verbose $MessageUser
 #$arguments = @($Message, $messageUser, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
-$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4p")
+$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4turbo")
 $OrchestratorAnswer = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
 if ($OrchestratorAnswer) {
     $OrchestratorAnswer
-    $script:OrchestratorAnswerFileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorAnswer -Folder $script:TeamDiscussionDataFolder -type "ProcessFinishing" -ihguid $ihguid 
+    $script:OrchestratorAnswerFileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorAnswer -Folder $script:ProjectFolderFullNamePath -type "ProcessFinishing" -ihguid $ihguid 
     if (Test-Path $script:OrchestratorAnswerFileFulleNamepath) {
         PSWriteColor\Write-Color -Text "ProcessFinishing saved to '$script:OrchestratorAnswerFileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
     }
@@ -423,7 +425,7 @@ $mainEntity.AddToConversationHistory($Message, $MessageUser, $OrchestratorAnswer
 PSWriteColor\Write-Color -Text "Suggesting prompt..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
 $Message = @"
 ###Instruction###
-You act as Prompt Engineer. Your task is create an advanced GPT prompt text query to execute the Project. You must ensure that all key and necessary elements are included. Response in a natural, human-like manner. Show prompt text query only.
+You act as Prompt Engineer. Your task is create an advanced GPT prompt to execute the Project. You must ensure that all key and necessary elements are included. Response in a natural, human-like manner.
 "@ | out-string
 $MessageUser = @"
 ###Project###
@@ -431,12 +433,12 @@ $OrchestratorAnswer
 "@ | out-string
 Write-Verbose $Message
 Write-Verbose $MessageUser
-$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4p")
+$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4turbo")
 $OrchestratorAnswerSugestPrompt = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
 
 if ($OrchestratorAnswerSugestPrompt) {
     $OrchestratorAnswerSugestPrompt
-    $script:OrchestratorAnswerSugestPromptFileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorAnswerSugestPrompt -Folder $script:TeamDiscussionDataFolder -type "SuggestingPrompt" -ihguid $ihguid 
+    $script:OrchestratorAnswerSugestPromptFileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorAnswerSugestPrompt -Folder $script:ProjectFolderFullNamePath -type "SuggestingPrompt" -ihguid $ihguid 
     if (Test-Path $script:OrchestratorAnswerSugestPromptFileFulleNamepath) {
         PSWriteColor\Write-Color -Text "SuggestingPrompt saved to '$script:OrchestratorAnswerSugestPromptFileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
     }
@@ -458,11 +460,11 @@ $OrchestratorAnswer
 Write-Verbose $messageSystem
 Write-Verbose $MessageUser
 
-$arguments = @($messageSystem, $MessageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4p")
+$arguments = @($messageSystem, $MessageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4turbo")
 $OrchestratorSuggestPromptAnswer = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
 if ($OrchestratorSuggestPromptAnswer) {
     $OrchestratorSuggestPromptAnswer
-    $script:OrchestratorSuggestPromptAnswerFileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorSuggestPromptAnswer -Folder $script:TeamDiscussionDataFolder -type "SuggestingPromptResponse" -ihguid $ihguid 
+    $script:OrchestratorSuggestPromptAnswerFileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorSuggestPromptAnswer -Folder $script:ProjectFolderFullNamePath -type "SuggestingPromptResponse" -ihguid $ihguid 
     if (Test-Path $script:OrchestratorSuggestPromptAnswerFileFulleNamepath) {
         PSWriteColor\Write-Color -Text "Suggesting prompt - Process final delivery saved to '$script:OrchestratorSuggestPromptAnswerFileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
     }
@@ -498,12 +500,12 @@ $($OrchestratorAnswer.trim())
 #$OrchestratorAnswerCode = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $verbose)
 Write-Verbose $message
 Write-Verbose $MessageUser
-$arguments = @($Message, $MessageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4p")
+$arguments = @($Message, $MessageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4turbo")
 #$OrchestratorAnswer = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $verbose)
 $OrchestratorAnswerFinal = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
 if ($OrchestratorAnswerFinal) {
     $OrchestratorAnswerFinal
-    $script:OrchestratorAnswerFinalFileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorAnswerFinal -Folder $script:TeamDiscussionDataFolder -type "FinalDelivery" -ihguid $ihguid 
+    $script:OrchestratorAnswerFinalFileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorAnswerFinal -Folder $script:ProjectFolderFullNamePath -type "FinalDelivery" -ihguid $ihguid 
     if (Test-Path $script:OrchestratorAnswerFinalFileFulleNamepath) {
         PSWriteColor\Write-Color -Text "Final delivery saved to '$script:OrchestratorAnswerFinalFileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
     }
@@ -525,11 +527,11 @@ $($OrchestratorAnswer.trim())
 Write-Verbose $messagesystem
 Write-Verbose $messageuser
 #$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4")
-$arguments = @($messagesystem, $messageuser, "Precise", $true, $true, $mainEntity.name, "udtgpt4p")
+$arguments = @($messagesystem, $messageuser, "Precise", $true, $true, $mainEntity.name, "udtgpt4turbo")
 $OrchestratorAnswerFinal2 = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
 if ($OrchestratorAnswerFinal2) {
     $OrchestratorAnswerFinal2
-    $script:OrchestratorAnswerFinal2FileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorAnswerFinal2 -Folder $script:TeamDiscussionDataFolder -type "FinalDelivery2" -ihguid $ihguid 
+    $script:OrchestratorAnswerFinal2FileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorAnswerFinal2 -Folder $script:ProjectFolderFullNamePath -type "FinalDelivery2" -ihguid $ihguid 
     if (Test-Path $script:OrchestratorAnswerFinal2FileFulleNamepath) {
         PSWriteColor\Write-Color -Text "Final delivery 2 saved to '$script:OrchestratorAnswerFinal2FileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
     }
@@ -555,11 +557,11 @@ $($OrchestratorAnswerFinal2.trim())
 Write-Verbose $messagesystem
 Write-Verbose $messageuser
 #$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4")
-$arguments = @($messagesystem, $messageuser, "Precise", $true, $true, $mainEntity.name, "udtgpt4p")
+$arguments = @($messagesystem, $messageuser, "Precise", $true, $true, $mainEntity.name, "udtgpt4turbo")
 $OrchestratorAnswerSummarizeAndCombine = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
 if ($OrchestratorAnswerSummarizeAndCombine) {
     $OrchestratorAnswerSummarizeAndCombine
-    $script:OrchestratorAnswerSummarizeAndCombineFileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorAnswerSummarizeAndCombine -Folder $script:TeamDiscussionDataFolder -type "SummarizeAndCombine" -ihguid $ihguid 
+    $script:OrchestratorAnswerSummarizeAndCombineFileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorAnswerSummarizeAndCombine -Folder $script:ProjectFolderFullNamePath -type "SummarizeAndCombine" -ihguid $ihguid 
     if (Test-Path $script:OrchestratorAnswerSummarizeAndCombineFileFulleNamepath) {
         PSWriteColor\Write-Color -Text "Summarize And Combine saved to '$script:OrchestratorAnswerSummarizeAndCombineFileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
     }
@@ -585,11 +587,11 @@ $($OrchestratorAnswerFinal2.trim())
 Write-Verbose $messagesystem
 Write-Verbose $messageuser
 #$arguments = @($Message, $messageUser, "Precise", $true, $true, $mainEntity.name, "udtgpt4")
-$arguments = @($messagesystem, $messageuser, "Precise", $true, $true, $mainEntity.name, "udtgpt4p")
+$arguments = @($messagesystem, $messageuser, "Precise", $true, $true, $mainEntity.name, "udtgpt4turbo")
 $OrchestratorAnswerStructuredResponse = $mainEntity.InvokeChatCompletion("PSAOAI", "Invoke-PSAOAIChatCompletion", $arguments, $verbose)
 if ($OrchestratorAnswerStructuredResponse) {
     $OrchestratorAnswerStructuredResponse
-    $script:OrchestratorAnswerStructuredResponseFileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorAnswerStructuredResponse -Folder $script:TeamDiscussionDataFolder -type "StructuredResponse" -ihguid $ihguid 
+    $script:OrchestratorAnswerStructuredResponseFileFulleNamepath = Save-DiscussionResponse -TextContent $OrchestratorAnswerStructuredResponse -Folder $script:ProjectFolderFullNamePath -type "StructuredResponse" -ihguid $ihguid 
     if (Test-Path $script:OrchestratorAnswerStructuredResponseFileFulleNamepath) {
         PSWriteColor\Write-Color -Text "Structured Response saved to '$script:OrchestratorAnswerStructuredResponseFileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
     }

@@ -74,7 +74,7 @@ class Entity {
         [string] $functionName
     ) {
         $Message = @"
-You act as $($destinationEntity.Description) with skills $($destinationEntity.Skills -join ", ").
+You act as $($destinationEntity.Description) with skills $($destinationEntity.Skills -join ", "). Your task is: 
 "@
         #Your specific task is generate english JSON for a developer to use in code. The specific task is to create a JSON structure for the  "${resource}". The response must be in JSON format ready to be copied and pasted into a code snippet. Every json value must be in english. Modify only the values, in the given JSON example structure: { "ExpertName": "", "Role": "", "Query": "", "Response": "" }
         #
@@ -83,10 +83,13 @@ You act as $($destinationEntity.Description) with skills $($destinationEntity.Sk
         #Write-Host $resource
         write-Verbose (Shorten-Text $resource)
         # Invoke invokeCompletion to send the resource to the destination entity
-        ###$arguments = @($Message, 2000, "Precise", $destinationEntity.name, $destinationEntity.GPTModel, $true)
-        ###$response = $destinationEntity.invokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $true)
-        $arguments = @($Message, $resource, "Precise", $true, $true, $destinationEntity.name, "udtgpt4")
-        $response = $destinationEntity.invokeChatCompletion($PSmoduleName, $functionName, $arguments, $false)
+        
+        $arguments = @($Message, 2000, "Precise", $destinationEntity.name, $destinationEntity.GPTModel, $true)
+        $response = $destinationEntity.invokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+        
+        ###$arguments = @($Message, $resource, "Precise", $true, $true, $destinationEntity.name, "udtgpt4")
+        ###$response = $destinationEntity.invokeChatCompletion($PSmoduleName, $functionName, $arguments, $false)
+        
         #Write-Host "Response from $($destinationEntity.Name): $response"
         return $response
     }

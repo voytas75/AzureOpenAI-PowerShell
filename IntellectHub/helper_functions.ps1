@@ -397,11 +397,13 @@ function Extract-JSON {
             }
             catch {
                 Write-Verbose "Extract-JSON: Failed to parse JSON."
+                return $false
             }
         }
     }
     else {
         Write-Verbose "Extract-JSON: No JSON found in the string."
+        return $false
     }
 
     # Return the array of valid JSON objects
@@ -518,7 +520,7 @@ function CleantojsonLLM {
 
     $Message = @"
 ###Instruction###
-In JSON format { "JobExperts":  [ "" ]}, provide information from Data about Expert names to get the Project done, without block code. 
+Response only in JSON format { "JobExperts":  [ "" ]}, provide information from Data about Expert names to get the Project done. 
 
 ###Data###
 $dataString
