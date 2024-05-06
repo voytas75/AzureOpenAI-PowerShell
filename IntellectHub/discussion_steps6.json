@@ -4,7 +4,7 @@
             "step": 1,
             "step_name": "Project Exploration",
             "isRequired": true,
-            "prompt": "User's Input: [Insert User's Input Here] \n\nAnalyze the user's earlier input about the project and provide information in JSON format. Ensure that the output follows the JSON structure: { \"project_name\": \"\", \"objectives\": [ \"\" ], \"functionalities\": [ \"\" ], \"constraints\": { \"resources\": [ \"\" ], \"technology\": [ \"\" ], \"other\": [ \"\" ] }}. Fill in any missing information to complete the task."
+            "prompt": "\n\nAnalyze the user's input about the project and provide information in JSON format. Ensure that the output follows the JSON structure: { \"project_name\": \"\", \"objectives\": [ \"\" ], \"functionalities\": [ \"\" ], \"constraints\": { \"resources\": [ \"\" ], \"technology\": [ \"\" ], \"other\": [ \"\" ] }}. Fill in any missing information to complete the task."
         },
         {
             "step": 2,

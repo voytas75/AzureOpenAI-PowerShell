@@ -163,7 +163,7 @@ while ($attempts -lt $maxAttempts -and -not (Test-IsValidJson $output)) {
         #$output
     }
     $attempts++
-#$attempts -lt $maxAttempts -and  -not (Test-IsValidJson $output)
+    #$attempts -lt $maxAttempts -and  -not (Test-IsValidJson $output)
 }
 
 if ($attempts -eq $maxAttempts) {
@@ -183,7 +183,7 @@ if ($expertstojob) {
     foreach ($experttojob in $expertstojob) {
         write-Verbose $($experttojob.Name)
     }
-PSWriteColor\Write-Color -Text "Experts recommendation finished" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -StartTab 1
+    PSWriteColor\Write-Color -Text "Experts recommendation finished" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -StartTab 1
 }
 #endregion Expert Recommendation
 
@@ -308,17 +308,14 @@ $($($expertToJob.GetLastNInteractions(1)).Response)
 
             $PromptToExpert = @"
 $($discussionStep.prompt)
-$PromptToExpertHistory
+
 ###Project### 
 $($projectGoal.trim())
 "@ | out-string
-
+            #$PromptToExpertHistory
+            #$PromptToExpert
             $expertreposnse = $mainEntity.SendResource($PromptToExpert, $expertToJob, "PSAOAI", "Invoke-PSAOAICompletion")
             
-            if ($expertreposnse) {
-                $expertToJob.AddToConversationHistory($PromptToExpert, $expertreposnse)
-                Write-Verbose "expertreposnse: $expertreposnse"
-            }
 
             $message = @"
 Your task is to compress the detailed project requirements provided by the GPT expert while highlighting key elements and retaining essential information. Make sure the summary is clear and concise. Output the compressed summary in JSON format.
