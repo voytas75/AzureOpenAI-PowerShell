@@ -520,7 +520,7 @@ function CleantojsonLLM {
 
     $Message = @"
 ###Instruction###
-Response only in JSON format { "JobExperts":  [ "" ]}, provide information from Data about Expert names to get the Project done. 
+In JSON format { "JobExperts":  [ "" ]}, provide information from Data about Expert names to get the Project done, without block code. 
 
 ###Data###
 $dataString
