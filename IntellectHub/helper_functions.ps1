@@ -128,20 +128,83 @@ function Save-DiscussionResponse {
     # Return the full path of the file
     return $filePath
 }
+
+<#
+.SYNOPSIS
+This function reads a JSON file and returns the discussion steps.
+
+.DESCRIPTION
+The Get-DiscussionStepsFromJson function reads a JSON file specified by the FilePath parameter. 
+If the file does not exist, it throws an error and returns null. 
+Otherwise, it reads the JSON data from the file and returns the discussion steps.
+
+.PARAMETER FilePath
+The path of the JSON file to read.
+
+.EXAMPLE
+Get-DiscussionStepsFromJson -FilePath "discussion_steps.json"
+
+This command reads the "discussion_steps.json" file and returns the discussion steps.
+
+.INPUTS
+System.String
+
+.OUTPUTS
+System.Object
+#>
 function Get-DiscussionStepsFromJson {
+    [CmdletBinding()]
     param(
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true, HelpMessage = "The path of the JSON file to read.")]
         [string] $FilePath
     )
 
-    # Read JSON data from file
-    $jsonData = Get-Content -Path $FilePath -Raw | ConvertFrom-Json
+    # Check if the file exists
+    if (!(Test-Path -Path $FilePath)) {
+        Write-Error "File $FilePath does not exist."
+        return $null
+    }
+
+    try {
+        # Read JSON data from file
+        $jsonData = Get-Content -Path $FilePath -Raw | ConvertFrom-Json
+    }
+    catch {
+        Write-Error "Failed to read or parse the JSON file: $FilePath"
+        return $null
+    }
 
     # Return the discussion steps
     return $jsonData.DiscussionSteps
 }
 
+<#
+.SYNOPSIS
+This function reads a JSON file and returns the data.
+
+.DESCRIPTION
+The Get-ExpertsFromJson function reads a JSON file specified by the FilePath parameter. 
+If the file does not exist, it throws an error and returns null. 
+Otherwise, it reads the JSON data from the file and returns it.
+
+.PARAMETER FilePath
+The path of the JSON file to read. The default is "experts.json".
+
+.EXAMPLE
+Get-ExpertsFromJson -FilePath "experts.json"
+
+This command reads the "experts.json" file and returns the data.
+
+.INPUTS
+System.String
+
+.OUTPUTS
+System.Object
+#>
 function Get-ExpertsFromJson {
+    [CmdletBinding()]
     param(
+        [Parameter(Mandatory = $false, ValueFromPipeline = $true, HelpMessage = "The path of the JSON file to read.")]
         [string] $FilePath = "experts.json"
     )
 
@@ -151,13 +214,18 @@ function Get-ExpertsFromJson {
         return $null
     }
 
-    # Read JSON data from file
-    $jsonData = Get-Content -Path $FilePath -Raw | ConvertFrom-Json
+    try {
+        # Read JSON data from file
+        $jsonData = Get-Content -Path $FilePath -Raw | ConvertFrom-Json
+    }
+    catch {
+        Write-Error "Failed to read or parse the JSON file: $FilePath"
+        return $null
+    }
 
     # Return the experts
     return $jsonData
 }
-
 # Main function to start discussion
 function StartDiscussion {
     param(
@@ -305,7 +373,37 @@ function ManageDiscussion {
     Invoke-PSAOAIchatCompletion -SystemPrompt "Summarize and show key elements" -usermessage "Discussion history: `n###`n$Discussion`n###`n" -OneTimeUserPrompt -simpleresponse -Mode Precise -Deployment "udtgpt4p" -APIVersion "2024-03-01-preview"
 }
 
+
+<#
+.SYNOPSIS
+This function creates a new Entity object with the provided parameters.
+
+.DESCRIPTION
+The Build-EntityObject function takes several parameters, including the name, role, description, skills, GPT type, and GPT model of the entity. It creates a new instance of the Entity class with these parameters and returns the created entity.
+
+.PARAMETER Name
+The name of the entity.
+
+.PARAMETER Role
+The role of the entity.
+
+.PARAMETER Description
+The description of the entity.
+
+.PARAMETER Skills
+The skills of the entity.
+
+.PARAMETER GPTType
+The GPT type of the entity.
+
+.PARAMETER GPTModel
+The GPT model of the entity.
+
+.EXAMPLE
+$entity = Build-EntityObject -Name "Expert" -Role "Engineer" -Description "Expert in engineering" -Skills @("Problem-Solving", "Design") -GPTType "azure" -GPTModel "udtgpt35turbo"
+#>
 function Build-EntityObject {
+    [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
         [string]$Name,
@@ -321,8 +419,14 @@ function Build-EntityObject {
         [string]$GPTModel
     )
 
-    # Create a new instance of the Entity class
-    $EntityObject = New-Object Entity -ArgumentList $Name, $Role, $Description, $Skills, $GPTType, $GPTModel
+    try {
+        # Create a new instance of the Entity class
+        $EntityObject = New-Object Entity -ArgumentList $Name, $Role, $Description, $Skills, $GPTType, $GPTModel
+    }
+    catch {
+        Write-Error -Message "Failed to create Entity object. Please check the input parameters."
+        return $null
+    }
 
     # Return the main entity
     return $EntityObject
@@ -481,7 +585,7 @@ function Get-ExpertRecommendation {
 
     # Prepare the message to be sent to the InvokeCompletion method
     $Message = @"
-Only as RFC8259 compliant JSON serialized format '{"JobExperts": [""]}', provide user with information about${ExperCountToChoose}the most useful Expert names to get the Project done. Response without deviation.
+Only as RFC8259 compliant JSON serialized format '{"JobExperts": [""]}', provide user with information about the most useful Expert name(s) to get the Project done. Chose only$($ExperCountToChoose). Response without deviation.
 
 ###Project###
 $usermessage
@@ -527,14 +631,14 @@ $dataString
 "@ | out-string
 
     #Write-Host $Message
-    Write-Color -Text "Data cleaning" -Color Magenta -BackGroundColor DarkGreen
+    PSWriteColor\Write-Color -Text "Data correction" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine -StartTab 1
     $arguments = @($Message, 1000, "UltraPrecise", $entity.name, $entity.GPTModel, $true)
     write-verbose ($arguments | Out-String)
     try {
         $output = $entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
         Write-Verbose $output
-        Write-Color -Text "Data cleaning" -Color Magenta -BackGroundColor DarkGreen
-        #Write-Host $output        
+        #Write-Host $output  
+        PSWriteColor\Write-Color -Text "Data refinement" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -StartTab 1
         $output = Clear-LLMDataJSOn $output
         return $output
     }

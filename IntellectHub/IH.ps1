@@ -11,7 +11,6 @@ import-module PSWriteColor
 
 $IHGUID = [System.Guid]::NewGuid().ToString()
 
-
 #region Importing Modules
 $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $entityClassPath = Join-Path -Path $scriptPath -ChildPath "entity_class.ps1"
@@ -35,59 +34,34 @@ Catch {
 }
 #endregion
 
-
 #region Importing Experts Data
-Try {
-    $experts = Get-ExpertsFromJson -FilePath "experts.json"
-    if ($experts) {
-        PSWriteColor\Write-Color -Text "Imported experts data ($($experts.count))" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
-    }
-}
-Catch {
-    Write-Error -Message "Failed to import experts data"
-    return $false
+$experts = Get-ExpertsFromJson -FilePath "experts.json"
+if ($experts) {
+    PSWriteColor\Write-Color -Text "Imported experts data ($($experts.count))" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
 }
 #endregion
-
 
 #region Importing Discussion Steps
-Try {
-    $discussionSteps = Get-DiscussionStepsFromJson -FilePath "discussion_steps6.json"
 
-    if ($discussionSteps) {
-        PSWriteColor\Write-Color -Text "Discussion steps was loaded ($($discussionSteps.count))" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
-    }
-}
-Catch {
-    Write-Error -Message "Failed to load discussion steps"
-    return $false
+$discussionSteps = Get-DiscussionStepsFromJson -FilePath "discussion_steps6.json"
+if ($discussionSteps) {
+    PSWriteColor\Write-Color -Text "Discussion steps was loaded ($($discussionSteps.count))" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
 }
 #endregion
-
 
 #region Creating Main Entity
-Try {
-    $mainEntity = Build-EntityObject -Name "Orchestrator" -Role "Project Manager" -Description "Manager of experts" -Skills @("Organization", "Communication", "Problem-Solving") -GPTType "azure" -GPTModel "udtgpt35turbo"
-
-    if ($mainEntity) {
-        PSWriteColor\Write-Color -Text "Main Entity was created" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
-    }
-}
-Catch {
-    Write-Error -Message "Failed to create Orchestrator Entity"
-    return $false
+$mainEntity = Build-EntityObject -Name "Orchestrator" -Role "Project Manager" -Description "Manager of experts" -Skills @("Organization", "Communication", "Problem-Solving") -GPTType "azure" -GPTModel "udtgpt35turbo"
+if ($mainEntity) {
+    PSWriteColor\Write-Color -Text "Main Entity was created" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
 }
 #endregion
-
 
 #region Creating Team Discussion Folder
 Try {
     # Get the current date and time
     $currentDateTime = Get-Date -Format "yyyyMMdd_HHmmss"
-
     # Create a folder with the current date and time as the name in the example path
     $script:TeamDiscussionDataFolder = Create-FolderInGivenPath -FolderPath $(Create-FolderInUserDocuments -FolderName "IH") -FolderName $currentDateTime
-
     if ($script:TeamDiscussionDataFolder) {
         PSWriteColor\Write-Color -Text "Team discussion folder was created '$script:TeamDiscussionDataFolder'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
     }
@@ -96,27 +70,21 @@ Catch {
     Write-Error -Message "Failed to create discussion folder"
     return $false
 }
-#endregion
-
-
+#endregion Creating Team Discussion Folder
 
 #region Loading Experts and Creating Entities
 Try {
     # Load the experts data from the JSON file
-    $expertsData = Get-Content -Path "experts.json" | ConvertFrom-Json
-
+    $expertsData = Get-Content -Path "experts.json" -Raw | ConvertFrom-Json
     # Initialize an empty array to store the entities
     $ExpertEntities = @()
-
     # Loop through each expert in the data
     foreach ($expert in $expertsData) {
         # Create a new entity for the expert
         $entity = Build-EntityObject -Name $expert.'Expert Type' -Role "Expert" -Description "An expert in $($expert.'Expert Type')" -Skills $expert.Skills -GPTType "azure" -GPTModel "udtgpt35turbo"
-
         # Add the entity to the entities array
         $ExpertEntities += $entity
     }
-
     if ($ExpertEntities) {
         PSWriteColor\Write-Color -Text "Entities were created ($($ExpertEntities.count))" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
     }
@@ -130,7 +98,6 @@ Catch {
 #region Project Folder Creation
 $script:ProjectFolderNameJson = Get-FolderNameTopic -Entity $mainEntity -usermessage $usermessage
 Write-Verbose ($script:ProjectFolderNameJson | out-string)
-
 $script:ProjectFolderFullNamePath = Create-FolderInGivenPath -FolderPath $script:TeamDiscussionDataFolder -FolderName (($script:ProjectFolderNameJson | ConvertFrom-Json).foldername | out-string)
 #$($($script:ProjectFolderNameJson | convertfrom-json).FolderName | out-string)
 if ($script:ProjectFolderFullNamePath) {
@@ -142,16 +109,14 @@ if ($script:ProjectFolderFullNamePath) {
 Write-Verbose "Get-ExpertRecommendation"
 PSWriteColor\Write-Color -Text "Experts recommendation " -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
 $output = Get-ExpertRecommendation -Entity $mainEntity -usermessage $usermessage -Experts $ExpertEntities -expertcount 1
-#$output
-
+#write-Host $output
 Write-Verbose "first response of gpt to the topic:"
 Write-Verbose $output
-
 $attempts = 0
 $maxAttempts = 5
-
 while ($attempts -lt $maxAttempts -and -not (Test-IsValidJson $output)) {
     Write-Verbose "The provided string is not a valid JSON. Cleaning process..."
+    PSWriteColor\Write-Color -Text "Data pre-processing " -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine -StartTab 1
     $output = Get-ExpertRecommendation -Entity $mainEntity -usermessage $usermessage -Experts $ExpertEntities -expertcount 1
     #$output
     Write-Verbose "start Extract-JSON"
@@ -165,7 +130,6 @@ while ($attempts -lt $maxAttempts -and -not (Test-IsValidJson $output)) {
     $attempts++
     #$attempts -lt $maxAttempts -and  -not (Test-IsValidJson $output)
 }
-
 if ($attempts -eq $maxAttempts) {
     PSWriteColor\Write-Color -Text "Maximum attempts reached. No experts recommendation. Exiting." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime 
     return
@@ -173,10 +137,8 @@ if ($attempts -eq $maxAttempts) {
 else {
     Write-Verbose "Valid JSON string provided: $output"
 }
-
 $expertstojob = $output | ConvertFrom-Json
 $expertstojob = $ExpertEntities | Where-Object { $_.Name -in $expertstojob.jobexperts }
-
 if ($expertstojob) {
     PSWriteColor\Write-Color -Text "Experts were choosed by $($mainEntity.Name) ($($expertstojob.Count)): $($expertstojob.Name -join ", ")" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
     $script:ProjectGoalFileFulleNamepath = Save-DiscussionResponse -TextContent $output -Folder $script:TeamDiscussionDataFolder -type "ExpertsRecommendation" -ihguid $ihguid
@@ -187,9 +149,9 @@ if ($expertstojob) {
 }
 #endregion Expert Recommendation
 
-#region Define Project Goal
-PSWriteColor\Write-Color -Text "Reviewing project goal..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
-Write-Verbose "Defining project goal based on user message: $usermessage"
+#region Define Project Explorations
+PSWriteColor\Write-Color -Text "Project exploration" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
+Write-Verbose "Defining project based on user message: $usermessage"
 $projectGoal = ""
 
 $Message = @"
@@ -213,10 +175,19 @@ The user has provided the following initial description of the Project. Review t
 $($usermessage.trim())
 "@ | out-string
 
+$Message = @"
+$($discussionSteps[0].prompt)
+
+###Project### 
+$($usermessage.trim())
+
+"@
+#Write-Host $Message
 Write-Verbose "Defining project goal, message: '$Message'"
-$arguments = @($Message, 500, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
+$arguments = @($Message, 1000, "UltraPrecise", $mainEntity.name, $mainEntity.GPTModel, $true)
 try {
     $projectGoal = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+    #write-Host $projectGoal
 }
 catch {
     Write-Error -Message "Failed to defining project goal"
@@ -229,7 +200,7 @@ if ($projectGoal) {
     PSWriteColor\Write-Color -Text "User goal: " -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
     PSWriteColor\Write-Color -Text $usermessage -Color Blue -BackGroundColor Yellow -LinesBefore 0 -Encoding utf8 
     PSWriteColor\Write-Color -Text "Reviewed goal: " -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
-    PSWriteColor\Write-Color -Text ($projectGoal | ConvertFrom-Json).ProjectGoal -Color Blue -BackGroundColor Yellow -LinesBefore 0 -Encoding utf8 
+    PSWriteColor\Write-Color -Text $(($projectGoal | ConvertFrom-Json).ProjectGoal) -Color Blue -BackGroundColor Yellow -LinesBefore 0 -Encoding utf8 
     $usermessageOryginal = $userMessage
     $usermessage = ($projectGoal | ConvertFrom-Json).ProjectGoal
 }
@@ -238,7 +209,38 @@ else {
 }
 Write-Verbose "Project goal: $projectGoal"
 $mainEntity.AddToConversationHistory($Message, $projectGoal)
-#endregion Define Project Goal
+#endregion Define Project Explorations
+
+
+#region Draft project output
+PSWriteColor\Write-Color -Text "Draft prompt" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
+$Message = @"
+###Instruction###
+You act as Prompt Engineer. Your task is create an GPT prompt text query to execute the Project expected output with a focus on ProjectGoal. You must ensure that all key and necessary elements are included. Response in a natural, human-like manner. Show prompt text query only.
+
+###Project###
+$projectGoal
+"@ | out-string
+$arguments = @($Message, 2000, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
+$projectDraftPrompt = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+$Message = @"
+###Instruction###
+$projectDraftPrompt
+
+###Project###
+$projectGoal
+"@ | out-string
+PSWriteColor\Write-Color -Text "Prototype" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
+$arguments = @($Message, 2000, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
+$projectDraft = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+if ($projectDraft) {
+    $script:projectDraftFileFulleNamepath = Save-DiscussionResponse -TextContent $projectDraft -Folder $script:TeamDiscussionDataFolder -type "projectDraft" -ihguid $ihguid 
+    if (Test-Path $script:projectDraftFileFulleNamepath) {
+        PSWriteColor\Write-Color -Text "Project draft saved to '$script:projectDraftFileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+    }
+}
+
+#endregion Draft project output
 
 <#
 #region Generate Project Goal
@@ -285,8 +287,8 @@ $ExpertsDiscussionHistoryArray = @()
 foreach ($expertToJob in $expertstojob) {
     PSWriteColor\Write-Color -Text "Processing by $($expertToJob.Name)..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -StartTab 1
     foreach ($discussionStep in $discussionSteps) {
-        if ($discussionStep.isRequired) {
-            PSWriteColor\Write-Color -Text "Analyzing step $($discussionStep.step): '$($discussionStep.step_name)'..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine -StartTab 2
+        if ($discussionStep.isRequired -and $discussionStep.step -gt 1) {
+            PSWriteColor\Write-Color -Text "Analyzing step: '$($discussionStep.step_name)'..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine -StartTab 2
             write-verbose "Discussion Step: $($discussionStep.step)" 
             write-verbose "Discussion Step name: $($discussionStep.step_name)"
 
@@ -311,6 +313,9 @@ $($discussionStep.prompt)
 
 ###Project### 
 $($projectGoal.trim())
+
+###Project output draft###
+$($projectDraft.trim())
 "@ | out-string
             #$PromptToExpertHistory
             #$PromptToExpert
@@ -390,7 +395,7 @@ $($ExpertsDiscussionHistoryArray.response)
 "@ | out-string
 
 $Message = @"
-After receiving responses from all experts regarding the project's various steps, compile a comprehensive summary with key elements. Summarize the main objectives, functionalities, constraints, and any other significant details gathered from the experts' responses. Ensure that the summary encapsulates the essence of the project and provides a clear understanding of its scope and requirements. Present the summarized information in JSON format, which will serve as the basis for the final delivery of the project.
+After receiving responses from all experts regarding the project's various steps, compile a comprehensive summary with key elements. Summarize the main objectives, functionalities, constraints, and any other significant details gathered from the experts' responses. Ensure that the summary encapsulates the essence of the project and provides a clear understanding of its scope and requirements. Present the summarized information in JSON format, which will serve as the basis for the final delivery of the project. You MUST ensure that response is based on verified sources.
 "@ | out-string
 
 $MessageUser = @"
@@ -416,12 +421,11 @@ if ($OrchestratorAnswer) {
 $mainEntity.AddToConversationHistory($Message, $MessageUser, $OrchestratorAnswer)
 #endregion ProcessFinishing
 
-
 #region Suggesting Prompt
 PSWriteColor\Write-Color -Text "Suggesting prompt..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
 $Message = @"
 ###Instruction###
-You act as Prompt Engineer. Your task is create an advanced GPT prompt text query to execute the Project. You must ensure that all key and necessary elements are included. Response in a natural, human-like manner. Show prompt text query only.
+You act as Prompt Engineer. Your task is create an advanced GPT prompt text query to execute the Project expected output. You must ensure that all key and necessary elements are included. Response in a natural, human-like manner. Show prompt text query only.
 "@ | out-string
 $MessageUser = @"
 ###Project###
@@ -441,7 +445,6 @@ if ($OrchestratorAnswerSugestPrompt) {
 }
 $mainEntity.AddToConversationHistory($Message, $MessageUser, $OrchestratorAnswerSugestPrompt)
 #endregion Suggesting Prompt
-
 
 #region Suggesting Prompt - Process Final Delivery
 PSWriteColor\Write-Color -Text "Suggesting prompt - Process final delivery..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
@@ -467,7 +470,6 @@ if ($OrchestratorSuggestPromptAnswer) {
 }
 $mainEntity.AddToConversationHistory($messageSystem, $MessageUser, $OrchestratorSuggestPromptAnswer)
 #endregion Suggesting Prompt - Process Final Delivery
-
 
 #region Final Delivery
 PSWriteColor\Write-Color -Text "Final delivery..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
@@ -508,7 +510,6 @@ if ($OrchestratorAnswerFinal) {
 }
 $mainEntity.AddToConversationHistory($Message, $MessageUser, $OrchestratorAnswerFinal)
 #endregion Final Delivery
-
 
 #region Final Delivery 2
 PSWriteColor\Write-Color -Text "Final delivery 2..." -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
@@ -596,14 +597,10 @@ if ($OrchestratorAnswerStructuredResponse) {
 $mainEntity.AddToConversationHistory($messagesystem, $messageuser, $OrchestratorAnswerStructuredResponse)
 #endregion Structured Response
 
-
-
-
 #region Save Conversation History
 $OrchestratorDiscussionHistoryFullName = (Join-Path -Path $script:TeamDiscussionDataFolder -ChildPath $mainEntity.Name) + ".json"
 $mainEntity.SaveConversationHistoryToFile($OrchestratorDiscussionHistoryFullName, "JSON")
 #endregion Save Conversation History
-
 
 #region Set Environment Variable
 [System.Environment]::SetEnvironmentVariable("PSAOAI_BANNER", "1", "User")
