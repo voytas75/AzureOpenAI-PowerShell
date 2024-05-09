@@ -5,7 +5,9 @@
     "Skills": [
       "Deep Knowledge",
       "Problem-Solving",
-      "Effective Communication"
+      "Effective Communication",
+      "Research and Analysis",
+      "Collaboration"
     ]
   },
   {
@@ -14,7 +16,9 @@
     "Skills": [
       "Data Analysis",
       "Data Visualization",
-      "Storytelling"
+      "Storytelling",
+      "Data Wrangling",
+      "Programming"
     ]
   },
   {
@@ -23,7 +27,10 @@
     "Skills": [
       "Creativity",
       "Brainstorming",
-      "Effective Communication"
+      "Effective Communication",
+      "Visual Thinking",
+      "Empathy",
+      "Adaptability"
     ]
   },
   {
@@ -32,7 +39,10 @@
     "Skills": [
       "Teamwork",
       "Conflict Resolution",
-      "Active Listening"
+      "Active Listening",
+      "Facilitation",
+      "Relationship Building",
+      "Delegation and Trust"
     ]
   },
   {
@@ -41,7 +51,9 @@
     "Skills": [
       "Adaptability",
       "Communication",
-      "Training and Development"
+      "Training and Development",
+      "Resistance Management",
+      "Metrics and Evaluation"
     ]
   },
   {
@@ -50,7 +62,10 @@
     "Skills": [
       "User Research",
       "Data Analysis",
-      "Effective Communication"
+      "Effective Communication",
+      "Information Architecture",
+      "Usability Testing",
+      "Prototyping"
     ]
   },
   {
@@ -59,7 +74,10 @@
     "Skills": [
       "Accessibility Guidelines",
       "Testing and Evaluation",
-      "Collaboration"
+      "Collaboration",
+      "Assistive Technologies",
+      "Remediation Strategies",
+      "Accessibility Awareness Training"
     ]
   },
   {
@@ -67,8 +85,33 @@
     "Expert Type": "Technical Expert",
     "Skills": [
       "Strong understanding of the technical aspects",
-      "Troubleshooting"
+      "Troubleshooting",
+      "Problem-Solving",
+      "Technical Communication",
+      "Technical Writing",
+      "Staying Updated"
+    ]
+  },
+  {
+    "ID": 9,
+    "Expert Type": "Subject Matter Expert (SME)",
+    "Skills":[
+      "Deep Knowledge",
+      "Problem-Solving",
+      "Effective Communication",
+      "Staying Updated",
+      "Collaboration"
+    ]
+  },
+  {
+    "ID": 10,
+    "Expert Type": "Decision Scientist",
+    "Skills":[
+      "Data Analysis and Modeling",
+      "Risk Assessment and Uncertainty Quantification",
+      "Problem Structuring and Framing",
+      "Optimization and Recommendation Techniques",
+      "Communication and Storytelling"
     ]
   }
-
 ]

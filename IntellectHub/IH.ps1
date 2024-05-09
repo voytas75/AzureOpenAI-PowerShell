@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
-    [string]$usermessage
+    [string]$usermessage,
+    [int]$expertCount = 3
 )
 
 # Import PSaoAI module
@@ -97,6 +98,7 @@ Catch {
 
 #region Project Folder Creation
 $script:ProjectFolderNameJson = Get-FolderNameTopic -Entity $mainEntity -usermessage $usermessage
+$script:ProjectFolderNameJson
 Write-Verbose ($script:ProjectFolderNameJson | out-string)
 $script:ProjectFolderFullNamePath = Create-FolderInGivenPath -FolderPath $script:TeamDiscussionDataFolder -FolderName (($script:ProjectFolderNameJson | ConvertFrom-Json).foldername | out-string)
 #$($($script:ProjectFolderNameJson | convertfrom-json).FolderName | out-string)
@@ -108,7 +110,7 @@ if ($script:ProjectFolderFullNamePath) {
 #region Expert Recommendation
 Write-Verbose "Get-ExpertRecommendation"
 PSWriteColor\Write-Color -Text "Experts recommendation " -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
-$output = Get-ExpertRecommendation -Entity $mainEntity -usermessage $usermessage -Experts $ExpertEntities -expertcount 1
+$output = Get-ExpertRecommendation -Entity $mainEntity -usermessage $usermessage -Experts $ExpertEntities -expertcount $expertCount
 #write-Host $output
 Write-Verbose "first response of gpt to the topic:"
 Write-Verbose $output
@@ -117,15 +119,13 @@ $maxAttempts = 5
 while ($attempts -lt $maxAttempts -and -not (Test-IsValidJson $output)) {
     Write-Verbose "The provided string is not a valid JSON. Cleaning process..."
     PSWriteColor\Write-Color -Text "Data pre-processing " -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine -StartTab 1
-    $output = Get-ExpertRecommendation -Entity $mainEntity -usermessage $usermessage -Experts $ExpertEntities -expertcount 1
+    #$output = Get-ExpertRecommendation -Entity $mainEntity -usermessage $usermessage -Experts $ExpertEntities -expertcount 2
     #Write-Host $output
     #Write-Verbose "start Extract-JSON"
     #$output = Extract-JSON -inputString $output
     #$output
-    if (-not (Test-IsValidJson $output)) {
-        Write-Verbose "start CleantojsonLLM"
-        $output = CleantojsonLLM -dataString $output -entity $mainEntity
-    }
+    Write-Verbose "start CleantojsonLLM"
+    $output = CleantojsonLLM -dataString $output -entity $mainEntity
     $attempts++
     #$attempts -lt $maxAttempts -and  -not (Test-IsValidJson $output)
 }
@@ -219,19 +219,69 @@ You as Prompt Engineer have task to create an GPT prompt text query to execute t
 ###Project###
 $projectGoal
 "@ | out-string
+
+$Message = @"
+### Instruction
+Create a GPT prompt text query for the project's expected output, focusing on the project goal. Ensure all key elements are included. Answer in a natural, human-like manner. Provide the prompt text query only. A prompt must comply with the following principles:
+1. Avoid unnecessary politeness in prompts to maintain conciseness.
+2. Integrate the intended audience's expertise level into the prompt.
+3. Break down complex tasks into a sequence of simpler prompts for clarity.
+4. Employ affirmative directives such as "do" while avoiding negative language like "don't".
+5. Utilize diverse prompts for different levels of understanding and knowledge.
+6. Incorporate a tipping mechanism for motivation when necessary.
+7. Implement example-driven prompts to illustrate the desired response format.
+8. Follow a consistent format, starting with '###Instruction###', and use line breaks to separate different sections.
+9. Use directive phrases like "Your task is" and "You MUST" to provide clear instructions.
+10. Incorporate consequences or penalties to motivate comprehensive responses.
+11. Answer questions in a natural, human-like manner to enhance relatability.
+12. Use leading words for clear guidance in problem-solving prompts.
+13. Ensure responses are unbiased and avoid relying on stereotypes.
+14. Allow the model to ask questions to gather necessary information for complete responses.
+15. Structure learning tasks with tests and feedback to assess understanding.
+16. Assign a role to the LLM to frame the context of the response.
+17. Use delimiters to set context and guide essay-type responses.
+18. Repeat key terms for emphasis and clarity within the prompt.
+19. Combine Chain-of-Thought with Few-Shot prompts to enhance reasoning.
+20. Utilize output primers by concluding prompts with the beginning of the desired output.
+21. Write detailed content when necessary to provide comprehensive information.
+22. Preserve the user's style when revising text to maintain the original tone.
+23. Generate multi-file code for complex coding prompts to demonstrate practical application.
+24. Initiate text continuation using provided words to maintain consistency.
+25. Clearly state the requirements that the model must follow using keywords for content generation.
+26. Mimic provided language style in the prompt to match a given sample.
+27. In the prompt, "you" must refer to the LLM model and "I" to the user.
+For example, when assessing Principle 7 (example-driven prompts), you might say:
+"The user prompt lacks concrete examples to guide the LLM's response. For instance, if the prompt asks for an explanation of photosynthesis, it should include a simple example like 'Explain how a plant makes its food from sunlight.'"
+Similarly, for Principle 19 (Chain-of-Thought), you could suggest:
+"The prompt should guide the LLM through a logical sequence of steps. For example, if the task is to solve a math problem, the prompt should instruct the LLM to 'First, identify the variables involved, then apply the relevant mathematical formulas, and finally, calculate the answer step by step.'"
+
+### Project
+$($projectGoal.trim())
+"@
 $arguments = @($Message, 2000, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
 $projectDraftPrompt = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+if ($projectDraftPrompt) {
+    Write-Host $projectDraftPrompt
+    $script:projectDraftPromptFileFulleNamepath = Save-DiscussionResponse -TextContent $projectDraftPrompt -Folder $script:TeamDiscussionDataFolder -type "projectDraftPrompt" -ihguid $ihguid 
+    if (Test-Path $script:projectDraftPromptFileFulleNamepath) {
+        PSWriteColor\Write-Color -Text "Project draft saved to '$script:projectDraftPromptFileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime
+    }
+} else {
+    Write-Warning "Empty Prototype Prompt. Exiting"
+    return $false
+}
+
 $Message = @"
-###Instruction###
-$projectDraftPrompt
+$($projectDraftPrompt.trim())
 
 ###Project###
-$projectGoal
+$($projectGoal.trim() | ConvertFrom-Json | select * | out-string)
 "@ | out-string
 PSWriteColor\Write-Color -Text "Prototype" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine
 $arguments = @($Message, 1000, "Precise", $mainEntity.name, $mainEntity.GPTModel, $true)
 $projectDraft = $mainEntity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
 if ($projectDraft) {
+    Write-Host $projectDraft
     $script:projectDraftFileFulleNamepath = Save-DiscussionResponse -TextContent $projectDraft -Folder $script:TeamDiscussionDataFolder -type "projectDraft" -ihguid $ihguid 
     if (Test-Path $script:projectDraftFileFulleNamepath) {
         PSWriteColor\Write-Color -Text "Project draft saved to '$script:projectDraftFileFulleNamepath'" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime

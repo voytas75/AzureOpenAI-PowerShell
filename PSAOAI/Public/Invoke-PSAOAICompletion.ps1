@@ -199,7 +199,6 @@ function Invoke-PSAOAICompletion {
         New-Item -ItemType Directory -Path $logfileDirectory -Force | Out-Null
     }
 
-
     while (-not $APIVersion) {
         $APIVersion = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API Version"
     }
@@ -342,6 +341,7 @@ function Invoke-PSAOAICompletion {
         Write-Verbose "Echo: $echo"
         Write-Verbose "Completion Config: $completion_config"
         Write-Verbose "Model: $Deployment"
+        Write-Verbose "LogFolder: $LogFolder"
 
         
         $bodyJSON = Get-PSAOAICompletionBody -prompt $prompt `
@@ -378,7 +378,7 @@ function Invoke-PSAOAICompletion {
         
         $response = Invoke-PSAOAIApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240
 
-        $responseText = (Show-ResponseMessage -content $response.choices[0].text -stream "console"  -simpleresponse:$simpleresponse | out-String)
+        $responseText = (Show-ResponseMessage -content $response.choices[0].text -stream "console" -simpleresponse:$simpleresponse | out-String)
         
         if (-not $simpleresponse) {
             Show-FinishReason -finishReason $response.choices.finish_reason

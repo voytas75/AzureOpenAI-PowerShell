@@ -4,7 +4,7 @@
             "step": 1,
             "step_name": "Project Exploration",
             "isRequired": true,
-            "prompt": "Analyze the user's input about the project and provide information in JSON format. ProjectGoal must be short but concise and contain the most important project data. Ensure that the output follows the JSON structure {\"ProjectName\": \"\", \"ProjectGoal\": \"\", \"Description\": \"\", \"Purpose\": \"\", \"Expected output\": \"\", \"Objectives\": [ \"\" ], \"Functionalities\": [ \"\" ], \"Constraints\": { \"Resources\": [ \"\" ], \"Technology\": [ \"\" ], \"Best Practices\": [ \"\" ], \"Other\": [ \"\" ]}}\nThe value of the parameter 'ProjectGoal' must be an imperative sentence. Fill in any missing information to complete the task."
+            "prompt": "Analyze the user's input about the project and provide information in JSON format. ProjectGoal must be focused on user's needs, short but concise, and must be an imperative sentence. Response must contain the most important project data. Ensure that the output follows the JSON structure {\"ProjectName\": \"\", \"ProjectGoal\": \"\", \"Description\": \"\", \"Purpose\": \"\", \"Expected output\": \"\", \"Objectives\": [ \"\" ], \"Functionalities\": [ \"\" ], \"Constraints\": { \"Resources\": [ \"\" ], \"Technology\": [ \"\" ], \"Best Practices\": [ \"\" ], \"Other\": [ \"\" ]}}\nFill in any missing information to complete the task."
         },
         {
             "step": 2,

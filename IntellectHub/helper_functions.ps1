@@ -118,7 +118,7 @@ function Save-DiscussionResponse {
     }
 
     # Save the discussion response to a file, using a unique name
-    $fileName = $type +"_"+ $ihguid + ".txt"
+    $fileName = $type + "_" + $ihguid + ".txt"
     $filePath = Join-Path -Path $Folder -ChildPath $fileName
     $TextContent.trim() | Out-File -FilePath $filePath -Encoding UTF8
 
@@ -460,7 +460,7 @@ function Clear-LLMDataJSON {
         $data = $data.Substring(0, $data.LastIndexOf('}') + 1)
     }
     catch {
-        Write-Error "Failed to clean the JSON string. Please ensure the input string is a valid JSON."
+        Write-Warning "Failed to clean the JSON string. Please ensure the input string is a valid JSON."
         return $data
     }
     # Return the cleaned data
@@ -583,17 +583,28 @@ function Get-ExpertRecommendation {
 
     # Prepare the message to be sent to the InvokeCompletion method
     $Message = @"
-Response without deviation as RFC8259 compliant JSON serialized format '{"JobExperts": [""]}', provide user with information about the most useful Expert name(s) to get the Project done. Chose only$($ExperCountToChoose). 
-
-###Project###
-$usermessage
+Response without deviation and as RFC8259 compliant JSON serialized format {"JobExperts": [""]}, provide information about the most useful Expert name(s) to get the Project done. Chose only$($ExperCountToChoose) expert(s). Project is '$usermessage'.
 
 ##Experts###
 $($Experts.foreach{"Name: "+$_.name, ", Experet description: "+$_.Description,", Expert' skills: "+$($_.Skills -join ", ")+"`n"})
 "@ | Out-String
 
+    $Message = @"
+Given the following information:  '$usermessage'
+
+$($Experts.foreach{"Name: "+$_.name, ", Experet description: "+$_.Description,", Expert' skills: "+$($_.Skills -join ", ")+"`n"})
+Generate a JSON object that includes$($ExperCountToChoose)name(s) of expert(s).
+
+###example###
+{
+    "JobExperts": [
+        "Collaboration Expert",
+        ""
+    ]
+}
+"@ | out-string
     # Write the message to the verbose output
-    #Write-Host $Message
+    Write-Host $Message
 
     # Prepare the arguments for the InvokeCompletion method
     $arguments = @($Message, 500, "Focused", $Entity.name, $Entity.GPTModel, $true)
@@ -601,7 +612,7 @@ $($Experts.foreach{"Name: "+$_.name, ", Experet description: "+$_.Description,",
     try {
         # Invoke the completion and get the output
         $output = $Entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
-        #Write-Host $output
+        Write-Host $output
 
         return $output
     }
@@ -622,20 +633,20 @@ function CleantojsonLLM {
 
     $Message = @"
 ###Instruction###
-In JSON format '{"JobExperts": [""]}', provide information from Data about Expert names to get the Project done, without block code. 
+In JSON format {"JobExperts": [""]}, provide information from Data about Expert names to get the Project done, without block code. 
 
 ###Data###
 $dataString
 "@ | out-string
 
-    #Write-Host $Message
+    Write-Host $Message
     PSWriteColor\Write-Color -Text "Data correction" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine -StartTab 1
     $arguments = @($Message, 1000, "UltraPrecise", $entity.name, $entity.GPTModel, $true)
     write-verbose ($arguments | Out-String)
     try {
         $output = $entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
         Write-Verbose $output
-        #Write-Host $output  
+        Write-Host $output  
         PSWriteColor\Write-Color -Text "Data refinement" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -StartTab 1
         $output = Clear-LLMDataJSOn $output
         #Write-Host $output  
