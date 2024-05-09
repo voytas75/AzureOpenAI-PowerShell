@@ -4,7 +4,7 @@
             "step": 1,
             "step_name": "Project Exploration",
             "isRequired": true,
-            "prompt": "Analyze the user's input about the project and provide information in JSON format. ProjectGoal must be short but concise and contain the most important project data. Ensure that the output follows the JSON structure: { \"ProjectName\": \"\", \"ProjectGoal\": \"\", \"Description\": \"\", \"Purpose\": \"\", \"Expected output\": \"\", \"Objectives\": [ \"\" ], \"Functionalities\": [ \"\" ], \"Constraints\": { \"Resources\": [ \"\" ], \"Technology\": [ \"\" ], \"Best Practices\": [ \"\" ], \"Other\": [ \"\" ] }}. Fill in any missing information to complete the task."
+            "prompt": "Analyze the user's input about the project and provide information in JSON format. ProjectGoal must be short but concise and contain the most important project data. Ensure that the output follows the JSON structure {\"ProjectName\": \"\", \"ProjectGoal\": \"\", \"Description\": \"\", \"Purpose\": \"\", \"Expected output\": \"\", \"Objectives\": [ \"\" ], \"Functionalities\": [ \"\" ], \"Constraints\": { \"Resources\": [ \"\" ], \"Technology\": [ \"\" ], \"Best Practices\": [ \"\" ], \"Other\": [ \"\" ]}}\nThe value of the parameter 'ProjectGoal' must be an imperative sentence. Fill in any missing information to complete the task."
         },
         {
             "step": 2,
@@ -39,7 +39,7 @@
         {
             "step": 7,
             "step_name": "Documentation",
-            "isRequired": true,
+            "isRequired": false,
             "prompt": "In JSON format {  \"ProjectName\": \"\",  \"purpose\": \"\",  \"architecture\": {    \"overview\": \"\",    \"diagrams\": [\"\"],    \"details\": \"\"  },  \"functionality\": {    \"core_features\": [      \"\",      \"\"    ],    \"user_guide\": {      \"getting_started\": \"\",      \"using_features\": \"\",      \"tutorials\": [\"\"]    }  },  \"troubleshooting\": {    \"common_issues\": [      \"\",      \"\"    ],    \"reporting_bugs\": \"\"  },  \"maintenance\": {    \"development_process\": \"\",    \"contribution_guidelines\": \"\"  }}, provide me with information about document the project comprehensively, including its purpose, architecture, functionality, usage instructions, and troubleshooting guidelines. Ensure the documentation facilitates understanding and maintenance of the project. MUST fill in any missing information necessary to complete the task."
         },
         {
@@ -51,8 +51,8 @@
         {
             "step": 9,
             "step_name": "Project Delivery",
-            "isRequired": true,
-            "prompt": "In JSON format {  \"ProjectName\": \"\",  \"delivery_package\": {    \"documentation\": {      \"format\": \"\",      \"location\": \"\"    },    \"release_notes\": {      \"content\": \"\",      \"location\": \"\"    },    \"deployment_instructions\": {      \"target_environment\": \"\",      \"instructions\": \"\",      \"location\": \"\"    },    \"artifacts\": [      \"\",      \"\",      \"\"    ]  }}, provide me with information about deliver the finalized design package. Include documentation, release notes, deployment instructions, and any other relevant artifacts. MUST fill in the missing information necessary to complete the task."
+            "isRequired": false,
+            "prompt": "In JSON format {  \"ProjectName\": \"\",  \"delivery_package\": {    \"documentation\": {      \"format\": \"\",      \"location\": \"\"    },    \"release_notes\": {      \"content\": \"\",      \"location\": \"\"    },    \"deployment_instructions\": {      \"target_environment\": \"\",      \"instructions\": \"\",      \"location\": \"\"    },}}, provide me with information about deliver the finalized design package. Include documentation, release notes, and deployment instructions. MUST fill in the missing information necessary to complete the task."
         }
     ]
 }

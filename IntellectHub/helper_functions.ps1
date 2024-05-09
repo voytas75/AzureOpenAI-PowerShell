@@ -118,7 +118,7 @@ function Save-DiscussionResponse {
     }
 
     # Save the discussion response to a file, using a unique name
-    $fileName = $type + $ihguid + ".txt"
+    $fileName = $type +"_"+ $ihguid + ".txt"
     $filePath = Join-Path -Path $Folder -ChildPath $fileName
     $TextContent.trim() | Out-File -FilePath $filePath -Encoding UTF8
 
@@ -474,17 +474,15 @@ function Extract-JSON {
         [string]$inputString
     )
 
-    Write-Verbose "Extract-JSON: inputstring:"
-    Write-Verbose $($inputString | out-string)
+    Write-Verbose "Extract-JSON: inputstring: $($inputString | out-string)"
 
     # Define a regular expression pattern to match JSON
     $jsonPattern = '(?s)\{.*?\}|\[.*?\]'
 
     # Find JSON substring using regex
     $jsonSubstrings = $inputString | Select-String -Pattern $jsonPattern -AllMatches | ForEach-Object { $_.Matches.Value }
-    Write-Verbose "Extract-JSON: jsonSubstrings:"
-    Write-Verbose $($jsonSubstrings | out-string)
-
+    Write-Verbose "Extract-JSON: jsonSubstrings: $($jsonSubstrings | out-string)"
+    
     # Initialize an array to hold valid JSON objects
     $validJsonObjects = @()
 
@@ -494,10 +492,11 @@ function Extract-JSON {
         foreach ($jsonSubstring in $jsonSubstrings) {
             # Parse JSON substring
             try {
-                $jsonObject = Test-IsValidJson $jsonSubstring
+                $jsonObject = Test-IsValidJson $jsonSubstring -Verbose:$verbose
                 Write-Verbose "Extract-JSON: JSON extracted and parsed successfully."
                 # Save parsed JSON into the array
                 $validJsonObjects += $jsonObject
+                Write-Host $jsonObject
             }
             catch {
                 Write-Verbose "Extract-JSON: Failed to parse JSON."
@@ -509,7 +508,6 @@ function Extract-JSON {
         Write-Verbose "Extract-JSON: No JSON found in the string."
         return $false
     }
-
     # Return the array of valid JSON objects
     return $validJsonObjects
 }
@@ -538,7 +536,7 @@ function Test-IsValidJson {
         #Write-Host "JSON is empty"
         return $false
     }
-    Write-Verbose "Test-IsValidJson: jsonString: '$jsonString'"
+    Write-Verbose "Test-IsValidJson: jsonString: $jsonString"
     try {
         $null = $jsonString | ConvertFrom-Json -ErrorAction Stop
         #Write-Host "JSON OK: $jsonString"
@@ -585,7 +583,7 @@ function Get-ExpertRecommendation {
 
     # Prepare the message to be sent to the InvokeCompletion method
     $Message = @"
-Only as RFC8259 compliant JSON serialized format '{"JobExperts": [""]}', provide user with information about the most useful Expert name(s) to get the Project done. Chose only$($ExperCountToChoose). Response without deviation.
+Response without deviation as RFC8259 compliant JSON serialized format '{"JobExperts": [""]}', provide user with information about the most useful Expert name(s) to get the Project done. Chose only$($ExperCountToChoose). 
 
 ###Project###
 $usermessage
@@ -624,7 +622,7 @@ function CleantojsonLLM {
 
     $Message = @"
 ###Instruction###
-In JSON format { "JobExperts":  [ "" ]}, provide information from Data about Expert names to get the Project done, without block code. 
+In JSON format '{"JobExperts": [""]}', provide information from Data about Expert names to get the Project done, without block code. 
 
 ###Data###
 $dataString
@@ -640,6 +638,7 @@ $dataString
         #Write-Host $output  
         PSWriteColor\Write-Color -Text "Data refinement" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -StartTab 1
         $output = Clear-LLMDataJSOn $output
+        #Write-Host $output  
         return $output
     }
     catch {
