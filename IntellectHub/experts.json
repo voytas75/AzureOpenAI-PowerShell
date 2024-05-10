@@ -8,7 +8,8 @@
       "Effective Communication",
       "Research and Analysis",
       "Collaboration"
-    ]
+    ],
+    "Description": "Possesses in-depth knowledge of a specific domain and can apply that knowledge to solve complex problems, conduct research and analysis, and effectively communicate findings to both technical and non-technical audiences."
   },
   {
     "ID": 2,
@@ -19,7 +20,8 @@
       "Storytelling",
       "Data Wrangling",
       "Programming"
-    ]
+    ],
+    "Description": "Extracts insights and knowledge from data by cleaning, analyzing, and visualizing it. They can translate complex data sets into clear and compelling stories to inform decision-making."
   },
   {
     "ID": 3,
@@ -31,7 +33,8 @@
       "Visual Thinking",
       "Empathy",
       "Adaptability"
-    ]
+    ],
+    "Description": "Generates original ideas, approaches problems from new angles, and facilitates brainstorming sessions. They can translate ideas into visual representations and adapt their thinking based on feedback."
   },
   {
     "ID": 4,
@@ -43,7 +46,8 @@
       "Facilitation",
       "Relationship Building",
       "Delegation and Trust"
-    ]
+    ],
+    "Description": "Ensures effective teamwork by fostering collaboration, resolving conflicts, and facilitating productive discussions. They build strong relationships within the team and delegate tasks effectively."
   },
   {
     "ID": 5,
@@ -54,7 +58,8 @@
       "Training and Development",
       "Resistance Management",
       "Metrics and Evaluation"
-    ]
+    ],
+    "Description": "Guides organizations through change initiatives by effectively communicating the need for change, developing training programs, and managing resistance. They track progress and measure the success of change initiatives."
   },
   {
     "ID": 6,
@@ -66,7 +71,8 @@
       "Information Architecture",
       "Usability Testing",
       "Prototyping"
-    ]
+    ],
+    "Description": "Conducts user research to understand user needs and behavior, analyzes the data, and translates findings into user-centered designs. They ensure information is organized logically and conduct usability testing to identify and address any user interface issues."
   },
   {
     "ID": 7,
@@ -78,7 +84,8 @@
       "Assistive Technologies",
       "Remediation Strategies",
       "Accessibility Awareness Training"
-    ]
+    ],
+    "Description": "Ensures digital products are accessible to everyone by adhering to accessibility guidelines, conducting testing with assistive technologies, and developing remediation strategies. They raise awareness of accessibility best practices within organizations."
   },
   {
     "ID": 8,
@@ -90,28 +97,31 @@
       "Technical Communication",
       "Technical Writing",
       "Staying Updated"
-    ]
+    ],
+    "Description": "Possesses a deep understanding of a specific technology and can troubleshoot problems, solve technical challenges, and clearly explain technical concepts to both technical and non-technical audiences. They continuously stay updated with the latest advancements in their field."
   },
   {
     "ID": 9,
     "Expert Type": "Subject Matter Expert (SME)",
-    "Skills":[
+    "Skills": [
       "Deep Knowledge",
       "Problem-Solving",
       "Effective Communication",
       "Staying Updated",
       "Collaboration"
-    ]
+    ],
+    "Description": "Brings a high level of specialized knowledge in a particular domain and can apply that knowledge to solve complex problems, collaborate with others, and effectively communicate their expertise to various audiences. They actively keep their knowledge current with the latest advancements in their field."
   },
   {
     "ID": 10,
     "Expert Type": "Decision Scientist",
-    "Skills":[
+    "Skills": [
       "Data Analysis and Modeling",
       "Risk Assessment and Uncertainty Quantification",
       "Problem Structuring and Framing",
       "Optimization and Recommendation Techniques",
       "Communication and Storytelling"
-    ]
+    ],
+    "Description": "A Decision Scientist leverages analytical techniques and models to evaluate complex situations related to the impact of GPT on IT Microsoft Administrators. They assess risks and uncertainties, clearly define the decision problem, and employ optimization methods to recommend the best course of action. By effectively communicating their findings and reasoning, they guide informed decision-making."
   }
 ]

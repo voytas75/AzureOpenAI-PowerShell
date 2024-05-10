@@ -1,0 +1,117 @@
+[
+  {
+    "ID": 1,
+    "Expert Type": "Domain Expert",
+    "Skills": [
+      "Deep Knowledge",
+      "Problem-Solving",
+      "Effective Communication",
+      "Research and Analysis",
+      "Collaboration"
+    ]
+  },
+  {
+    "ID": 2,
+    "Expert Type": "Data Analyst",
+    "Skills": [
+      "Data Analysis",
+      "Data Visualization",
+      "Storytelling",
+      "Data Wrangling",
+      "Programming"
+    ]
+  },
+  {
+    "ID": 3,
+    "Expert Type": "Creative Thinker",
+    "Skills": [
+      "Creativity",
+      "Brainstorming",
+      "Effective Communication",
+      "Visual Thinking",
+      "Empathy",
+      "Adaptability"
+    ]
+  },
+  {
+    "ID": 4,
+    "Expert Type": "Collaboration Expert",
+    "Skills": [
+      "Teamwork",
+      "Conflict Resolution",
+      "Active Listening",
+      "Facilitation",
+      "Relationship Building",
+      "Delegation and Trust"
+    ]
+  },
+  {
+    "ID": 5,
+    "Expert Type": "Change Management Expert",
+    "Skills": [
+      "Adaptability",
+      "Communication",
+      "Training and Development",
+      "Resistance Management",
+      "Metrics and Evaluation"
+    ]
+  },
+  {
+    "ID": 6,
+    "Expert Type": "UX Researcher",
+    "Skills": [
+      "User Research",
+      "Data Analysis",
+      "Effective Communication",
+      "Information Architecture",
+      "Usability Testing",
+      "Prototyping"
+    ]
+  },
+  {
+    "ID": 7,
+    "Expert Type": "Accessibility Specialist",
+    "Skills": [
+      "Accessibility Guidelines",
+      "Testing and Evaluation",
+      "Collaboration",
+      "Assistive Technologies",
+      "Remediation Strategies",
+      "Accessibility Awareness Training"
+    ]
+  },
+  {
+    "ID": 8,
+    "Expert Type": "Technical Expert",
+    "Skills": [
+      "Strong understanding of the technical aspects",
+      "Troubleshooting",
+      "Problem-Solving",
+      "Technical Communication",
+      "Technical Writing",
+      "Staying Updated"
+    ]
+  },
+  {
+    "ID": 9,
+    "Expert Type": "Subject Matter Expert (SME)",
+    "Skills":[
+      "Deep Knowledge",
+      "Problem-Solving",
+      "Effective Communication",
+      "Staying Updated",
+      "Collaboration"
+    ]
+  },
+  {
+    "ID": 10,
+    "Expert Type": "Decision Scientist",
+    "Skills":[
+      "Data Analysis and Modeling",
+      "Risk Assessment and Uncertainty Quantification",
+      "Problem Structuring and Framing",
+      "Optimization and Recommendation Techniques",
+      "Communication and Storytelling"
+    ]
+  }
+]

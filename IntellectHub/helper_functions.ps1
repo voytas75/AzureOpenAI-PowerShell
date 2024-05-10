@@ -603,22 +603,37 @@ Generate a JSON object that includes$($ExperCountToChoose)name(s) of expert(s).
     ]
 }
 "@ | out-string
-    # Write the message to the verbose output
-    Write-Host $Message
+$Message = @"
+Given the following information: "$usermessage"
 
+**Expert Teams and Skills:**
+$($Experts.foreach{"Name: '"+$($_.name.trim()), "', Experet description: "+$_.Description,", Expert' skills: "+$($_.Skills -join ", ")+"`n"})
+**Goal:**
+Suggest best$($ExperCountToChoose)name(s) of expert(s), generate, and show only a JSON object with the following structure:
+
+{
+  "JobExperts": [
+    "Domain Expert",
+    "Data Analyst"
+  ]
+}
+"@
+
+# Write the message to the verbose output
+    #Write-Host $Message
     # Prepare the arguments for the InvokeCompletion method
     $arguments = @($Message, 500, "Focused", $Entity.name, $Entity.GPTModel, $true)
 
     try {
         # Invoke the completion and get the output
         $output = $Entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
-        Write-Host $output
+        #Write-Host $output
 
         return $output
     }
     catch {
         # Write an error message if the expert recommendation fails
-        Write-Error -Message "Failed to get expert recommendation"
+        Write-Warning -Message "Failed to get expert recommendation"
         return $false
     }
 }
