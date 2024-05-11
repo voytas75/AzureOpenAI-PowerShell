@@ -58,7 +58,9 @@ function Invoke-PSAOAIApiRequest {
 
         # If the job failed, write the error message
         if ($response.JobStateInfo.State -eq 'Failed') {
-            #Write-Output $($response.ChildJobs[0].JobStateInfo.Reason.message
+            Write-Warning $($response.ChildJobs[0].JobStateInfo.Reason.message)
+
+            return 
         }
 
         # Receive the job result

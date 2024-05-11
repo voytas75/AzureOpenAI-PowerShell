@@ -375,9 +375,12 @@ function Invoke-PSAOAICompletion {
             }
             Write-Host "{MaxTokens:'$MaxTokens', temp:'$Temperature', top_p:'$TopP', fp:'$FrequencyPenalty', pp:'$PresencePenalty', user:'$User', n:'$N', stop:'$Stop', stream:'$Stream'} " -ForegroundColor Magenta
         }
-        
+        #write-host $bodyJSON -BackgroundColor Blue
         $response = Invoke-PSAOAIApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240
-
+        if (-not $($response.choices[0].text)) {
+            Write-Warning "Response is empty"
+            return
+        }
         $responseText = (Show-ResponseMessage -content $response.choices[0].text -stream "console" -simpleresponse:$simpleresponse | out-String)
         
         if (-not $simpleresponse) {

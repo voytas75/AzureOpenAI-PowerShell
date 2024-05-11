@@ -605,12 +605,10 @@ Generate a JSON object that includes$($ExperCountToChoose)name(s) of expert(s).
 "@ | out-string
 $Message = @"
 Given the following information: "$usermessage"
-
-**Expert Teams and Skills:**
+###Expert###
 $($Experts.foreach{"Name: '"+$($_.name.trim()), "', Experet description: "+$_.Description,", Expert' skills: "+$($_.Skills -join ", ")+"`n"})
-**Goal:**
-Suggest best$($ExperCountToChoose)name(s) of expert(s), generate, and show only a JSON object with the following structure:
-
+###Goal###
+Suggest best$($ExperCountToChoose)name(s) of expert(s), generate a JSON object, and show only with the following structure:
 {
   "JobExperts": [
     "Domain Expert",
@@ -627,7 +625,7 @@ Suggest best$($ExperCountToChoose)name(s) of expert(s), generate, and show only 
     try {
         # Invoke the completion and get the output
         $output = $Entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
-        #Write-Host $output
+        Write-Host $output
 
         return $output
     }
@@ -655,15 +653,18 @@ $dataString
 "@ | out-string
 
     Write-Host $Message
-    PSWriteColor\Write-Color -Text "Data correction" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine -StartTab 1
     $arguments = @($Message, 1000, "UltraPrecise", $entity.name, $entity.GPTModel, $true)
     write-verbose ($arguments | Out-String)
     try {
-        $output = $entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
-        Write-Verbose $output
-        Write-Host $output  
         PSWriteColor\Write-Color -Text "Data refinement" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -StartTab 1
         $output = Clear-LLMDataJSOn $output
+        if (Test-IsValidJson $output) {
+            return $output
+        }
+        PSWriteColor\Write-Color -Text "Data correction" -Color Blue -BackGroundColor Cyan -LinesBefore 0 -Encoding utf8 -ShowTime -NoNewLine -StartTab 1
+        $output = $entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+        #Write-Verbose $output
+        #Write-Host $output  
         #Write-Host $output  
         return $output
     }

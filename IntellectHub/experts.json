@@ -9,7 +9,8 @@
       "Research and Analysis",
       "Collaboration"
     ],
-    "Description": "Possesses in-depth knowledge of a specific domain and can apply that knowledge to solve complex problems, conduct research and analysis, and effectively communicate findings to both technical and non-technical audiences."
+    "Description": "Possesses in-depth knowledge of a specific domain and can apply that knowledge to solve complex problems, conduct research and analysis, and effectively communicate findings to both technical and non-technical audiences.",
+    "Supplement": "Provide a scientifically accurate foundation. Remember: Prioritize factual accuracy."
   },
   {
     "ID": 2,
@@ -21,7 +22,8 @@
       "Data Wrangling",
       "Programming"
     ],
-    "Description": "Extracts insights and knowledge from data by cleaning, analyzing, and visualizing it. They can translate complex data sets into clear and compelling stories to inform decision-making."
+    "Description": "Extracts insights and knowledge from data by cleaning, analyzing, and visualizing it. They can translate complex data sets into clear and compelling stories to inform decision-making.",
+    "Supplement": "Focus: Analyze for themes, conflicts, and engagement. Goal: Offer insights on narrative structure. Remember: Leverage data analysis skills to improve the topic."
   },
   {
     "ID": 3,
@@ -34,7 +36,8 @@
       "Empathy",
       "Adaptability"
     ],
-    "Description": "Generates original ideas, approaches problems from new angles, and facilitates brainstorming sessions. They can translate ideas into visual representations and adapt their thinking based on feedback."
+    "Description": "Generates original ideas, approaches problems from new angles, and facilitates brainstorming sessions. They can translate ideas into visual representations and adapt their thinking based on feedback.",
+    "Supplement": "Focus: Unleash your imagination! Explore unconventional ideas and world-building elements. Goal: Infuse originality and wonder. Remember: Don't be afraid to push boundaries."
   },
   {
     "ID": 4,

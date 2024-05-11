@@ -1,3 +1,10 @@
+[CmdletBinding()]
+param(
+    [string] $Topic = "The Impact of GPT on IT Microsoft Administrators",
+    [int] $maxRounds = 5,
+    [int] $expertCount = 2 
+)
+
 class Entity {
     [string] $name
     [string[]] $memory
@@ -29,18 +36,13 @@ You are $($this.name) with skills $($this.skills -join ", "). What is your state
     }
     
     #[string] respond([string[]] $statements, [scriptblock] $invokeGPTFunction, [string[]] $prompts, [Entity] $entity) {
-    [string] respond([string[]] $statements, [scriptblock] $invokeGPTFunction, [string[]] $prompts) {
+    [string] respond([string[]] $statements, [scriptblock] $invokeGPTFunction, [string] $topic) {
         Write-Host ">Generate Respond for $($this.name)<"
         $otherStatements = $statements -join ", "
-        Write-Color "Generate Respond pre-prompts: '$prompts'" -Color Yellow
-        $prompts += $otherStatements
-        Write-Color "Generate Respond prompts: '$prompts'" -Color Yellow
-        $response = & $invokeGPTFunction $prompts $this  # Pass prompts and the current entity to the invokeGPT function
-        #$response = $this.respond($otherStatements, $invokeGPTFunction, $prompts)
-
+        $response = & $invokeGPTFunction $otherStatements $this  # Pass prompts and the current entity to the invokeGPT function
         $this.addToMemory($response)
-        return "$($this.name): $response`nOthers mentioned: $otherStatements"
-        #return "$($this.name): $response"
+        #return "$($this.name): $response`nOthers mentioned: $otherStatements"
+        return "$($this.name): $response"
     }
     
     [void] addToMemory([string] $response) {
@@ -82,12 +84,10 @@ function ConductDiscussion {
     param (
         [Entity[]] $entities,
         [string] $topic,
-        [string[]] $prompts,
         [int] $maxRounds
     )
 
     Write-Host "`nTopic: $topic" -BackgroundColor Cyan
-    Write-Host "Prompts: $($prompts -join ', ')" -BackgroundColor DarkBlue
 
     $roundNumber = 1
     while ($roundNumber -le $maxRounds) {
@@ -98,9 +98,9 @@ function ConductDiscussion {
                 write-color ">ConductDiscussion $($_.name)<"
                 $_.generateStatement($topic) 
              })
-            Write-Host ">ConductDiscussion prompts: $prompts<"
             Write-Host ">ConductDiscussion EntityRespond<"
-            $EntityRespond = $entity.respond($otherStatements, ${function:InvokeGPT}, $prompts)
+            $EntityRespond = $entity.respond($otherStatements, ${function:InvokeGPT}, $topic)
+            $prompts += $EntityRespond
             Write-Color -Text $EntityRespond -Color Green
         }
         $roundNumber++
@@ -110,23 +110,26 @@ function ConductDiscussion {
 # Define the function to invoke GPT
 function InvokeGPT {
     param (
-        [string[]] $prompts,
+        [string[]] $Statements,
         [entity] $entity
     )
 
     # Call your InvokeGPT function here
-    $prompt = $prompts | Get-Random
-    Write-color "InvokeGPT prompts for $($entity.name): '$prompts'" -BackGroundColor DarkYellow
-    Write-color "InvokeGPT pre-prompt for $($entity.name): '$prompt'" -BackGroundColor DarkYellow
-    $arguments = @($prompt, 1000, "UltraPrecise", $entity.name, "udtgpt35turbo", $true)
-    Write-color "InvokeGPT prompt for $($entity.name): '$prompt'" -BackGroundColor DarkYellow
+    #Write-color "InvokeGPT prompts for $($entity.name): '$prompts'" -BackGroundColor DarkYellow
+    #Write-color "InvokeGPT pre-prompt for $($entity.name): '$prompt'" -BackGroundColor DarkYellow
+    $Message = @"
+Respond to the statements of others:
+$($statements)
+and give your arguments, ask questions.
+"@
+    $arguments = @($Message, 1000, "UltraPrecise", $entity.name, "udtgpt35turbo", $true)
+    #Write-color "InvokeGPT prompt for $($entity.name): '$prompt'" -BackGroundColor DarkYellow
     $response = $entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
-    Write-Color $response -BackGroundColor DarkGray
+    #Write-Color $response -BackGroundColor DarkGray
     return $response
 }
 
-$topic = "The Impact of GPT on IT Microsoft Administrators"
-$expertCount = 2
+
 
 # Import modules and scripts
 [System.Environment]::SetEnvironmentVariable("PSAOAI_BANNER", "0", "User")
@@ -217,14 +220,5 @@ if ($expertstojob) {
 }
 #endregion Expert Recommendation
 
-# Define prompts for the discussion
-$prompts = @(
-    "What are your thoughts on the impact of GPT on IT?",
-    "How do you perceive the role of GPT in shaping our daily work?"
-)
-
-# Define the maximum number of rounds
-$maxRounds = 2
-
 # Conduct the discussion with a limit on the number of rounds
-ConductDiscussion -entities $expertstojob -topic $topic -prompts $prompts -maxRounds $maxRounds
+ConductDiscussion -entities $expertstojob -topic $topic -maxRounds $maxRounds
