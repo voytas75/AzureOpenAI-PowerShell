@@ -44,10 +44,11 @@ class LanguageModel {
 # Create a moderator language model
 
 $noteModerator = @"
-NOTE: You are Moderator. Keep focus on the prompt. Summarize key points, identify areas of agreement/disagreement, and prompt further exploration. Maintain a neutral stance and encourage respectful exchange of ideas. Identify the main themes or subjects discussed in the Topic. Display any response as JSON object with keys you choose. Show only JSON. Example: 
+NOTE: You are Moderator. Keep focus on the prompt. Summarize key points, identify areas of agreement/disagreement, required user's action, and prompt further exploration. Maintain a neutral stance and encourage respectful exchange of ideas. Identify the main themes or subjects discussed in the Topic. Display any response as JSON object with keys you choose. Show only JSON. Example: 
 ``````json
 {
     "Topic": "",
+    "required_action": "",
     "themes_and_subjects": [
         ""
     ],
@@ -99,7 +100,8 @@ NOTE: You are $name. Provide a scientifically accurate foundation. Prioritize fa
     ],
     "Other": [
         ""
-    ]
+    ],
+    "Insights": ""
 }
 ``````
 "@ 
@@ -117,8 +119,9 @@ NOTE: You are $name. Analyze and offer insights to unlock the power of data and 
     ],
     "Other": [
         ""
-    ]
-}
+    ],
+    "Insights": ""
+    }
 ``````
 "@ 
             }
@@ -135,8 +138,9 @@ NOTE: You are $name. Unleash your imagination. Explore unconventional ideas and 
     ],
     "Other": [
         ""
-    ]
-}
+    ],
+    "Insights": ""
+    }
 ``````
 "@ 
             }
@@ -182,7 +186,7 @@ What are your thoughts on the topic and show them as JSON?
 "@
 
 
-        $moderatorResponse = $moderator.InvokeLLM("Discuss about '$topic'")
+        $moderatorResponse = $moderator.InvokeLLM("Topic to response '$topic'")
         Write-Host "Moderator: $moderatorResponse" -ForegroundColor Green
         #$moderatorResponse = Extract-JSON $moderatorResponse
         $moderatorResponse = Clear-LLMDataJSON $moderatorResponse
@@ -220,7 +224,11 @@ $($lastMemoryElement.trim())
         #Write-Host ""
         $Summarize = @"
 Considering the following responses, create a new response that combines the most relevant and interesting information.
+
+Responses:
+###
 $($expert.memory)
+###
 "@
         Write-Host "$($expert.name)'s summarized memory:" -BackgroundColor Blue
         #write-Host ($moderator.InvokeLLM($Summarize)) -BackgroundColor Blue
@@ -229,27 +237,30 @@ $($expert.memory)
 
     # General summarization
     foreach ($expert in $experts) {
-        $generalMemory += $expert.GetLastNMemoryElements(1)
+        $generalMemory += Clear-LLMDataJSON ($expert.GetLastNMemoryElements(1) | out-string)
     }
     $Summarize = @"
-Summarize the key points from the provided summaries to create a comprehensive response. Prioritize information directly relevant to the user's Topic.
+Summarize the key points from the provided responses to create a comprehensive and detailed final answer. Prioritize information directly relevant to the user's Topic.
 
 User's topic: $topic
 
-Summaries:
+Responses:
+###
 $generalMemory
+###
 "@
 
     $NewSupplement = @"
 
 
-Display any response as JSON object with keys you choose. Show only JSON. Example: 
+Display response as one JSON object with keys you choose. Show only JSON. Example: 
 ``````json
 {
     "Topic": "",
     "Key_points": [
         ""
-    ]
+    ],
+    "Final_Answer": ""
 }
 ``````
 "@
