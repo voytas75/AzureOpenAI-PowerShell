@@ -21,7 +21,7 @@ class LanguageModel {
         try {
             # Simulate language model response
             $prompt = $prompt + "`n`n" + $this.supplementary_information
-            write-host $prompt
+            write-host $prompt -ForegroundColor DarkYellow
             #Write-Host $prompt -BackgroundColor Gray -ForegroundColor White
             $arguments = @($prompt, 1000, "Precise", $this.name, "udtgpt35turbo", $true)
             $response = Invoke-PSAOAICompletion @arguments
@@ -60,6 +60,11 @@ NOTE: You are Moderator. Keep focus on the prompt. Summarize key points, identif
     "further_exploration": [
         ""
     ],
+    "questions_for_experts": {
+        "": [
+          ""
+        ]
+      },
     "other": [
         ""
     ]
@@ -161,8 +166,12 @@ $($lastMemoryElement.trim())
         #Write-Host "$($expert.name)'s Memory:" -ForegroundColor Blue
         #Write-Host ($expert.memory) -ForegroundColor Blue
         #Write-Host ""
+        $Summarize = @"
+Considering the following responses, create a new response that combines the most relevant and interesting information.
+$($expert.memory)
+"@
         Write-Host "$($expert.name)'s summarized memory:" -BackgroundColor Blue
-        write-Host ($moderator.InvokeLLM("Summarize: $($expert.memory)")) -BackgroundColor Blue
+        write-Host ($moderator.InvokeLLM($Summarize)) -BackgroundColor Blue
     }
 
     # Provide a general response related to the user's topic
