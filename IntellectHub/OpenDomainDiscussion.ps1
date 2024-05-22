@@ -227,7 +227,7 @@ Considering the following responses, create a new response that combines the mos
 
 Responses:
 ###
-$($expert.memory)
+$($($expert.memory).trim())
 ###
 "@
         Write-Host "$($expert.name)'s summarized memory:" -BackgroundColor Blue
@@ -237,7 +237,7 @@ $($expert.memory)
 
     # General summarization
     foreach ($expert in $experts) {
-        $generalMemory += Clear-LLMDataJSON ($expert.GetLastNMemoryElements(1) | out-string)
+        $generalMemory += Clear-LLMDataJSON (($expert.GetLastNMemoryElements(1) | out-string) -join "`n")
     }
     $Summarize = @"
 Summarize the key points from the provided responses to create a comprehensive and detailed final answer. Prioritize information directly relevant to the user's Topic.
