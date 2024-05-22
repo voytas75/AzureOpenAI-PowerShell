@@ -21,7 +21,7 @@ class LanguageModel {
         try {
             # Simulate language model response
             $prompt = $prompt + "`n`n" + $this.supplementary_information
-            write-host $prompt -ForegroundColor DarkYellow
+            #write-host $prompt -ForegroundColor DarkYellow
             $arguments = @($prompt, 1000, "Precise", $this.name, "udtgpt35turbo", $true)
             $response = Invoke-PSAOAICompletion @arguments
             $this.memory += $response
@@ -85,63 +85,59 @@ function Conduct-Discussion {
 
     # Create expert language models
     $experts = @()
-    for ($i = 1; $i -le $expertCount; $i++) {
-        switch ($i) {
-            1 {
-                $name = "Domain Expert"; $supplement = @"
 
-
-NOTE: You are $name. Provide a scientifically accurate foundation. Prioritize factual accuracy. Display any response as JSON object with keys you choose. Show only JSON. Example: 
+    $ResponseJSONobjectTemplate = @"
+Display response as JSON object with given keys. Show only valid JSON syntax. Example: 
 ``````json
 {
     "Topic": "",
     "Thoughts": [
+        "",
         ""
     ],
     "Other": [
+        "",
         ""
     ],
     "Insights": ""
 }
 ``````
+"@
+    for ($i = 1; $i -le 5; $i++) {
+        switch ($i) {
+            1 {
+                $name = "Domain Expert"; $supplement = @"
+
+
+NOTE: You are $name. Provide a scientifically accurate foundation. Prioritize factual accuracy. 
 "@ 
             }
             2 {
                 $name = "Data Analyst"; $supplement = @"
 
 
-NOTE: You are $name. Analyze and offer insights to unlock the power of data and help make better choices. Use main answer structure. Display any response as JSON object with keys you choose. Show only JSON. Example: 
-``````json
-{
-    "Topic": "",
-    "Thoughts": [
-        ""
-    ],
-    "Other": [
-        ""
-    ],
-    "Insights": ""
-    }
-``````
+NOTE: You are $name. Analyze and offer insights to unlock the power of data and help make better choices. Use main answer structure. $ResponseJSONobjectTemplate
 "@ 
             }
             3 {
                 $name = "Creative Thinker"; $supplement = @"
             
             
-NOTE: You are $name. Unleash your imagination. Explore unconventional ideas and world-building elements. Infuse originality and wonder. Don't be afraid to push boundaries. Display any response as JSON object with keys you choose. Show only JSON. Example: 
-``````json
-{
-    "Topic": "",
-    "Thoughts": [
-        ""
-    ],
-    "Other": [
-        ""
-    ],
-    "Insights": ""
-    }
-``````
+NOTE: You are $name. Unleash your imagination. Explore unconventional ideas and world-building elements. Infuse originality and wonder. Don't be afraid to push boundaries. $ResponseJSONobjectTemplate
+"@ 
+            }
+            4 {
+                $name = "Psychologist"; $supplement = @"
+            
+            
+NOTE: You are $name. Provide valuable insights and guidance. Trained professionals with expertise in human behavior, research methods, and critical thinking. $ResponseJSONobjectTemplate
+"@ 
+            }
+            5 {
+                $name = "Facilitator"; $supplement = @"
+            
+            
+NOTE: You are $name with deep understanding of group dynamics, excellent communication and listening skills, knowledge of various discussion techniques, and awareness of personal biases. Other beneficial qualities include empathy, patience, conflict management skills, and a diverse range of interests and knowledge. Able to create a safe and inclusive environment, promote a sense of community and growth, and possess a combination of knowledge, skills, and qualities. $ResponseJSONobjectTemplate
 "@ 
             }
             Default {}
@@ -149,6 +145,7 @@ NOTE: You are $name. Unleash your imagination. Explore unconventional ideas and 
         $expert = [LanguageModel]::new($name, $supplement)
         $experts += $expert
     }
+    $experts = $experts | get-random -Count $expertCount
 
     # Start discussion rounds
     for ($round = 1; $round -le $rounds; $round++) {
@@ -164,25 +161,15 @@ You need to analyze the topic and memory, if any, and answer the question. Respo
 
 Topic: $topic
 
-Response JSON object example:
-``````json
-{
-    "Topic": "",
-    "Thoughts": [
-        ""
-    ],
-    "Other": [
-        ""
-    ]
-}
-``````
+$ResponseJSONobjectTemplate
 "@
 
         $questionFooter = @"
 
 
-### Question ###
+### Questions ###
 What are your thoughts on the topic and show them as JSON?
+
 "@
 
 
@@ -190,7 +177,7 @@ What are your thoughts on the topic and show them as JSON?
         Write-Host "Moderator: $moderatorResponse" -ForegroundColor Green
         #$moderatorResponse = Extract-JSON $moderatorResponse
         $moderatorResponse = Clear-LLMDataJSON $moderatorResponse
-
+        $questionFooter += ($moderatorResponse | ConvertFrom-Json).questions_for_experts -join "`n"
         # Each expert responds
         foreach ($expert in $experts) {
             $lastMemoryElement = $expert.GetLastNMemoryElements(1)
@@ -205,6 +192,7 @@ $($lastMemoryElement.trim())
 
             $questionWithmemory += $questionInstruction
             $questionWithmemory += $questionmiddle
+            $questionWithmemory += ($moderatorResponse | ConvertFrom-Json).required_action
             $questionWithmemory += $lastMemoryElement
             $questionWithmemory += $questionFooter
             $expertResponse = $expert.InvokeLLM($questionWithmemory)
@@ -226,8 +214,9 @@ $($lastMemoryElement.trim())
 Considering the following responses, create a new response that combines the most relevant and interesting information.
 
 Responses:
-###
+``````text
 $($($expert.memory).trim())
+``````
 ###
 "@
         Write-Host "$($expert.name)'s summarized memory:" -BackgroundColor Blue
@@ -245,15 +234,15 @@ Summarize the key points from the provided responses to create a comprehensive a
 User's topic: $topic
 
 Responses:
-###
+``````text
 $generalMemory
-###
+``````
 "@
 
     $NewSupplement = @"
 
 
-Display response as one JSON object with keys you choose. Show only JSON. Example: 
+Display response as JSON object with given keys. Show only valid JSON syntax. Example: 
 ``````json
 {
     "Topic": "",
@@ -266,29 +255,32 @@ Display response as one JSON object with keys you choose. Show only JSON. Exampl
 "@
     $moderator.supplementary_information = $NewSupplement
     $FinalResponse = $moderator.InvokeLLM($Summarize)
-    write-Host ($FinalResponse) -BackgroundColor Green
+    #write-Host ($FinalResponse) -BackgroundColor Green
     $FinalResponseObj = Clear-LLMDataJSON $FinalResponse | ConvertFrom-Json
-    Write-Host "Topic: $($FinalResponseObj.Topic)"
-    Write-Host "Thoughts:"
+    Write-Host "Topic:" -BackgroundColor DarkGreen
+    Write-Host $($FinalResponseObj.Topic)
+    #Write-Host "Thoughts:"
     foreach ($thought in $FinalResponseObj.Thoughts) {
-        Write-Host " - $thought"
+        #Write-Host " - $thought"
     }
-    Write-Host "Other:"
+    #Write-Host "Other:"
     foreach ($other in $FinalResponseObj.Other) {
-        Write-Host " - $other"
+        #Write-Host " - $other"
     }
-    Write-Host "Combined:"
+    #Write-Host "Combined:"
     foreach ($Combined in $FinalResponseObj.Combined) {
-        Write-Host " - $Combined"
+        #Write-Host " - $Combined"
     }
-    Write-Host "Key_points:"
+    Write-Host "Final answer:" -BackgroundColor DarkGreen
+    Write-Host $($FinalResponseObj.Final_Answer)
+    Write-Host "Key_points:" -BackgroundColor DarkGreen
     foreach ($Key_points in $FinalResponseObj.Key_points) {
         Write-Host " - $Key_points"
     }
     
     # Provide a general response related to the user's topic
-    $generalResponse = "In conclusion, regarding the topic '$topic', the experts have provided valuable insights."
-    Write-Host $generalResponse
+    #$generalResponse = "In conclusion, regarding the topic '$topic', the experts have provided valuable insights."
+    #Write-Host $generalResponse
 
     #$moderator.GetLastNMemoryElements(1)
     #$moderator.GetLastNMemoryElements(2)
