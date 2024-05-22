@@ -22,13 +22,13 @@ class LanguageModel {
             # Simulate language model response
             $prompt = $prompt + "`n`n" + $this.supplementary_information
             write-host $prompt -ForegroundColor DarkYellow
-            #Write-Host $prompt -BackgroundColor Gray -ForegroundColor White
             $arguments = @($prompt, 1000, "Precise", $this.name, "udtgpt35turbo", $true)
             $response = Invoke-PSAOAICompletion @arguments
             $this.memory += $response
             #return "This is $($this.name)'s response to:`n$($prompt)`n '$response'"
             return "This is $($this.name)'s response:`n===`n$($response.trim())`n==="
-        } catch {
+        }
+        catch {
             return "An error occurred while invoking the language model: $_"
         }
     }
@@ -44,10 +44,13 @@ class LanguageModel {
 # Create a moderator language model
 
 $noteModerator = @"
-NOTE: You are Moderator. Keep focus on the prompt. Summarize key points, identify areas of agreement/disagreement, and prompt further exploration. Maintain a neutral stance and encourage respectful exchange of ideas. Display any response as JSON object with keys you choose. Show only JSON. Example: 
+NOTE: You are Moderator. Keep focus on the prompt. Summarize key points, identify areas of agreement/disagreement, and prompt further exploration. Maintain a neutral stance and encourage respectful exchange of ideas. Identify the main themes or subjects discussed in the Topic. Display any response as JSON object with keys you choose. Show only JSON. Example: 
 ``````json
 {
     "Topic": "",
+    "themes_and_subjects": [
+        ""
+    ],
     "key_points": [
         ""
     ],
@@ -60,18 +63,16 @@ NOTE: You are Moderator. Keep focus on the prompt. Summarize key points, identif
     "further_exploration": [
         ""
     ],
-    "questions_for_experts": {
-        "": [
-          ""
-        ]
-      },
+    "questions_for_experts": [
+        ""
+        ],
     "other": [
         ""
     ]
 }
 ``````
 "@
-$moderator = [LanguageModel]::new("Moderator",$noteModerator)
+$moderator = [LanguageModel]::new("Moderator", $noteModerator)
 
 # Define a function to conduct the discussion
 function Conduct-Discussion {
@@ -85,9 +86,60 @@ function Conduct-Discussion {
     $experts = @()
     for ($i = 1; $i -le $expertCount; $i++) {
         switch ($i) {
-            1 { $name = "Domain Expert"; $supplement = "NOTE: You are $name. Provide a scientifically accurate foundation. Prioritize factual accuracy." }
-            2 { $name = "Data Analyst"; $supplement = "NOTE: You are $name. Analyze and offer insights to unlock the power of data and help make better choices. Use main answer structure." }
-            3 { $name = "Creative Thinker"; $supplement = "NOTE: You are $name. Unleash your imagination. Explore unconventional ideas and world-building elements. Infuse originality and wonder. Don't be afraid to push boundaries. " }
+            1 {
+                $name = "Domain Expert"; $supplement = @"
+
+
+NOTE: You are $name. Provide a scientifically accurate foundation. Prioritize factual accuracy. Display any response as JSON object with keys you choose. Show only JSON. Example: 
+``````json
+{
+    "Topic": "",
+    "Thoughts": [
+        ""
+    ],
+    "Other": [
+        ""
+    ]
+}
+``````
+"@ 
+            }
+            2 {
+                $name = "Data Analyst"; $supplement = @"
+
+
+NOTE: You are $name. Analyze and offer insights to unlock the power of data and help make better choices. Use main answer structure. Display any response as JSON object with keys you choose. Show only JSON. Example: 
+``````json
+{
+    "Topic": "",
+    "Thoughts": [
+        ""
+    ],
+    "Other": [
+        ""
+    ]
+}
+``````
+"@ 
+            }
+            3 {
+                $name = "Creative Thinker"; $supplement = @"
+            
+            
+NOTE: You are $name. Unleash your imagination. Explore unconventional ideas and world-building elements. Infuse originality and wonder. Don't be afraid to push boundaries. Display any response as JSON object with keys you choose. Show only JSON. Example: 
+``````json
+{
+    "Topic": "",
+    "Thoughts": [
+        ""
+    ],
+    "Other": [
+        ""
+    ]
+}
+``````
+"@ 
+            }
             Default {}
         }
         $expert = [LanguageModel]::new($name, $supplement)
@@ -101,9 +153,9 @@ function Conduct-Discussion {
         # Moderator asks question
         $questionInstruction = @"
 ### Instruction ###
-You must analyze topic and memory if exists and answer question. Response as JSON object only.
+You need to analyze the topic and memory, if any, and answer the question. Response as JSON object only.
 "@
-$questionmiddle = @"
+        $questionmiddle = @"
 
 
 Topic: $topic
@@ -122,7 +174,7 @@ Response JSON object example:
 ``````
 "@
 
-$questionFooter = @"
+        $questionFooter = @"
 
 
 ### Question ###
@@ -171,9 +223,58 @@ Considering the following responses, create a new response that combines the mos
 $($expert.memory)
 "@
         Write-Host "$($expert.name)'s summarized memory:" -BackgroundColor Blue
-        write-Host ($moderator.InvokeLLM($Summarize)) -BackgroundColor Blue
+        #write-Host ($moderator.InvokeLLM($Summarize)) -BackgroundColor Blue
+        write-Host ($expert.InvokeLLM($Summarize)) -BackgroundColor Blue
     }
 
+    # General summarization
+    foreach ($expert in $experts) {
+        $generalMemory += $expert.GetLastNMemoryElements(1)
+    }
+    $Summarize = @"
+Summarize the key points from the provided summaries to create a comprehensive response. Prioritize information directly relevant to the user's Topic.
+
+User's topic: $topic
+
+Summaries:
+$generalMemory
+"@
+
+    $NewSupplement = @"
+
+
+Display any response as JSON object with keys you choose. Show only JSON. Example: 
+``````json
+{
+    "Topic": "",
+    "Key_points": [
+        ""
+    ]
+}
+``````
+"@
+    $moderator.supplementary_information = $NewSupplement
+    $FinalResponse = $moderator.InvokeLLM($Summarize)
+    write-Host ($FinalResponse) -BackgroundColor Green
+    $FinalResponseObj = Clear-LLMDataJSON $FinalResponse | ConvertFrom-Json
+    Write-Host "Topic: $($FinalResponseObj.Topic)"
+    Write-Host "Thoughts:"
+    foreach ($thought in $FinalResponseObj.Thoughts) {
+        Write-Host " - $thought"
+    }
+    Write-Host "Other:"
+    foreach ($other in $FinalResponseObj.Other) {
+        Write-Host " - $other"
+    }
+    Write-Host "Combined:"
+    foreach ($Combined in $FinalResponseObj.Combined) {
+        Write-Host " - $Combined"
+    }
+    Write-Host "Key_points:"
+    foreach ($Key_points in $FinalResponseObj.Key_points) {
+        Write-Host " - $Key_points"
+    }
+    
     # Provide a general response related to the user's topic
     $generalResponse = "In conclusion, regarding the topic '$topic', the experts have provided valuable insights."
     Write-Host $generalResponse
