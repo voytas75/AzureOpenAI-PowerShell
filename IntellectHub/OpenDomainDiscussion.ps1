@@ -18,15 +18,19 @@ class LanguageModel {
     }
 
     [string] InvokeLLM([string] $prompt) {
-        # Simulate language model response
-        $prompt += "`n"
-        $prompt += $this.supplementary_information
-        #Write-Host $prompt -BackgroundColor Gray -ForegroundColor White
-        $arguments = @($prompt, 1000, "Precise", $this.name, "udtgpt35turbo", $true)
-        $response = Invoke-PSAOAICompletion @arguments
-        $this.memory += $response
-        #return "This is $($this.name)'s response to:`n$($prompt)`n '$response'"
-        return "This is $($this.name)'s response:`n===`n$($response.trim())`n==="
+        try {
+            # Simulate language model response
+            $prompt = $prompt + "`n`n" + $this.supplementary_information
+            write-host $prompt
+            #Write-Host $prompt -BackgroundColor Gray -ForegroundColor White
+            $arguments = @($prompt, 1000, "Precise", $this.name, "udtgpt35turbo", $true)
+            $response = Invoke-PSAOAICompletion @arguments
+            $this.memory += $response
+            #return "This is $($this.name)'s response to:`n$($prompt)`n '$response'"
+            return "This is $($this.name)'s response:`n===`n$($response.trim())`n==="
+        } catch {
+            return "An error occurred while invoking the language model: $_"
+        }
     }
 
     [string[]] GetLastNMemoryElements([int] $n) {
@@ -40,33 +44,27 @@ class LanguageModel {
 # Create a moderator language model
 
 $noteModerator = @"
-NOTE: You are Moderator. Facilitate discussion, ensure all experts contribute, and keep focus on the prompt. Summarize key points, identify areas of agreement/disagreement, and prompt further exploration. Maintain a neutral stance and encourage respectful exchange of ideas. Display any response as JSON object with keys you choose. Show only JSON. Example: 
-```json
+NOTE: You are Moderator. Keep focus on the prompt. Summarize key points, identify areas of agreement/disagreement, and prompt further exploration. Maintain a neutral stance and encourage respectful exchange of ideas. Display any response as JSON object with keys you choose. Show only JSON. Example: 
+``````json
 {
-    "prompt": "The Impact of GPT on IT Microsoft Administrators",
+    "Topic": "",
     "key_points": [
-        "GPT (Group Policy Tools) is a powerful tool for managing and configuring Microsoft systems",
-        "It has greatly simplified the process of managing multiple systems and enforcing policies",
-        "GPT has also increased efficiency and reduced the workload for IT Microsoft Administrators",
-        "However, some experts argue that GPT has also made it easier for inexperienced administrators to make mistakes",
-        "There is also a concern that GPT may limit the flexibility and customization options for administrators",
-        "Overall, the impact of GPT on IT Microsoft Administrators has been largely positive, but there are also some potential drawbacks"
+        ""
     ],
     "areas_of_agreement": [
-        "GPT has made managing and configuring Microsoft systems easier and more efficient",
-        "It has reduced the workload for IT Microsoft Administrators",
-        "The impact of GPT has been mostly positive"
+        ""
     ],
     "areas_of_disagreement": [
-        "Some experts believe that GPT may limit flexibility and customization options for administrators",
-        "There is a concern that inexperienced administrators may make mistakes with GPT"
+        ""
     ],
-    "further_exploration": "How can IT Microsoft Administrators balance the benefits of GPT with the potential drawbacks? Are there any strategies or best practices for using GPT effectively?",
+    "further_exploration": [
+        ""
+    ],
     "other": [
         ""
     ]
 }
-```
+``````
 "@
 $moderator = [LanguageModel]::new("Moderator",$noteModerator)
 
@@ -82,9 +80,9 @@ function Conduct-Discussion {
     $experts = @()
     for ($i = 1; $i -le $expertCount; $i++) {
         switch ($i) {
-            1 { $name = "Domain Expert"; $supplement = "NOTE: You are $name. Provide a scientifically accurate foundation. Remember: Prioritize factual accuracy." }
-            2 { $name = "Data Analyst"; $supplement = "NOTE: You are $name. Focus: Analyze for themes, conflicts, and engagement. Goal: Offer insights on narrative structure. Remember: Leverage data analysis skills to improve the topic." }
-            3 { $name = "Creative Thinker"; $supplement = "NOTE: You are $name. Focus: Unleash your imagination! Explore unconventional ideas and world-building elements. Goal: Infuse originality and wonder. Remember: Don't be afraid to push boundaries." }
+            1 { $name = "Domain Expert"; $supplement = "NOTE: You are $name. Provide a scientifically accurate foundation. Prioritize factual accuracy." }
+            2 { $name = "Data Analyst"; $supplement = "NOTE: You are $name. Analyze and offer insights to unlock the power of data and help make better choices. Use main answer structure." }
+            3 { $name = "Creative Thinker"; $supplement = "NOTE: You are $name. Unleash your imagination. Explore unconventional ideas and world-building elements. Infuse originality and wonder. Don't be afraid to push boundaries. " }
             Default {}
         }
         $expert = [LanguageModel]::new($name, $supplement)
@@ -93,22 +91,68 @@ function Conduct-Discussion {
 
     # Start discussion rounds
     for ($round = 1; $round -le $rounds; $round++) {
-        Write-Host "Round $round"
+        Write-Host "Round $round" -BackgroundColor DarkGreen
 
         # Moderator asks question
-        $question = "What are your two thoughts on the topic '$topic'?"
-        $moderatorResponse = $moderator.InvokeLLM("Welcome all experts to discussion about '$topic'")
+        $questionInstruction = @"
+### Instruction ###
+You must analyze topic and memory if exists and answer question. Response as JSON object only.
+"@
+$questionmiddle = @"
+
+
+Topic: $topic
+
+Response JSON object example:
+``````json
+{
+    "Topic": "",
+    "Thoughts": [
+        ""
+    ],
+    "Other": [
+        ""
+    ]
+}
+``````
+"@
+
+$questionFooter = @"
+
+
+### Question ###
+What are your thoughts on the topic and show them as JSON?
+"@
+
+
+        $moderatorResponse = $moderator.InvokeLLM("Discuss about '$topic'")
         Write-Host "Moderator: $moderatorResponse" -ForegroundColor Green
+        #$moderatorResponse = Extract-JSON $moderatorResponse
+        $moderatorResponse = Clear-LLMDataJSON $moderatorResponse
 
         # Each expert responds
         foreach ($expert in $experts) {
             $lastMemoryElement = $expert.GetLastNMemoryElements(1)
             if ($lastMemoryElement) {
-                $lastMemoryElement = "`nYour last response was:`n"+$($lastMemoryElement.trim())
+                $lastMemoryElement = @"
+
+
+Memory:
+$($lastMemoryElement.trim())
+"@
             }
-            $expertResponse = $expert.InvokeLLM($question+$lastMemoryElement)
+
+            $questionWithmemory += $questionInstruction
+            $questionWithmemory += $questionmiddle
+            $questionWithmemory += $lastMemoryElement
+            $questionWithmemory += $questionFooter
+            $expertResponse = $expert.InvokeLLM($questionWithmemory)
             Write-Host "$($expert.name): $expertResponse" 
+            #$expertResponse = Extract-JSON $expertResponse | ConvertFrom-Json
+            $expertResponse = Clear-LLMDataJSON $expertResponse | ConvertFrom-Json
+            
             $lastMemoryElement = ""
+            $questionWithmemory = ""
         }
     }
 

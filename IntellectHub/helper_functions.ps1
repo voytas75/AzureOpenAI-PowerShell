@@ -469,6 +469,7 @@ function Clear-LLMDataJSON {
   
 
 function Extract-JSON {
+    [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
         [string]$inputString
@@ -492,11 +493,11 @@ function Extract-JSON {
         foreach ($jsonSubstring in $jsonSubstrings) {
             # Parse JSON substring
             try {
-                $jsonObject = Test-IsValidJson $jsonSubstring -Verbose:$verbose
+                $jsonObject = Test-IsValidJson $jsonSubstring
                 Write-Verbose "Extract-JSON: JSON extracted and parsed successfully."
                 # Save parsed JSON into the array
                 $validJsonObjects += $jsonObject
-                Write-Host $jsonObject
+                #Write-Host $jsonObject
             }
             catch {
                 Write-Verbose "Extract-JSON: Failed to parse JSON."
