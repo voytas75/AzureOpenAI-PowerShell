@@ -78,7 +78,7 @@ When discussing and analyzing the provided user topic text, please ensure to cov
 
 2. **Purpose and Objectives:**
    - Clarify the objectives and intended outcomes of the analysis.
-   - Align your analysis with the user’s goals.
+   - Align your analysis with the user's goals.
 
 3. **Audience Consideration:**
    - Identify and consider the target audience for this discussion.
@@ -123,7 +123,7 @@ When discussing and analyzing the provided user topic text, please ensure to cov
 
 Please respond in JSON format as follows:
 
-```json
+``````json
 {
   "contextualUnderstanding": {
     "backgroundInformation": "",
@@ -176,7 +176,7 @@ Please respond in JSON format as follows:
     "engagement": ""
   }
 }
-```
+``````
 
 By addressing these aspects, your analysis will be comprehensive, insightful, and valuable for the intended audience. Thank you for your expertise and thorough consideration.
 "@
