@@ -115,7 +115,9 @@ Generating Summary Statistics: Act as a data analyst and generate summary statis
 Creating Numpy Arrays: Act as a data scientist and create a numpy array with a specific shape, initialized with random values. This can be useful for various data analysis tasks.
 Generating Fake Data: Act as a fake data generator and create a dataset with a specified number of rows and columns, along with the column names. This can be helpful for testing and prototyping data analysis workflows.
 Hypothesis Testing and Statistical Analysis: Seek assistance from ChatGPT in formulating hypotheses, selecting appropriate statistical tests, and interpreting the results. For example, design a hypothesis test to determine if there's a significant difference in conversion rates between two website versions.
-Data Documentation and Catalog: Collaborate with various stakeholders to understand their data needs and ensure that data governance initiatives support their requirements. Communicate data governance policies, updates, and best practices throughout the organization to drive awareness and adoption.
+Data Documentation and Catalog: Collaborate with various stakeholders to understand their data needs and ensure that data governance initiatives support their requirements. Communicate data governance policies, updates, and best practices throughout the organization to drive awareness and adoption. 
+
+$ResponseJSONobjectTemplate
 "@
             }
             3 {
@@ -138,7 +140,9 @@ Predicting Future Trends: Engage in a discussion about emerging trends or techno
 Design Thinking: Explore the principles and methodologies of design thinking. Discuss how this approach can be applied to solve complex problems, enhance user experiences, and drive innovation in various domains.
 Exploring Cross-disciplinary Connections: Engage in a conversation about the intersections between different disciplines or fields. Discuss how ideas, concepts, or methodologies from one domain can be applied to another, leading to innovative solutions and new perspectives.
 
-Remember to dive deep into the discussion, provide thoughtful insights, and explore various angles to stimulate your creative thinking.
+Remember to dive deep into the discussion, provide thoughtful insights, and explore various angles to stimulate your creative thinking. 
+
+$ResponseJSONobjectTemplate
 "@
             }
             4 {
@@ -162,7 +166,9 @@ Psychological Assessment and Therapy: Discuss different approaches to psychologi
 Social Psychology: Engage in a conversation about social psychology and the influence of social factors on individual behavior and attitudes. Discuss concepts such as conformity, obedience, and social influence.
 Ethics and Professional Practice: Explore ethical considerations in psychology and the importance of maintaining professional standards. Engage in a conversation about the ethical dilemmas psychologists may encounter in their practice.
 
-Remember to provide evidence-based insights, maintain confidentiality and respect, and follow ethical guidelines when engaging in discussions.
+Remember to provide evidence-based insights, maintain confidentiality and respect, and follow ethical guidelines when engaging in discussions. 
+
+$ResponseJSONobjectTemplate
 "@
             }
             5 {
@@ -170,7 +176,9 @@ Remember to provide evidence-based insights, maintain confidentiality and respec
                 $name = "Facilitator"; 
                 $supplement = @"
 ###NOTE###
-You are $name with deep understanding of group dynamics, excellent communication and listening skills, knowledge of various discussion techniques, and awareness of personal biases. Other beneficial qualities include empathy, patience, conflict management skills, and a diverse range of interests and knowledge. Able to create a safe and inclusive environment, promote a sense of community and growth, and possess a combination of knowledge, skills, and qualities. $ResponseJSONobjectTemplate
+You are $name with deep understanding of group dynamics, excellent communication and listening skills, knowledge of various discussion techniques, and awareness of personal biases. Other beneficial qualities include empathy, patience, conflict management skills, and a diverse range of interests and knowledge. Able to create a safe and inclusive environment, promote a sense of community and growth, and possess a combination of knowledge, skills, and qualities. 
+
+$ResponseJSONobjectTemplate
 "@ 
 
                 $supplement = @"
@@ -184,7 +192,9 @@ Conflict Resolution: Engage in a discussion about conflict resolution techniques
 Brainstorming and Idea Generation: Discuss effective techniques for brainstorming and generating ideas within a group setting. Explore methods that encourage creativity, diverse perspectives, and collaboration.
 Building Consensus: Engage in a conversation about strategies for building consensus in group discussions. Share insights on how to guide participants towards finding common ground, making decisions, and reaching agreements.
 Facilitating Virtual Meetings: Discuss best practices for facilitating virtual meetings and overcoming challenges associated with remote collaboration. Share insights on how to engage participants, manage technology, and ensure productive discussions in virtual settings.
-Evaluation and Feedback: Explore methods for evaluating group discussions and providing constructive feedback to participants. Discuss the importance of continuous improvement and creating opportunities for reflection and learning.
+Evaluation and Feedback: Explore methods for evaluating group discussions and providing constructive feedback to participants. Discuss the importance of continuous improvement and creating opportunities for reflection and learning. 
+
+$ResponseJSONobjectTemplate
 "@
             }
             Default {}
