@@ -66,8 +66,119 @@ function Conduct-Discussion {
     $ResponseJSONobjectTemplate = @"
 Show only serialized JSON only using syntax: '{ "Topic": "", "Thoughts": [ "",  "" ], "Other_findings": [ "", "" ], "Insights": [ "", "" ], "Topic_answers": [ "", "" ],"Question_answers": [ "", "" ],"questions_for_experts": [ "", "" ]}'
 "@
-$ResponseJSONobjectTemplate = @"
+    $ResponseJSONobjectTemplate = @"
 You must response in JSON format '{ "Topic": "", "Thoughts": [ "",  "" ], "Other_findings": [ "", "" ], "Insights": [ "", "" ], "Topic_answers": [ "", "" ],"Question_answers": [ "", "" ],"questions_for_experts": [ "", "" ]}'
+"@
+    $AnalysisInstructions = @"
+When discussing and analyzing the provided user topic text, please ensure to cover the following key aspects and respond in JSON format:
+
+1. **Contextual Understanding:**
+   - Provide background information and context for the topic.
+   - Define the scope and boundaries of the discussion.
+
+2. **Purpose and Objectives:**
+   - Clarify the objectives and intended outcomes of the analysis.
+   - Align your analysis with the user’s goals.
+
+3. **Audience Consideration:**
+   - Identify and consider the target audience for this discussion.
+   - Address the specific needs and expectations of the audience.
+
+4. **Content Analysis:**
+   - Highlight and focus on the main points and themes within the text.
+   - Assess the relevance and accuracy of the information provided.
+
+5. **Terminology:**
+   - Clearly define any specific terms or jargon used.
+   - Maintain consistency in the use of terminology throughout your discussion.
+
+6. **Structure and Organization:**
+   - Present the information in a logical and coherent manner.
+   - Use appropriate sections and headings to enhance clarity.
+
+7. **Critical Analysis:**
+   - Evaluate the strengths and weaknesses of the arguments or information presented.
+   - Examine the credibility and reliability of the supporting evidence.
+   - Identify and address any potential biases or assumptions.
+
+8. **Comparative Analysis:**
+   - Compare the topic with related work or similar topics to provide context.
+   - Identify and discuss any trends or patterns observed.
+
+9. **Implications and Applications:**
+   - Discuss the practical implications of the information.
+   - Suggest potential future research directions or developments.
+
+10. **Feedback and Collaboration:**
+    - Seek feedback from peers or other experts to enrich the analysis.
+    - Encourage collaborative insights to provide diverse perspectives.
+
+11. **Ethical Considerations:**
+    - Consider and discuss any ethical issues related to the topic.
+    - Acknowledge the responsibility in handling and presenting the information.
+
+12. **Presentation and Communication:**
+    - Ensure the information is communicated clearly and effectively.
+    - Use engaging methods, such as visuals or examples, to enhance understanding.
+
+Please respond in JSON format as follows:
+
+```json
+{
+  "contextualUnderstanding": {
+    "backgroundInformation": "",
+    "scope": ""
+  },
+  "purposeAndObjectives": {
+    "goals": "",
+    "intendedOutcome": ""
+  },
+  "audienceConsideration": {
+    "targetAudience": "",
+    "audienceNeeds": ""
+  },
+  "contentAnalysis": {
+    "keyPoints": "",
+    "relevance": "",
+    "accuracy": ""
+  },
+  "terminology": {
+    "definitions": "",
+    "consistency": ""
+  },
+  "structureAndOrganization": {
+    "logicalFlow": "",
+    "sectionsAndHeadings": ""
+  },
+  "criticalAnalysis": {
+    "strengthsAndWeaknesses": "",
+    "evidence": "",
+    "bias": ""
+  },
+  "comparativeAnalysis": {
+    "relatedWork": "",
+    "trendsAndPatterns": ""
+  },
+  "implicationsAndApplications": {
+    "practicalImplications": "",
+    "futureDirections": ""
+  },
+  "feedbackAndCollaboration": {
+    "inputFromOthers": "",
+    "collaborativeInsights": ""
+  },
+  "ethicalConsiderations": {
+    "ethicalImplications": "",
+    "responsibility": ""
+  },
+  "presentationAndCommunication": {
+    "clarity": "",
+    "engagement": ""
+  }
+}
+```
+
+By addressing these aspects, your analysis will be comprehensive, insightful, and valuable for the intended audience. Thank you for your expertise and thorough consideration.
 "@
     # Loop to create different types of expert language models
     for ($i = 1; $i -le 5; $i++) {
@@ -97,6 +208,12 @@ Please provide a comprehensive analysis and insights on the given topic, conside
 $ResponseJSONobjectTemplate
 "@
 
+                $supplement = @"
+###NOTE###
+As a $name, your role is crucial in providing valuable analysis and insights on various topics. 
+$AnalysisInstructions
+"@
+
             }
             2 {
                 # Data Analyst role
@@ -118,6 +235,12 @@ Hypothesis Testing and Statistical Analysis: Seek assistance from ChatGPT in for
 Data Documentation and Catalog: Collaborate with various stakeholders to understand their data needs and ensure that data governance initiatives support their requirements. Communicate data governance policies, updates, and best practices throughout the organization to drive awareness and adoption. 
 
 $ResponseJSONobjectTemplate
+"@
+
+                $supplement = @"
+###NOTE###
+As a $name, your role is crucial in providing valuable analysis and insights on various topics. 
+$AnalysisInstructions
 "@
             }
             3 {
@@ -143,6 +266,12 @@ Exploring Cross-disciplinary Connections: Engage in a conversation about the int
 Remember to dive deep into the discussion, provide thoughtful insights, and explore various angles to stimulate your creative thinking. 
 
 $ResponseJSONobjectTemplate
+"@
+
+                $supplement = @"
+###NOTE###
+As a $name, your role is crucial in providing valuable analysis and insights on various topics. 
+$AnalysisInstructions
 "@
             }
             4 {
@@ -170,6 +299,12 @@ Remember to provide evidence-based insights, maintain confidentiality and respec
 
 $ResponseJSONobjectTemplate
 "@
+
+                $supplement = @"
+###NOTE###
+As a $name, your role is crucial in providing valuable analysis and insights on various topics. 
+$AnalysisInstructions
+"@
             }
             5 {
                 # Facilitator role
@@ -195,6 +330,12 @@ Facilitating Virtual Meetings: Discuss best practices for facilitating virtual m
 Evaluation and Feedback: Explore methods for evaluating group discussions and providing constructive feedback to participants. Discuss the importance of continuous improvement and creating opportunities for reflection and learning. 
 
 $ResponseJSONobjectTemplate
+"@
+
+                $supplement = @"
+###NOTE###
+As a $name, your role is crucial in providing valuable analysis and insights on various topics. 
+$AnalysisInstructions
 "@
             }
             Default {}
