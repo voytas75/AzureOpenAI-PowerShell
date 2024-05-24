@@ -138,7 +138,7 @@ Predicting Future Trends: Engage in a discussion about emerging trends or techno
 Design Thinking: Explore the principles and methodologies of design thinking. Discuss how this approach can be applied to solve complex problems, enhance user experiences, and drive innovation in various domains.
 Exploring Cross-disciplinary Connections: Engage in a conversation about the intersections between different disciplines or fields. Discuss how ideas, concepts, or methodologies from one domain can be applied to another, leading to innovative solutions and new perspectives.
 
-Remember to dive deep into the discussion, provide thoughtful insights, and explore various angles to stimulate your creative thinking. Feel free to adapt and customize these prompts based on your specific interests and goals.
+Remember to dive deep into the discussion, provide thoughtful insights, and explore various angles to stimulate your creative thinking.
 "@
             }
             4 {
@@ -162,7 +162,7 @@ Psychological Assessment and Therapy: Discuss different approaches to psychologi
 Social Psychology: Engage in a conversation about social psychology and the influence of social factors on individual behavior and attitudes. Discuss concepts such as conformity, obedience, and social influence.
 Ethics and Professional Practice: Explore ethical considerations in psychology and the importance of maintaining professional standards. Engage in a conversation about the ethical dilemmas psychologists may encounter in their practice.
 
-Remember to provide evidence-based insights, maintain confidentiality and respect, and follow ethical guidelines when engaging in discussions. Adapt and customize these prompts based on your specific interests and expertise as a psychologist.
+Remember to provide evidence-based insights, maintain confidentiality and respect, and follow ethical guidelines when engaging in discussions.
 "@
             }
             5 {
