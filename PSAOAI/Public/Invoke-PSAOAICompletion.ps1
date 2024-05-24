@@ -342,7 +342,7 @@ function Invoke-PSAOAICompletion {
         Write-Verbose "Echo: $echo"
         Write-Verbose "Completion Config: $completion_config"
         Write-Verbose "Model: $Deployment"
-        Write-Verbose "LogFolder: $LogFolder"
+        Write-Verbose "LogFolder: $logfileDirectory"
 
         
         $bodyJSON = Get-PSAOAICompletionBody -prompt $prompt `
