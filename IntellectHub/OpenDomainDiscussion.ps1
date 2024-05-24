@@ -21,7 +21,7 @@ class LanguageModel {
     [string] InvokeLLM([string] $prompt) {
         try {
             # Simulate language model response
-            $prompt = $prompt + "`n`n" + $this.supplementary_information
+            #$prompt = $prompt + "`n`n" + $this.supplementary_information
             #write-host $prompt -ForegroundColor DarkYellow
             $arguments = @($prompt, 2000, "Precise", $this.name, "udtgpt35turbo", $true)
             $response = Invoke-PSAOAICompletion @arguments -LogFolder $script:TeamDiscussionDataFolder -verbose:$false
@@ -214,6 +214,127 @@ As a $name, your role is crucial in providing valuable analysis and insights on 
 $AnalysisInstructions
 "@
 
+$domainExpertPrompt = @"
+**Expert Description:**
+Please note that this prompt is intended for a Domain Expert with the following skills and qualifications:
+- Deep knowledge of the specific field or industry.
+- Ability to synthesize complex information.
+- Strong research and analytical skills.
+- Excellent communication skills.
+
+**Instructions:**
+
+When discussing and analyzing the provided user topic text, please ensure to cover the following key aspects and respond in JSON format:
+
+1. **Contextual Understanding:**
+   - Provide background information and context for the topic.
+   - Define the scope and boundaries of the discussion.
+
+2. **Purpose and Objectives:**
+   - Clarify the objectives and intended outcomes of the analysis.
+   - Align your analysis with the user’s goals.
+
+3. **Audience Consideration:**
+   - Identify and consider the target audience for this discussion.
+   - Address the specific needs and expectations of the audience.
+
+4. **Content Analysis:**
+   - Highlight and focus on the main points and themes within the text.
+   - Assess the relevance and accuracy of the information provided.
+
+5. **Terminology:**
+   - Clearly define any specific terms or jargon used.
+   - Maintain consistency in the use of terminology throughout your discussion.
+
+6. **Structure and Organization:**
+   - Present the information in a logical and coherent manner.
+   - Use appropriate sections and headings to enhance clarity.
+
+7. **Critical Analysis:**
+   - Evaluate the strengths and weaknesses of the arguments or information presented.
+   - Examine the credibility and reliability of the supporting evidence.
+   - Identify and address any potential biases or assumptions.
+
+8. **Comparative Analysis:**
+   - Compare the topic with related work or similar topics to provide context.
+   - Identify and discuss any trends or patterns observed.
+
+9. **Implications and Applications:**
+   - Discuss the practical implications of the information.
+   - Suggest potential future research directions or developments.
+
+10. **Feedback and Collaboration:**
+    - Seek feedback from peers or other experts to enrich the analysis.
+    - Encourage collaborative insights to provide diverse perspectives.
+
+11. **Ethical Considerations:**
+    - Consider and discuss any ethical issues related to the topic.
+    - Acknowledge the responsibility in handling and presenting the information.
+
+12. **Presentation and Communication:**
+    - Ensure the information is communicated clearly and effectively.
+    - Use engaging methods, such as visuals or examples, to enhance understanding.
+
+Please respond in JSON format as follows:
+
+``````json
+{
+  "contextualUnderstanding": {
+    "backgroundInformation": "",
+    "scope": ""
+  },
+  "purposeAndObjectives": {
+    "goals": "",
+    "intendedOutcome": ""
+  },
+  "audienceConsideration": {
+    "targetAudience": "",
+    "audienceNeeds": ""
+  },
+  "contentAnalysis": {
+    "keyPoints": "",
+    "relevance": "",
+    "accuracy": ""
+  },
+  "terminology": {
+    "definitions": "",
+    "consistency": ""
+  },
+  "structureAndOrganization": {
+    "logicalFlow": "",
+    "sectionsAndHeadings": ""
+  },
+  "criticalAnalysis": {
+    "strengthsAndWeaknesses": "",
+    "evidence": "",
+    "bias": ""
+  },
+  "comparativeAnalysis": {
+    "relatedWork": "",
+    "trendsAndPatterns": ""
+  },
+  "implicationsAndApplications": {
+    "practicalImplications": "",
+    "futureDirections": ""
+  },
+  "feedbackAndCollaboration": {
+    "inputFromOthers": "",
+    "collaborativeInsights": ""
+  },
+  "ethicalConsiderations": {
+    "ethicalImplications": "",
+    "responsibility": ""
+  },
+  "presentationAndCommunication": {
+    "clarity": "",
+    "engagement": ""
+  }
+}
+``````
+
+By addressing these aspects, your analysis will be comprehensive, insightful, and valuable for the intended audience. Thank you for your expertise and thorough consideration.
+"@
+
             }
             2 {
                 # Data Analyst role
@@ -242,6 +363,8 @@ $ResponseJSONobjectTemplate
 As a $name, your role is crucial in providing valuable analysis and insights on various topics. 
 $AnalysisInstructions
 "@
+
+$dataAnalystPrompt = $domainExpertPrompt.Replace("Domain Expert", "Data Analyst").Replace("Deep knowledge of the specific field or industry", "Proficiency in data analysis and statistical tools").Replace("Ability to synthesize complex information", "Strong understanding of data visualization techniques").Replace("Strong research and analytical skills", "Ability to interpret and explain data insights").Replace("Excellent communication skills", "Experience with data-driven decision making")
             }
             3 {
                 # Creative Thinker role
@@ -273,6 +396,9 @@ $ResponseJSONobjectTemplate
 As a $name, your role is crucial in providing valuable analysis and insights on various topics. 
 $AnalysisInstructions
 "@
+
+$creativeThinkerPrompt = $domainExpertPrompt.Replace("Domain Expert", "Creative Thinker").Replace("Deep knowledge of the specific field or industry", "Strong brainstorming and ideation skills").Replace("Ability to synthesize complex information", "Ability to think outside the box").Replace("Strong research and analytical skills", "Excellent problem-solving skills").Replace("Excellent communication skills", "Strong communication and storytelling abilities")
+
             }
             4 {
                 # Psychologist role
@@ -305,6 +431,9 @@ $ResponseJSONobjectTemplate
 As a $name, your role is crucial in providing valuable analysis and insights on various topics. 
 $AnalysisInstructions
 "@
+
+$psychologistPrompt = $domainExpertPrompt.Replace("Domain Expert", "Psychologist").Replace("Deep knowledge of the specific field or industry", "In-depth understanding of human behavior and mental processes").Replace("Ability to synthesize complex information", "Experience with qualitative and quantitative research methods").Replace("Strong research and analytical skills", "Strong analytical and interpretative skills").Replace("Excellent communication skills", "Excellent communication and empathy skills")
+
             }
             5 {
                 # Facilitator role
@@ -337,6 +466,9 @@ $ResponseJSONobjectTemplate
 As a $name, your role is crucial in providing valuable analysis and insights on various topics. 
 $AnalysisInstructions
 "@
+
+$facilitatorPrompt = $domainExpertPrompt.Replace("Domain Expert", "Facilitator").Replace("Deep knowledge of the specific field or industry", "Strong leadership and mediation skills").Replace("Ability to synthesize complex information", "Ability to guide discussions and ensure productive outcomes").Replace("Strong research and analytical skills", "Excellent communication and conflict resolution skills").Replace("Excellent communication skills", "Experience with group dynamics and teamwork")
+
             }
             Default {}
         }
