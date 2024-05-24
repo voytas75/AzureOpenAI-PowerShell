@@ -315,7 +315,8 @@ function Invoke-PSAOAICompletion {
 
         $userMessageHash = Get-Hash -InputString $prompt -HashType MD5
    
-        $logFullNamePath = Join-Path -Path $logfileDirectory -ChildPath "$($script:modulename)Completion-${userMessageHash}.txt"
+        $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+        $logFullNamePath = Join-Path -Path $logfileDirectory -ChildPath "$($script:modulename)Completion-${userMessageHash}-$timestamp.txt"
     
         Write-LogMessage -Message "User message:`n$prompt" -LogFile $logFullNamePath
 
