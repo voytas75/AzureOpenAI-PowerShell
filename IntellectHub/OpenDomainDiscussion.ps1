@@ -23,7 +23,7 @@ class LanguageModel {
             # Simulate language model response
             #$prompt = $prompt + "`n`n" + $this.supplementary_information
             #write-host $prompt -ForegroundColor DarkYellow
-            $arguments = @($prompt, 2000, "Precise", $this.name, "udtgpt35turbo", $true)
+            $arguments = @($prompt, 3000, "Precise", $this.name, "udtgpt35turbo", $true)
             $response = Invoke-PSAOAICompletion @arguments -LogFolder $script:TeamDiscussionDataFolder -verbose:$false
             $this.memory += $response
             #return "This is $($this.name)'s response to:`n$($prompt)`n '$response'"
