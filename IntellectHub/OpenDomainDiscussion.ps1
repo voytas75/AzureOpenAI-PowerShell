@@ -214,7 +214,7 @@ As a $name, your role is crucial in providing valuable analysis and insights on 
 $AnalysisInstructions
 "@
 
-$domainExpertPrompt = @"
+$ExpertPrompt = @"
 **Expert Description:**
 Please note that this prompt is intended for a Domain Expert with the following skills and qualifications:
 - Deep knowledge of the specific field or industry.
@@ -232,7 +232,7 @@ When discussing and analyzing the provided user topic text, please ensure to cov
 
 2. **Purpose and Objectives:**
    - Clarify the objectives and intended outcomes of the analysis.
-   - Align your analysis with the user’s goals.
+   - Align your analysis with the user's goals.
 
 3. **Audience Consideration:**
    - Identify and consider the target audience for this discussion.
@@ -364,7 +364,7 @@ As a $name, your role is crucial in providing valuable analysis and insights on 
 $AnalysisInstructions
 "@
 
-$dataAnalystPrompt = $domainExpertPrompt.Replace("Domain Expert", "Data Analyst").Replace("Deep knowledge of the specific field or industry", "Proficiency in data analysis and statistical tools").Replace("Ability to synthesize complex information", "Strong understanding of data visualization techniques").Replace("Strong research and analytical skills", "Ability to interpret and explain data insights").Replace("Excellent communication skills", "Experience with data-driven decision making")
+$ExpertPrompt = $ExpertPrompt.Replace("Domain Expert", "Data Analyst").Replace("Deep knowledge of the specific field or industry", "Proficiency in data analysis and statistical tools").Replace("Ability to synthesize complex information", "Strong understanding of data visualization techniques").Replace("Strong research and analytical skills", "Ability to interpret and explain data insights").Replace("Excellent communication skills", "Experience with data-driven decision making")
             }
             3 {
                 # Creative Thinker role
@@ -397,7 +397,7 @@ As a $name, your role is crucial in providing valuable analysis and insights on 
 $AnalysisInstructions
 "@
 
-$creativeThinkerPrompt = $domainExpertPrompt.Replace("Domain Expert", "Creative Thinker").Replace("Deep knowledge of the specific field or industry", "Strong brainstorming and ideation skills").Replace("Ability to synthesize complex information", "Ability to think outside the box").Replace("Strong research and analytical skills", "Excellent problem-solving skills").Replace("Excellent communication skills", "Strong communication and storytelling abilities")
+$ExpertPrompt = $ExpertPrompt.Replace("Domain Expert", "Creative Thinker").Replace("Deep knowledge of the specific field or industry", "Strong brainstorming and ideation skills").Replace("Ability to synthesize complex information", "Ability to think outside the box").Replace("Strong research and analytical skills", "Excellent problem-solving skills").Replace("Excellent communication skills", "Strong communication and storytelling abilities")
 
             }
             4 {
@@ -432,7 +432,7 @@ As a $name, your role is crucial in providing valuable analysis and insights on 
 $AnalysisInstructions
 "@
 
-$psychologistPrompt = $domainExpertPrompt.Replace("Domain Expert", "Psychologist").Replace("Deep knowledge of the specific field or industry", "In-depth understanding of human behavior and mental processes").Replace("Ability to synthesize complex information", "Experience with qualitative and quantitative research methods").Replace("Strong research and analytical skills", "Strong analytical and interpretative skills").Replace("Excellent communication skills", "Excellent communication and empathy skills")
+$ExpertPrompt = $ExpertPrompt.Replace("Domain Expert", "Psychologist").Replace("Deep knowledge of the specific field or industry", "In-depth understanding of human behavior and mental processes").Replace("Ability to synthesize complex information", "Experience with qualitative and quantitative research methods").Replace("Strong research and analytical skills", "Strong analytical and interpretative skills").Replace("Excellent communication skills", "Excellent communication and empathy skills")
 
             }
             5 {
@@ -467,7 +467,7 @@ As a $name, your role is crucial in providing valuable analysis and insights on 
 $AnalysisInstructions
 "@
 
-$facilitatorPrompt = $domainExpertPrompt.Replace("Domain Expert", "Facilitator").Replace("Deep knowledge of the specific field or industry", "Strong leadership and mediation skills").Replace("Ability to synthesize complex information", "Ability to guide discussions and ensure productive outcomes").Replace("Strong research and analytical skills", "Excellent communication and conflict resolution skills").Replace("Excellent communication skills", "Experience with group dynamics and teamwork")
+$ExpertPrompt = $ExpertPrompt.Replace("Domain Expert", "Facilitator").Replace("Deep knowledge of the specific field or industry", "Strong leadership and mediation skills").Replace("Ability to synthesize complex information", "Ability to guide discussions and ensure productive outcomes").Replace("Strong research and analytical skills", "Excellent communication and conflict resolution skills").Replace("Excellent communication skills", "Experience with group dynamics and teamwork")
 
             }
             Default {}
@@ -502,12 +502,26 @@ $($topic.trim())
 $ModeratorMemoryText
 "@
 
+$moderatorPrompt = @"
+$noteModerator
+
+###Topic###
+$($topic.trim())
+
+$ModeratorMemoryText
+"@
+
+
         $moderatorPrompt = @"
 ###Instruction###
 You act as Knowledge Moderator. Based on memory as JSON and topic do data analyze. Using the MECE framework, please create a detailed long-form content outline on the topic: `"$($topic.trim())`" and memory. Generate the output in serialized JSON, follow the instructions from the NOTE.
 
 $ModeratorMemoryText
+
+$noteModerator
 "@
+
+
         $moderatorResponse = $moderator.InvokeLLM($moderatorPrompt)
         $moderatorResponseJSON = Clear-LLMDataJSON $moderatorResponse
         $moderatorResponseObj = $moderatorResponseJSON | convertfrom-json
@@ -535,6 +549,13 @@ $ModeratorMemoryText
 Your act as expert. Based on memory data as JSON, topic, and goal your task is to do data analyze from your perspective. You must improve 'Topic_answers' key's value according with new informations. Response must be detailed and adhere the NOTE.
 
 "@
+
+$questionInstruction = @"
+$ExpertPrompt
+
+"@
+
+
         $questionmiddle = @"
 
 ###Topic###
@@ -623,6 +644,7 @@ As a Great Knowledge Orchestrator do analyze the memory data, and create a long-
 ###Memory###
 $ExpertMemory
 
+$noteModerator
 "@
         $expertSummarize = $expert.InvokeLLM($Summarize)
         $expertSummarizeJSON = Clear-LLMDataJSON $expertSummarize
@@ -671,6 +693,7 @@ Display response as JSON object only with given keys: '{ "Topic": "", "Key_point
 "@
     Write-Host "Finalizing" -BackgroundColor White -ForegroundColor Blue
     $moderator.supplementary_information = $NewSupplement
+    $Summarize += $NewSupplement
     $FinalResponse = $moderator.InvokeLLM($Summarize)
     #write-Host ($FinalResponse) -BackgroundColor Green
     $FinalResponseJSON = Clear-LLMDataJSON $FinalResponse 
