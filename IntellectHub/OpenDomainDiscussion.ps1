@@ -371,16 +371,71 @@ $generalMemory
 
 Display response as JSON object only with given keys: '{ "Topic": "", "Key_points": [ "" ], "Topic_answers": [ "" ], "Final_Answer": ""}'
 "@
+
+    $Summarize = @"
+###Instruction###
+Please summarize the analysis for the user who sent the topic by covering the following key points. Respond in JSON format.
+
+1. Topic Summary:
+   - Provide a brief overview of the topic.
+   - Highlight the key points discussed.
+
+2. Key Findings:
+   - Summarize the major insights and findings.
+   - Highlight the strengths and weaknesses identified.
+
+3. Recommendations:
+   - Suggest actions or next steps based on the analysis.
+   - Mention any future considerations or areas for further research.
+
+Respond in this JSON format:
+
+``````json
+{
+  "topicSummary": {
+    "overview": "",
+    "keyPoints": ""
+  },
+  "keyFindings": {
+    "insights": "",
+    "strengths": "",
+    "weaknesses": ""
+  },
+  "recommendations": {
+    "actions": "",
+    "futureConsiderations": ""
+  }
+}
+``````
+
+###Memory###
+$generalMemory
+
+"@
+
+
     Write-Host "Finalizing" -BackgroundColor White -ForegroundColor Blue
     $moderator.supplementary_information = $NewSupplement
-    $Summarize += $NewSupplement
+    #$Summarize += $NewSupplement
     $FinalResponse = $moderator.InvokeLLM($Summarize)
     #write-Host ($FinalResponse) -BackgroundColor Green
     $FinalResponseJSON = Clear-LLMDataJSON $FinalResponse 
     $FinalResponseObj = $FinalResponseJSON | ConvertFrom-Json
-    Write-Host "Topic:" -BackgroundColor DarkGreen
-    Write-Host $($FinalResponseObj.Topic)
-    Write-Host "Topic's answers:" -BackgroundColor DarkGreen
+    Write-Host "topicSummary:" -BackgroundColor DarkGreen
+    Write-Host $($FinalResponseObj.topicSummary.overview)
+    Write-Host $($FinalResponseObj.topicSummary.keyPoints)
+
+    Write-Host "keyFindings:" -BackgroundColor DarkGreen
+    Write-Host $($FinalResponseObj.keyFindings.insights)
+    Write-Host $($FinalResponseObj.keyFindings.strengths)
+    Write-Host $($FinalResponseObj.keyFindings.weaknesses)
+
+    Write-Host "recommendations:" -BackgroundColor DarkGreen
+    Write-Host $($FinalResponseObj.recommendations.actions)
+    Write-Host $($FinalResponseObj.recommendations.futureConsiderations)
+
+
+    Write-Host "keyFindings:" -BackgroundColor DarkGreen
     foreach ($Answers in $FinalResponseObj.Topic_answers) {
         Write-Host " - $Answers"
     }
