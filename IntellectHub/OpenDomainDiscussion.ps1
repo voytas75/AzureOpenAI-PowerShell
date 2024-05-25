@@ -22,7 +22,7 @@ class LanguageModel {
         try {
             # Simulate language model response
             #$prompt = $prompt + "`n`n" + $this.supplementary_information
-            write-host $prompt -ForegroundColor DarkYellow
+            #write-host $prompt -ForegroundColor DarkYellow
             $arguments = @($prompt, 3000, "Precise", $this.name, "udtgpt35turbo", $true)
             $response = Invoke-PSAOAICompletion @arguments -LogFolder $script:TeamDiscussionDataFolder -verbose:$false
             $this.memory += $response
@@ -108,7 +108,7 @@ Cover the six key aspects below.
    - Future directions
 6. Communication:
     - Clarity and engagement
-
+Enrich your response with creative insights, innovative ideas, and deep analytical thoughts. Aim to provide a thorough, insightful, and forward-thinking analysis.
 "@
 
             }
@@ -172,7 +172,7 @@ Cover the six key aspects below.
             if ($lastMemoryElementJSON) {
                 $lastMemoryElementObj = $lastMemoryElementJSON | ConvertFrom-Json
                 $ExpertsMemory += @"
-$($expert.name) response:
+($($expert.name) response)
     context: 
     - backgroundandscope: $($lastMemoryElementObj.context.backgroundandscope)
 objectives: 
@@ -214,6 +214,7 @@ Cover the five key points below.
 5. Outcome:
    - Summary of conclusions
    - Next steps
+Enrich your response with creative insights, innovative ideas, and deep analytical thoughts. Aim to provide a thorough, insightful, and forward-thinking analysis.
 
    You must respond in JSON format only:
 ``````json
@@ -237,9 +238,7 @@ Cover the five key points below.
             #$moderatorResponseObj
         }
         else {
-            Write-Host $moderatorResponseObj.Topic -ForegroundColor Green
-            Write-Host $moderatorResponseObj.required_action -ForegroundColor Green
-            Write-Host ($moderatorResponseObj.questions_for_experts -join "`n") -ForegroundColor Green
+            Write-Host $moderatorResponseObj.outcome.summary -ForegroundColor Green
         }
         $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
         $filename = "$round-$($moderator.name)-prompt-$timestamp.txt"
@@ -258,7 +257,7 @@ Cover the five key points below.
             if ($lastMemoryElement -or $ModeratorMemoryJSON) {
                 $lastMemoryElement = @"
 $lastMemoryElement
-Memory of Moderator:
+(Memory of Moderator)
 Context: 
     - background and scope: $($ModeratorMemoryObj.context.backgroundandscope)
 KeyPoints: 
@@ -290,7 +289,7 @@ outcome:
                 #$expertResponseObj
             }
             else {
-                Write-Host $($expertResponseObj.Thoughts -join "`n")
+                Write-Host $($ModeratorMemoryObj.outcome.summary)
             }
             $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
             $filename = "$round-$($expert.name)-prompt-$timestamp.txt"
@@ -316,16 +315,63 @@ outcome:
         #Write-Host "$($expert.name)'s Memory:" -ForegroundColor Blue
         #Write-Host ($expert.memory) -ForegroundColor Blue
         #Write-Host ""
-        $ExpertMemory = $($expert.memory).foreach{ Clear-LLMDataJSON $_ }
+        $ExpertMemoryJSON = $($expert.memory).foreach{ Clear-LLMDataJSON $_ }
+        $ExpertMemoryObj = $ExpertMemoryJSON | ConvertFrom-Json
+        $ExpertMemory = @"
+(Your earlier response)
+context: 
+    - backgroundandscope: $($ExpertMemoryObj.context.backgroundandscope)
+objectives: 
+    - goalsandoutcomes: $($ExpertMemoryObj.context.backgroundandscope)
+content: 
+    - mainPoints: $($ExpertMemoryObj.content.mainPoints)
+    - relevance: $($ExpertMemoryObj.content.relevance)
+analysis:
+    - strengths: $($ExpertMemoryObj.analysis.strengths) 
+    - weaknesses: $($ExpertMemoryObj.analysis.weaknesses)
+    - credibility: $($ExpertMemoryObj.analysis.credibility)
+implications:
+    - practical: $($ExpertMemoryObj.implications.practical)
+    - future: $($ExpertMemoryObj.implications.future)
+communication:
+    - clarityandengagement: $($ExpertMemoryObj.communication.clarityandengagement)
+"@
+        $ExpertsMemory += $ExpertMemory
+        
         $Summarize = @"
 ###Instruction###
 As a Great Knowledge Orchestrator do analyze the memory data, and create a long-form content response that combines the most relevant and interesting information. Remove information aboout experts. Analyze memory data and improve your response.
-
-###Memory###
 $ExpertMemory
+Cover the five key points below. 
+1. Context:
+   - Background and scope
+2. Key Points:
+   - Main points discussed
+   - Participant contributions
+3. Flow:
+   - Discussion progression
+   - Key transitions
+4. Analysis:
+   - Major insights
+   - Consensus and disagreements
+5. Outcome:
+   - Summary of conclusions
+   - Next steps
+Enrich your response with creative insights, innovative ideas, and deep analytical thoughts. Aim to provide a thorough, insightful, and forward-thinking analysis.
 
-$noteModerator
+You must respond in JSON format only:
+``````json
+{
+    "context": {"backgroundandscope": ""},
+    "keyPoints": {"mainPoints": "", "contributions": ""},
+    "flow": {"progression": "", "transitions": ""},
+    "analysis": {"insights": "", "consensus": "", "disagreements": ""},
+    "outcome": {"summary": "", "nextSteps": ""}
+}
+``````
 "@
+
+
         $expertSummarize = $expert.InvokeLLM($Summarize)
         $expertSummarizeJSON = Clear-LLMDataJSON $expertSummarize
         $expertSummarizeObj = $expertSummarizeJSON | ConvertFrom-Json
@@ -337,8 +383,7 @@ $noteModerator
             #$expertSummarizeObj
         }
         else {
-            Write-Host $expertSummarizeObj.Thoughts
-            Write-Host $expertSummarizeObj.Topic_answers
+            Write-Host $expertSummarizeObj.outcome.summary
         }
         $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
         $filename = "Summarize-$($expert.name)-prompt-$timestamp.txt"
@@ -350,45 +395,23 @@ $noteModerator
 
     }
 
-    # General summarization
-    foreach ($expert in $experts) {
-        $generalMemory += $($expert.GetLastNMemoryElements(1)).foreach{ Clear-LLMDataJSON $_ }
-    }
     $Summarize = @"
 ###Instruction###
-As a Great Knowledge Orchestrator you must do the task to answer the topic based on memory of discussion. Examine given data and create comprehensive and detailed final answer. Prioritize information directly relevant to the user's Topic.
-
-###Topic###
-$topic
-
-###Memory###
-$generalMemory
-
-
-"@
-
-    $NewSupplement = @"
-
-Display response as JSON object only with given keys: '{ "Topic": "", "Key_points": [ "" ], "Topic_answers": [ "" ], "Final_Answer": ""}'
-"@
-
-    $Summarize = @"
-###Instruction###
-Please summarize the analysis for the user who sent the topic by covering the following key points. Respond in JSON format.
-
+Create a detailed response to the topic: 
+$ExpertsMemory
+by following these three steps:
 1. Topic Summary:
    - Provide a brief overview of the topic.
    - Highlight the key points discussed.
-
 2. Key Findings:
    - Summarize the major insights and findings.
    - Highlight the strengths and weaknesses identified.
-
 3. Recommendations:
    - Suggest actions or next steps based on the analysis.
    - Mention any future considerations or areas for further research.
+Enrich your response with creative insights, innovative ideas, and deep analytical thoughts. Aim to provide a thorough, insightful, and forward-thinking analysis.
 
-Respond in this JSON format:
+Ensure a structured and thorough analysis. Respond only in this JSON format:
 
 ``````json
 {
@@ -407,10 +430,6 @@ Respond in this JSON format:
   }
 }
 ``````
-
-###Memory###
-$generalMemory
-
 "@
 
 
@@ -421,43 +440,18 @@ $generalMemory
     #write-Host ($FinalResponse) -BackgroundColor Green
     $FinalResponseJSON = Clear-LLMDataJSON $FinalResponse 
     $FinalResponseObj = $FinalResponseJSON | ConvertFrom-Json
-    Write-Host "topicSummary:" -BackgroundColor DarkGreen
+    Write-Host "Topic Summary:" -BackgroundColor DarkGreen
     Write-Host $($FinalResponseObj.topicSummary.overview)
     Write-Host $($FinalResponseObj.topicSummary.keyPoints)
 
-    Write-Host "keyFindings:" -BackgroundColor DarkGreen
+    Write-Host "Key Findings:" -BackgroundColor DarkGreen
     Write-Host $($FinalResponseObj.keyFindings.insights)
     Write-Host $($FinalResponseObj.keyFindings.strengths)
     Write-Host $($FinalResponseObj.keyFindings.weaknesses)
 
-    Write-Host "recommendations:" -BackgroundColor DarkGreen
+    Write-Host "Recommendations:" -BackgroundColor DarkGreen
     Write-Host $($FinalResponseObj.recommendations.actions)
     Write-Host $($FinalResponseObj.recommendations.futureConsiderations)
-
-
-    Write-Host "keyFindings:" -BackgroundColor DarkGreen
-    foreach ($Answers in $FinalResponseObj.Topic_answers) {
-        Write-Host " - $Answers"
-    }
-
-    #Write-Host "Thoughts:"
-    foreach ($thought in $FinalResponseObj.Thoughts) {
-        #Write-Host " - $thought"
-    }
-    #Write-Host "Other:"
-    foreach ($other in $FinalResponseObj.Other) {
-        #Write-Host " - $other"
-    }
-    #Write-Host "Combined:"
-    foreach ($Combined in $FinalResponseObj.Combined) {
-        #Write-Host " - $Combined"
-    }
-    Write-Host "Key_points:" -BackgroundColor DarkGreen
-    foreach ($Key_points in $FinalResponseObj.Key_points) {
-        Write-Host " - $Key_points"
-    }
-    Write-Host "Final answer:" -BackgroundColor DarkGreen
-    Write-Host $($FinalResponseObj.Final_Answer)
     
     $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
     $filename = "Final-$($moderator.name)-prompt-$timestamp.txt"
