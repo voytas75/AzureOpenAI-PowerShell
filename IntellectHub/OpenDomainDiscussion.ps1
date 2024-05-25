@@ -173,22 +173,22 @@ Enrich your response with creative insights, innovative ideas, and deep analytic
                 $lastMemoryElementObj = $lastMemoryElementJSON | ConvertFrom-Json
                 $ExpertsMemory += @"
 ($($expert.name) response)
-    context: 
-    - backgroundandscope: $($lastMemoryElementObj.context.backgroundandscope)
-objectives: 
-    - goalsandoutcomes: $($lastMemoryElementObj.context.backgroundandscope)
-content: 
-    - mainPoints: $($lastMemoryElementObj.content.mainPoints)
+Context: 
+    - background ands cope: $($lastMemoryElementObj.context.backgroundandscope)
+Objectives: 
+    - goals and outcomes: $($lastMemoryElementObj.context.backgroundandscope)
+Content: 
+    - main Points: $($lastMemoryElementObj.content.mainPoints)
     - relevance: $($lastMemoryElementObj.content.relevance)
-analysis:
+Analysis:
     - strengths: $($lastMemoryElementObj.analysis.strengths) 
     - weaknesses: $($lastMemoryElementObj.analysis.weaknesses)
     - credibility: $($lastMemoryElementObj.analysis.credibility)
-implications:
+Implications:
     - practical: $($lastMemoryElementObj.implications.practical)
     - future: $($lastMemoryElementObj.implications.future)
-communication:
-    - clarityandengagement: $($lastMemoryElementObj.communication.clarityandengagement)
+Communication:
+    - clarity and engagement: $($lastMemoryElementObj.communication.clarityandengagement)
 
 "@
             }
