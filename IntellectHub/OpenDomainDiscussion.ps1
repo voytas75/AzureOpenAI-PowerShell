@@ -22,7 +22,7 @@ class LanguageModel {
         try {
             # Simulate language model response
             #$prompt = $prompt + "`n`n" + $this.supplementary_information
-            #write-host $prompt -ForegroundColor DarkYellow
+            write-host $prompt -ForegroundColor DarkYellow
             $arguments = @($prompt, 3000, "Precise", $this.name, "udtgpt35turbo", $true)
             $response = Invoke-PSAOAICompletion @arguments -LogFolder $script:TeamDiscussionDataFolder -verbose:$false
             $this.memory += $response
@@ -217,53 +217,24 @@ $AnalysisInstructions
 "@
 
                 $ExpertPrompt = @"
-###Expert Description###
-You are $name with the following skills and qualifications:
-- Deep knowledge of the specific field or industry.
-- Ability to synthesize complex information.
-- Strong research and analytical skills.
-- Excellent communication skills.
-
 ###Instructions###
-Analyze the provided topic text covering the key aspects below. Respond in JSON format.
-
-1. **Context:**
-   - Background
-   - Scope
-
-2. **Objectives:**
-   - Goals
-   - Outcomes
-
-3. **Content:**
+You are $name with the following skills and qualifications: Deep knowledge of the specific field or industry, Ability to synthesize complex information, Strong research and analytical skills, Excellent communication skills. Your main task is to analyze the topic text `"$topic`", goal, and memory, if any. Cover the six key aspects below.
+1. Context:
+   - Background and Scope
+2. Objectives:
+   - Goals and outcomes
+3. Content:
    - Main points
    - Relevance
-
-4. **Analysis:**
+4. Analysis:
    - Strengths
    - Weaknesses
    - Credibility
-
-5. **Implications:**
+5. Implications:
    - Practical
    - Future directions
-
-6. **Communication:**
-    - Clarity
-    - Engagement
-
-Respond in this JSON format:
-
-``````json
-{
-  "context": {"background": "", "scope": ""},
-  "objectives": {"goals": "", "outcomes": ""},
-  "content": {"mainPoints": "", "relevance": ""},
-  "analysis": {"strengths": "", "weaknesses": "", "credibility": ""},
-  "implications": {"practical": "", "future": ""},
-  "communication": {"clarity": "", "engagement": ""}
-}
-``````
+6. Communication:
+    - Clarity and engagement
 "@
 
             }
@@ -463,31 +434,27 @@ $moderatorPrompt = @"
 ###Instructions###
 You are Moderator with the following skills: Strong leadership, excellent communication, conflict resolution, experience in group dynamics and teamwork. You must respond in JSON format only:
 {
-    "context": {"background": "", "scope": ""},
+    "context": {"backgroundandscope": ""},
     "keyPoints": {"mainPoints": "", "contributions": ""},
     "flow": {"progression": "", "transitions": ""},
     "analysis": {"insights": "", "consensus": "", "disagreements": ""},
     "outcome": {"summary": "", "nextSteps": ""}
 }
-Your main task is to facilitate and analyze the provided topic. Cover the key points below. 
-1. **Context:**
-   - Background
-   - Scope
-2. **Key Points:**
+Your main task is to facilitate and analyze the topic `"$($topic.trim())`". Cover the five key points below. 
+1. Context:
+   - Background and scope
+2. Key Points:
    - Main points discussed
    - Participant contributions
-3. **Flow:**
+3. Flow:
    - Discussion progression
    - Key transitions
-4. **Analysis:**
+4. Analysis:
    - Major insights
    - Consensus and disagreements
-5. **Outcome:**
+5. Outcome:
    - Summary of conclusions
    - Next steps
-
-###Topic###
-$($topic.trim())
 "@
 
 
@@ -535,30 +502,44 @@ $topic
         $questionFooter = @"
 
 "@
-        $questionFooter += "`n###Question###`n"
-        $questionFooter += $moderatorResponseObj.questions_for_experts -join "`n`n###Question###`n"
+        #$questionFooter += "`n###Question###`n"
+        #$questionFooter += $moderatorResponseObj.questions_for_experts -join "`n`n###Question###`n"
 
         # Each expert responds
         foreach ($expert in $experts) {
             $lastMemoryElement = $($expert.GetLastNMemoryElements(1)).foreach{ Clear-LLMDataJSON $_ }
-            $ModeratorMemory = $($moderator.GetLastNMemoryElements(1)).foreach{ Clear-LLMDataJSON $_ }
-            if ($lastMemoryElement -or $ModeratorMemory) {
+            $ModeratorMemoryJSON = $($moderator.GetLastNMemoryElements(1)).foreach{ Clear-LLMDataJSON $_ }
+            $ModeratorMemoryObj = $ModeratorMemoryJSON | ConvertFrom-Json
+            if ($lastMemoryElement -or $ModeratorMemoryJSON) {
                 $lastMemoryElement = @"
 
 
-###Memory###
+###Topic###
 $lastMemoryElement
-$ModeratorMemory                
+Memory of Moderator:
+Context: 
+    - background and scope: $($ModeratorMemoryObj.context.backgroundandscope)
+
+You must respond by filling in the appropriate JSON object key values:
+{
+    "context": {"backgroundandscope": ""},
+    "objectives": {"goalsandoutcomes": ""},
+    "content": {"mainPoints": "", "relevance": ""},
+    "analysis": {"strengths": "", "weaknesses": "", "credibility": ""},
+    "implications": {"practical": "", "future": ""},
+    "communication": {"clarityandengagement": ""}
+}
+    
 "@
 
             }
 
             $questionWithmemory += $questionInstruction
-            $questionWithmemory += $questionmiddle
+            #$questionWithmemory += $questionmiddle
             $questionWithmemory += @"
 
 ###Goal###
-$($moderatorResponseObj.required_action)
+$($moderatorResponseObj.outcome.summary)
 
 "@
             $questionWithmemory += $lastMemoryElement
