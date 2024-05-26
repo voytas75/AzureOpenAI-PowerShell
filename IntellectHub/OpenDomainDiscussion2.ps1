@@ -22,7 +22,7 @@ class LanguageModel {
         try {
             # Simulate language model response
             #$prompt = $prompt + "`n`n" + $this.supplementary_information
-            #write-host $prompt -ForegroundColor DarkYellow
+            write-host $prompt -ForegroundColor DarkYellow
             $arguments = @($prompt, 3000, "Precise", $this.name, "udtgpt35turbo", $true)
             $response = Invoke-PSAOAICompletion @arguments -LogFolder $script:TeamDiscussionDataFolder -verbose:$false
             $this.memory += $response
@@ -62,20 +62,6 @@ function Conduct-Discussion {
 
     # Create expert language models
     $experts = @()
-
-    $ExpertPromptJSON = @"
-You must respond by filling in the appropriate JSON object key values:
-``````json
-{
-    "context": {"backgroundandscope": ""},
-    "objectives": {"goalsandoutcomes": ""},
-    "content": {"mainPoints": "", "relevance": ""},
-    "analysis": {"strengths": "", "weaknesses": "", "credibility": ""},
-    "implications": {"practical": "", "future": ""},
-    "communication": {"clarityandengagement": ""}
-}
-``````
-"@
     
     # Loop to create different types of expert language models
     for ($i = 1; $i -le 5; $i++) {
@@ -84,13 +70,10 @@ You must respond by filling in the appropriate JSON object key values:
             1 {
                 # Domain Expert role
                 $name = "Domain Expert"; 
-                $supplement = @"
-"@ 
-
                 $ExpertPrompt = @"
 ###Instructions###
-You are $name with the following skills and qualifications: Deep knowledge of the domain, Ability to synthesize complex information, Strong research and analytical skills, Excellent communication skills. Your main task is to build answer to `"$($topic.trim())`". To do that you MUST facilitate and analyze the topic, and other data.
-In analyze cover the six key aspects below using your skills and qualifications:
+You are $name with the following skills and qualifications: Deep knowledge of the domain, Ability to synthesize complex information, Strong research and analytical skills, Excellent communication skills. Your main task is to build answer to `"$($topic.trim())`". To do that you MUST analyze and data and naswer questions.
+In analyze use your skills and qualificationscover and help yourself with key aspects below:
 1. Context:
    - Background and Scope
 2. Objectives:
@@ -104,16 +87,14 @@ In analyze cover the six key aspects below using your skills and qualifications:
    - Credibility
 5. Implications:
    - Practical
-   - Future directions
 6. Communication:
     - Clarity and engagement
+7. Questions
+    - Ask and answer questions to/for experts
 
-Enrich your response with creative insights, innovative ideas, and deep analytical thoughts. Aim to provide a thorough, insightful, and forward-thinking analysis to answer the best way to the topic.
+Enrich your response with creative insights, innovative ideas, and deep analytical thoughts. Aim to provide a thorough, insightful, and forward-thinking analysis to answer the best way to the topic. Use clear language
 
-###Data###
-``````text
 {0}
-``````
 "@
 
             }
@@ -165,45 +146,28 @@ Enrich your response with creative insights, innovative ideas, and deep analytic
     # Randomly select a number of experts based on the expertCount parameter
     $experts = $experts | get-random -Count $expertCount
     write-host ($experts.name -join ", ")
-    $nextStep = ""
     # Start discussion rounds
     for ($round = 1; $round -le $rounds; $round++) {
         Write-Host "Round $round" -BackgroundColor White -ForegroundColor Blue
 
-        $ModeratorMemory = $($moderator.GetLastNMemoryElements(1)).foreach{ Clear-LLMDataJSON $_ }
+        $ModeratorMemory = $($moderator.GetLastNMemoryElements(1))
         $ExpertsMemory = ""
         foreach ($expert in $experts) {
-            $lastMemoryElementJSON = $($expert.GetLastNMemoryElements(1)).foreach{ Clear-LLMDataJSON $_ }
-            if ($lastMemoryElementJSON) {
-                $lastMemoryElementObj = $lastMemoryElementJSON | ConvertFrom-Json
+            $lastMemoryElement = $($expert.GetLastNMemoryElements(1))
+            if ($lastMemoryElement) {
                 $ExpertsMemory += @"
-($($expert.name) response)
-Context: 
-    - background ands cope: $($lastMemoryElementObj.context.backgroundandscope)
-Objectives: 
-    - goals and outcomes: $($lastMemoryElementObj.context.backgroundandscope)
-Content: 
-    - main Points: $($lastMemoryElementObj.content.mainPoints)
-    - relevance: $($lastMemoryElementObj.content.relevance)
-Analysis:
-    - strengths: $($lastMemoryElementObj.analysis.strengths) 
-    - weaknesses: $($lastMemoryElementObj.analysis.weaknesses)
-    - credibility: $($lastMemoryElementObj.analysis.credibility)
-Implications:
-    - practical: $($lastMemoryElementObj.implications.practical)
-    - future: $($lastMemoryElementObj.implications.future)
-Communication:
-    - clarity and engagement: $($lastMemoryElementObj.communication.clarityandengagement)
-
+(Memory of $($expert.name))
+$lastMemoryElement
 "@
+                
             }
         }
 
         $moderatorPrompt = @"
 ###Instructions###
 You are Moderator with the following skills: Strong leadership, excellent communication, conflict resolution, experience in group dynamics and teamwork. 
-Your main task is to build answer to `"$($topic.trim())`". To do that you MUST facilitate and analyze the topic, and other data. Also do: $nextStep. Enrich your response with creative insights, innovative ideas, and deep analytical thoughts. Aim to provide a thorough, insightful, and forward-thinking analysis.
-Cover the five key points below. 
+Your main task is to build answer to `"$($topic.trim())`". To do that you MUST facilitate and analyze the topic, and other data. Enrich your response with creative insights, innovative ideas, and deep analytical thoughts. Aim to provide a thorough, insightful, and forward-thinking analysis.
+Cover the key points below. 
 1. Context:
    - Background and scope
 2. Key Points:
@@ -218,18 +182,8 @@ Cover the five key points below.
 5. Outcome:
    - Summary of conclusions
    - Next steps
-
-You must respond in JSON format only. 'nextstep' must be specific sentence. Create a sentence to meet the requirements of LLM queries. The sentence will be used in LLM promp. 
-``````json
-{
-    "context": {"backgroundandscope": ""},
-    "keyPoints": {"mainPoints": "", "contributions": ""},
-    "flow": {"progression": "", "transitions": ""},
-    "analysis": {"insights": "", "consensus": "", "disagreements": ""},
-    "outcome": {"summary": "", "nextSteps": ""}
-}
-``````
-   
+6. Ask and answer questions to analyze topic.
+Use clear language
 ###Data###
 ``````text
 $ExpertsMemory
@@ -237,18 +191,14 @@ $ExpertsMemory
 "@
 
         $moderatorResponse = $moderator.InvokeLLM($moderatorPrompt)
-        $moderatorResponseJSON = Clear-LLMDataJSON $moderatorResponse
-        $moderatorResponseObj = $moderatorResponseJSON | convertfrom-json
-        $nextStep = $expertSummarizeObj.outcome.nextSteps
 
         if (-not $Thoughts) {
             Write-Host "Moderator: $moderatorResponse" -ForegroundColor Green
-            $nextStep
             #$moderatorResponseJSON
             #$moderatorResponseObj
         }
         else {
-            Write-Host $moderatorResponseObj.outcome.summary -ForegroundColor Green
+            Write-Host $moderatorResponse -ForegroundColor Green
         }
         $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
         $filename = "$round-$($moderator.name)-prompt-$timestamp.txt"
@@ -261,37 +211,37 @@ $ExpertsMemory
         $lastMemoryElement = ""
         # Each expert responds
         foreach ($expert in $experts) {
-            $lastMemoryElement = $($expert.GetLastNMemoryElements(1)).foreach{ Clear-LLMDataJSON $_ }
-            $ModeratorMemoryJSON = $($moderator.GetLastNMemoryElements(1)).foreach{ Clear-LLMDataJSON $_ }
-            $ModeratorMemoryObj = $ModeratorMemoryJSON | ConvertFrom-Json
-            if ($lastMemoryElement -or $ModeratorMemoryJSON) {
+            $ExpertsMemory = ""   
+            foreach ($expert in $experts) {
+                $lastMemoryElement = $($expert.GetLastNMemoryElements(1))
+                if ($lastMemoryElement) {
+                    $ExpertsMemory += @"
+    (Memory of $($expert.name))
+    $lastMemoryElement
+"@
+                    
+                }
+            }
+    
+
+            #$lastMemoryElement = $($expert.GetLastNMemoryElements(1))
+            $ModeratorMemory = $($moderator.GetLastNMemoryElements(1))
+            if ($lastMemoryElement -or $ModeratorMemory) {
                 $lastMemoryElement = @"
-$lastMemoryElement
 (Memory of Moderator)
-Context: 
-    - background and scope: $($ModeratorMemoryObj.context.backgroundandscope)
-KeyPoints: 
-    - mainPoints: $($ModeratorMemoryObj.KeyPoints.mainPoints)
-    - contributions: $($ModeratorMemoryObj.KeyPoints.contributions)
-flow: 
-    - progression: $($ModeratorMemoryObj.flow.progression)
-    - transitions: $($ModeratorMemoryObj.flow.transitions)
-analysis: 
-    - insights: $($ModeratorMemoryObj.analysis.insights)
-    - consensus: $($ModeratorMemoryObj.analysis.consensus)
-    - disagreements: $($ModeratorMemoryObj.analysis.disagreements)
-outcome: 
-    - summary: $($ModeratorMemoryObj.outcome.summary)
-    - nextSteps: $($ModeratorMemoryObj.outcome.nextSteps)
-  
+$ModeratorMemory
+$ExpertsMemory
 "@
 
             }
-            $questionWithmemory = $($ExpertPrompt -f $lastMemoryElement)
-            $questionWithmemory += $ExpertPromptJSON
+            $expertpromptData = @"
+###Data###
+``````text
+{0}
+``````
+"@
+            $questionWithmemory = $($ExpertPrompt -f $($expertpromptData -f $lastMemoryElement))
             $expertResponse = $expert.InvokeLLM($questionWithmemory)
-            $expertResponseJSON = Clear-LLMDataJSON $expertResponse
-            $expertResponseObj = $expertResponseJSON | ConvertFrom-Json
             #$expertResponse = Extract-JSON $expertResponse | ConvertFrom-Json
             if (-not $Thoughts) {
                 Write-Host "$($expert.name): $expertResponse" 
@@ -299,7 +249,7 @@ outcome:
                 #$expertResponseObj
             }
             else {
-                Write-Host $($ModeratorMemoryObj.outcome.summary)
+                Write-Host $expertResponse
             }
             $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
             $filename = "$round-$($expert.name)-prompt-$timestamp.txt"
@@ -318,126 +268,37 @@ outcome:
         $moderatorPrompt = ""
         $moderatorResponse = ""
     }
-    Write-Host "Summarize" -BackgroundColor White -ForegroundColor Blue
-
-    # Print experts' memories
     foreach ($expert in $experts) {
-        #Write-Host "$($expert.name)'s Memory:" -ForegroundColor Blue
-        #Write-Host ($expert.memory) -ForegroundColor Blue
-        #Write-Host ""
-        #$ExpertMemoryJSON = $($expert.memory).foreach{ Clear-LLMDataJSON $_ }
-        #$ExpertMemoryObj = $ExpertMemoryJSON | ConvertFrom-Json
-        $ExpertMemory = @"
-(Your earlier response)
-context: 
-    - backgroundandscope: $($ExpertMemoryObj.context.backgroundandscope)
-objectives: 
-    - goalsandoutcomes: $($ExpertMemoryObj.context.backgroundandscope)
-content: 
-    - mainPoints: $($ExpertMemoryObj.content.mainPoints)
-    - relevance: $($ExpertMemoryObj.content.relevance)
-analysis:
-    - strengths: $($ExpertMemoryObj.analysis.strengths) 
-    - weaknesses: $($ExpertMemoryObj.analysis.weaknesses)
-    - credibility: $($ExpertMemoryObj.analysis.credibility)
-implications:
-    - practical: $($ExpertMemoryObj.implications.practical)
-    - future: $($ExpertMemoryObj.implications.future)
-communication:
-    - clarityandengagement: $($ExpertMemoryObj.communication.clarityandengagement)
+        $lastMemoryElement = $($expert.GetLastNMemoryElements(1))
+        if ($lastMemoryElement) {
+            $ExpertsMemory += @"
+(Memory of $($expert.name))
+$lastMemoryElement
 "@
-        $ExpertsMemory += $ExpertMemory
-        
-        $Summarize = @"
-###Instruction###
-As a Great Knowledge Orchestrator do analyze the memory data, and create a long-form content response that combines the most relevant and interesting information. Remove information aboout experts. Analyze memory data and improve your response.
-Cover the five key points below. 
-1. Context:
-   - Background and scope
-2. Key Points:
-   - Main points discussed
-   - Participant contributions
-3. Flow:
-   - Discussion progression
-   - Key transitions
-4. Analysis:
-   - Major insights
-   - Consensus and disagreements
-5. Outcome:
-   - Summary of conclusions
-   - Next steps
-Enrich your response with creative insights, innovative ideas, and deep analytical thoughts. Aim to provide a thorough, insightful, and forward-thinking analysis.
-
-###Data###
-$ExpertMemory
-
-You must respond in JSON format only:
-``````json
-{
-    "context": {"backgroundandscope": ""},
-    "keyPoints": {"mainPoints": "", "contributions": ""},
-    "flow": {"progression": "", "transitions": ""},
-    "analysis": {"insights": "", "consensus": "", "disagreements": ""},
-    "outcome": {"summary": "", "nextSteps": ""}
-}
-``````
-"@
-
-
-        #$expertSummarize = $expert.InvokeLLM($Summarize)
-        $expertSummarizeJSON = Clear-LLMDataJSON $expertSummarize
-        $expertSummarizeObj = $expertSummarizeJSON | ConvertFrom-Json
-        if (-not $Thoughts) {
-            Write-Host "$($expert.name)'s summarized memory:" -BackgroundColor Blue
-            #write-Host ($moderator.InvokeLLM($Summarize)) -BackgroundColor Blue
-            write-Host $expertSummarize -BackgroundColor Blue
-            #$expertSummarizeJSON
-            #$expertSummarizeObj
+            
         }
-        else {
-            Write-Host $expertSummarizeObj.outcome.summary
-        }
-        $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-        $filename = "Summarize-$($expert.name)-prompt-$timestamp.txt"
-        $filepath = Join-Path -Path $script:TeamDiscussionDataFolder -ChildPath $filename
-        $Summarize | Out-File -FilePath $filepath
-        $filename = "Summarize-$($expert.name)-response-$timestamp.txt"
-        $filepath = Join-Path -Path $script:TeamDiscussionDataFolder -ChildPath $filename
-        $expertSummarize | Out-File -FilePath $filepath
-
     }
 
-    $Summarize = @"
-###Instruction###
-Your task is to create a detailed summary to the topic by following these three steps:
-1. Topic Summary:
-   - Provide a brief overview of the topic.
-   - Highlight the key points discussed.
-2. Key Findings:
-   - Summarize the major insights and findings.
-   - Highlight the strengths and weaknesses identified.
-3. Recommendations:
-   - Suggest actions or next steps based on the analysis.
-   - Mention any future considerations or areas for further research.
-Enrich your response with creative insights, innovative ideas, and deep analytical thoughts. Aim to provide a thorough, insightful, and forward-thinking analysis.
 
-Text to Summary:
+    #$lastMemoryElement = $($expert.GetLastNMemoryElements(1))
+    $ModeratorMemory = $($moderator.GetLastNMemoryElements(1))
+    if ($lastMemoryElement -or $ModeratorMemory) {
+        $lastMemoryElement = @"
+(Memory of Moderator)
+$ModeratorMemory
 $ExpertsMemory
-$lastMemoryElement
-
-Ensure a structured and thorough analysis. Respond only in this JSON format:
-
-``````json
-{
-  "Moderator": {
-    "topic": "",
-    "response": ""
-  }
-}
-``````
 "@
 
-$Summarize = @"
+    }
+    $expertpromptData = @"
+###Data###
+``````text
+{0}
+``````
+"@
+    $questionWithmemory = $($expertpromptData -f $lastMemoryElement)
+
+    $Summarize = @"
 ###Instruction###
 We've had a thought-provoking discussion about `"$topic`", and now it's time to synthesize what we've learned!
 Crafting the Big Picture:
@@ -445,11 +306,7 @@ Recap the Key Points: Briefly summarize the main discussion points. Use clear, c
 Weaving the Threads: Explain how the different perspectives and information shared relate to the original topic. Did the discussion reveal new aspects, or solidify existing knowledge?
 Towards an Answer: Based on the collective insights, craft an answer (or multiple perspectives if applicable) to the original question about the topic.
 
-###Data###
-``````text
-$ExpertsMemory
-$lastMemoryElement
-``````
+$questionWithmemory
 "@
 
 
@@ -458,8 +315,6 @@ $lastMemoryElement
     #$Summarize += $NewSupplement
     $FinalResponse = $moderator.InvokeLLM($Summarize)
     #write-Host ($FinalResponse) -BackgroundColor Green
-    $FinalResponseJSON = Clear-LLMDataJSON $FinalResponse 
-    $FinalResponseObj = $FinalResponseJSON | ConvertFrom-Json
     Write-Host "Answer:" -BackgroundColor DarkGreen
     Write-Host $FinalResponse
 
