@@ -10,18 +10,15 @@ param(
 class LanguageModel {
     [string] $name
     [string[]] $memory
-    [string] $supplementary_information
 
-    LanguageModel([string] $name, [string] $supplement) {
+    LanguageModel([string] $name) {
         $this.name = $name
         $this.memory = @()
-        $this.supplementary_information = $supplement
     }
 
     [string] InvokeLLM([string] $prompt) {
         try {
             # Simulate language model response
-            #$prompt = $prompt + "`n`n" + $this.supplementary_information
             write-host $prompt -ForegroundColor DarkYellow
             $arguments = @($prompt, 3000, "Precise", $this.name, "udtgpt35turbo", $true)
             $response = Invoke-PSAOAICompletion @arguments -LogFolder $script:TeamDiscussionDataFolder -verbose:$false
@@ -45,12 +42,7 @@ class LanguageModel {
 }
 
 # Create a moderator language model
-
-$noteModerator = @"
-"@
-
-
-$moderator = [LanguageModel]::new("Moderator", $noteModerator)
+$moderator = [LanguageModel]::new("Moderator")
 
 # Define a function to conduct the discussion
 function Conduct-Discussion {
@@ -72,27 +64,7 @@ function Conduct-Discussion {
                 $name = "Domain Expert"; 
                 $ExpertPrompt = @"
 ###Instructions###
-You are $name with the following skills and qualifications: Deep knowledge of the domain, Ability to synthesize complex information, Strong research and analytical skills, Excellent communication skills. Your main task is to build answer to `"$($topic.trim())`". To do that you MUST analyze and data and naswer questions.
-In analyze use your skills and qualificationscover and help yourself with key aspects below:
-1. Context:
-   - Background and Scope
-2. Objectives:
-   - Goals and outcomes
-3. Content:
-   - Main points
-   - Relevance
-4. Analysis:
-   - Strengths
-   - Weaknesses
-   - Credibility
-5. Implications:
-   - Practical
-6. Communication:
-    - Clarity and engagement
-7. Questions
-    - Ask and answer questions to/for experts
-
-Enrich your response with creative insights, innovative ideas, and deep analytical thoughts. Aim to provide a thorough, insightful, and forward-thinking analysis to answer the best way to the topic. Use clear language
+You are $name with the following skills and qualifications: Deep knowledge of the domain, Ability to synthesize complex information, Strong research and analytical skills, Excellent communication skills. Your main task is to focus to build answer for topic `"$($topic.trim())`". To do that you MUST analyze the data and answer questions, if any. Enrich your response with creative insights, innovative ideas, and deep analytical thoughts. Aim to provide a thorough, insightful, and forward-thinking analysis to answer the best way to the topic. Use clear language. Response MUST be text block without any new or empty lines.
 
 {0}
 "@
@@ -101,45 +73,30 @@ Enrich your response with creative insights, innovative ideas, and deep analytic
             2 {
                 # Data Analyst role
                 $name = "Data Analyst"; 
-
-                $supplement = @"
-"@
-
                 $ExpertPrompt = $ExpertPrompt.Replace("Domain Expert", "Data Analyst").Replace("Deep knowledge of the domain", "Proficiency in data analysis and statistical tools").Replace("Ability to synthesize complex information", "Strong understanding of data visualization techniques").Replace("Strong research and analytical skills", "Ability to interpret and explain data insights").Replace("Excellent communication skills", "Experience with data-driven decision making")
             }
             3 {
                 # Creative Thinker role
                 $name = "Creative Thinker"; 
-                $supplement = @"
-"@ 
-
-
                 $ExpertPrompt = $ExpertPrompt.Replace("Domain Expert", "Creative Thinker").Replace("Deep knowledge of the domain", "Strong brainstorming and ideation skills").Replace("Ability to synthesize complex information", "Ability to think outside the box").Replace("Strong research and analytical skills", "Excellent problem-solving skills").Replace("Excellent communication skills", "Strong communication and storytelling abilities")
 
             }
             4 {
                 # Psychologist role
                 $name = "Psychologist"; 
-                $supplement = @"
-"@
-
                 $ExpertPrompt = $ExpertPrompt.Replace("Domain Expert", "Psychologist").Replace("Deep knowledge of the domain", "In-depth understanding of human behavior and mental processes").Replace("Ability to synthesize complex information", "Experience with qualitative and quantitative research methods").Replace("Strong research and analytical skills", "Strong analytical and interpretative skills").Replace("Excellent communication skills", "Excellent communication and empathy skills")
 
             }
             5 {
                 # Facilitator role
                 $name = "Facilitator"; 
-                $supplement = @"
-"@ 
-
-
                 $ExpertPrompt = $ExpertPrompt.Replace("Domain Expert", "Facilitator").Replace("Deep knowledge of the domain", "Strong leadership and mediation skills").Replace("Ability to synthesize complex information", "Ability to guide discussions and ensure productive outcomes").Replace("Strong research and analytical skills", "Excellent communication and conflict resolution skills").Replace("Excellent communication skills", "Experience with group dynamics and teamwork")
 
             }
             Default {}
         }
         # Create a new language model with the assigned role and instructions
-        $expert = [LanguageModel]::new($name, $supplement)
+        $expert = [LanguageModel]::new($name)
         # Add the new expert to the experts array
         $experts += $expert
     }
@@ -151,45 +108,41 @@ Enrich your response with creative insights, innovative ideas, and deep analytic
         Write-Host "Round $round" -BackgroundColor White -ForegroundColor Blue
 
         $ModeratorMemory = $($moderator.GetLastNMemoryElements(1))
+        $ModeratorMemoryData = @"
+(Memory of Moderator)
+$ModeratorMemory
+"@
+        
         $ExpertsMemory = ""
         foreach ($expert in $experts) {
             $lastMemoryElement = $($expert.GetLastNMemoryElements(1))
             if ($lastMemoryElement) {
                 $ExpertsMemory += @"
 (Memory of $($expert.name))
-$lastMemoryElement
+$($lastMemoryElement.trim())
 "@
                 
             }
         }
-
+        if (-not [string]::IsNullOrWhiteSpace($ExpertsMemory) ) {
+            $moderatorPromptData = @"
+{0}
+{1}
+"@
+            $moderatorPromptData = ($moderatorPromptData -f $ModeratorMemoryData.trim(),$ExpertsMemory.trim())
+        } 
         $moderatorPrompt = @"
 ###Instructions###
 You are Moderator with the following skills: Strong leadership, excellent communication, conflict resolution, experience in group dynamics and teamwork. 
-Your main task is to build answer to `"$($topic.trim())`". To do that you MUST facilitate and analyze the topic, and other data. Enrich your response with creative insights, innovative ideas, and deep analytical thoughts. Aim to provide a thorough, insightful, and forward-thinking analysis.
-Cover the key points below. 
-1. Context:
-   - Background and scope
-2. Key Points:
-   - Main points discussed
-   - Participant contributions
-3. Flow:
-   - Discussion progression
-   - Key transitions
-4. Analysis:
-   - Major insights
-   - Consensus and disagreements
-5. Outcome:
-   - Summary of conclusions
-   - Next steps
-6. Ask and answer questions to analyze topic.
-Use clear language
-###Data###
-``````text
-$ExpertsMemory
-``````
-"@
+Your main task is to focus to build answer to topic `"$($topic.trim())`". To do that you MUST facilitate and analyze the topic, and other data, if any. Enrich your response with creative insights, innovative ideas, and deep analytical thoughts. Aim to provide a thorough, insightful, and forward-thinking analysis. Use clear language. Response MUST be text block without any new or empty lines.
 
+{0}
+"@
+        if (-not [string]::IsNullOrWhiteSpace($ExpertsMemory) ) {
+            $moderatorPrompt = $moderatorPrompt -f $moderatorPromptData
+        } else {
+            $moderatorPrompt = $moderatorPrompt -f $null
+        }
         $moderatorResponse = $moderator.InvokeLLM($moderatorPrompt)
 
         if (-not $Thoughts) {
@@ -235,12 +188,9 @@ $ExpertsMemory
 
             }
             $expertpromptData = @"
-###Data###
-``````text
 {0}
-``````
 "@
-            $questionWithmemory = $($ExpertPrompt -f $($expertpromptData -f $lastMemoryElement))
+            $questionWithmemory = $($ExpertPrompt -f $($expertpromptData -f $lastMemoryElement.trim()))
             $expertResponse = $expert.InvokeLLM($questionWithmemory)
             #$expertResponse = Extract-JSON $expertResponse | ConvertFrom-Json
             if (-not $Thoughts) {
@@ -291,12 +241,9 @@ $ExpertsMemory
 
     }
     $expertpromptData = @"
-###Data###
-``````text
 {0}
-``````
 "@
-    $questionWithmemory = $($expertpromptData -f $lastMemoryElement)
+    $questionWithmemory = $($expertpromptData -f $lastMemoryElement.trim())
 
     $Summarize = @"
 ###Instruction###
@@ -311,7 +258,6 @@ $questionWithmemory
 
 
     Write-Host "Finalizing" -BackgroundColor White -ForegroundColor Blue
-    $moderator.supplementary_information = $NewSupplement
     #$Summarize += $NewSupplement
     $FinalResponse = $moderator.InvokeLLM($Summarize)
     #write-Host ($FinalResponse) -BackgroundColor Green
