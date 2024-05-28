@@ -9,17 +9,19 @@ param(
 # Define Language Model class
 class LanguageModel {
     [string] $name
+    [string] $ExpertPrompt
     [string[]] $memory
 
-    LanguageModel([string] $name) {
+    LanguageModel([string] $name, $ExpertPrompt) {
         $this.name = $name
+        $this.ExpertPrompt = $ExpertPrompt
         $this.memory = @()
     }
 
     [string] InvokeLLM([string] $prompt) {
         try {
             # Simulate language model response
-            write-host $prompt -ForegroundColor DarkYellow
+            #write-host $prompt -ForegroundColor DarkYellow
             $arguments = @($prompt, 3000, "Precise", $this.name, "udtgpt35turbo", $true)
             $response = Invoke-PSAOAICompletion @arguments -LogFolder $script:TeamDiscussionDataFolder -verbose:$false
             $this.memory += $response
@@ -42,7 +44,7 @@ class LanguageModel {
 }
 
 # Create a moderator language model
-$moderator = [LanguageModel]::new("Moderator")
+$moderator = [LanguageModel]::new("Moderator", "")
 
 # Define a function to conduct the discussion
 function Conduct-Discussion {
@@ -54,57 +56,66 @@ function Conduct-Discussion {
 
     # Create expert language models
     $experts = @()
+
+    $responseGuide = "You must use only JSON object output when respond. Add key 'questions'.`nYou provide a thorough, insightful, and forward-thinking data analysis. Set clear goal to respond to the topic. Add questions, and with answer to ones, if any. Use CoT, and professional tone in your response."
     
+    $responseSummarizerGuide = "Use professional tone. You must use only JSON object output when responding {`"response`": `"`"}"
+
     # Loop to create different types of expert language models
-    for ($i = 1; $i -le 5; $i++) {
+    for ($i = 0; $i -le 4; $i++) {
         # Switch case to assign different roles and instructions to the experts
         switch ($i) {
-            1 {
+            0 {
                 # Domain Expert role
                 $name = "Domain Expert"; 
-                $ExpertPrompt = @"
+                $ExpertPrompt_ = @"
 You are $name with the following skills and qualifications: Deep knowledge of the domain, Ability to synthesize complex information, Strong research and analytical skills, Excellent communication skills. Your main task us respond to the topic '$($topic.trim())' 
 {0}
-You MUST provide a thorough, insightful, and forward-thinking data analysis. Enrich your response with questions, and with answer to ones, if any. Use clear and professional tone.
-"@
+$responseGuide
 
+"@
+                $ExpertPrompt = $ExpertPrompt_
             }
-            2 {
+            1 {
                 # Data Analyst role
                 $name = "Data Analyst"; 
-                $ExpertPrompt = $ExpertPrompt.Replace("Domain Expert", "Data Analyst").Replace("Deep knowledge of the domain", "Proficiency in data analysis and statistical tools").Replace("Ability to synthesize complex information", "Strong understanding of data visualization techniques").Replace("Strong research and analytical skills", "Ability to interpret and explain data insights").Replace("Excellent communication skills", "Experience with data-driven decision making")
+                $ExpertPrompt = $ExpertPrompt_.Replace("Domain Expert", "Data Analyst").Replace("Deep knowledge of the domain", "Proficiency in data analysis and statistical tools").Replace("Ability to synthesize complex information", "Strong understanding of data visualization techniques").Replace("Strong research and analytical skills", "Ability to interpret and explain data insights").Replace("Excellent communication skills", "Experience with data-driven decision making")
             }
-            3 {
+            2 {
                 # Creative Thinker role
                 $name = "Creative Thinker"; 
-                $ExpertPrompt = $ExpertPrompt.Replace("Domain Expert", "Creative Thinker").Replace("Deep knowledge of the domain", "Strong brainstorming and ideation skills").Replace("Ability to synthesize complex information", "Ability to think outside the box").Replace("Strong research and analytical skills", "Excellent problem-solving skills").Replace("Excellent communication skills", "Strong communication and storytelling abilities")
+                $ExpertPrompt = $ExpertPrompt_.Replace("Domain Expert", "Creative Thinker").Replace("Deep knowledge of the domain", "Strong brainstorming and ideation skills").Replace("Ability to synthesize complex information", "Ability to think outside the box").Replace("Strong research and analytical skills", "Excellent problem-solving skills").Replace("Excellent communication skills", "Strong communication and storytelling abilities")
+
+            }
+            3 {
+                # Psychologist role
+                $name = "Psychologist"; 
+                $ExpertPrompt = $ExpertPrompt_.Replace("Domain Expert", "Psychologist").Replace("Deep knowledge of the domain", "In-depth understanding of human behavior and mental processes").Replace("Ability to synthesize complex information", "Experience with qualitative and quantitative research methods").Replace("Strong research and analytical skills", "Strong analytical and interpretative skills").Replace("Excellent communication skills", "Excellent communication and empathy skills")
 
             }
             4 {
-                # Psychologist role
-                $name = "Psychologist"; 
-                $ExpertPrompt = $ExpertPrompt.Replace("Domain Expert", "Psychologist").Replace("Deep knowledge of the domain", "In-depth understanding of human behavior and mental processes").Replace("Ability to synthesize complex information", "Experience with qualitative and quantitative research methods").Replace("Strong research and analytical skills", "Strong analytical and interpretative skills").Replace("Excellent communication skills", "Excellent communication and empathy skills")
-
-            }
-            5 {
                 # Facilitator role
                 $name = "Facilitator"; 
-                $ExpertPrompt = $ExpertPrompt.Replace("Domain Expert", "Facilitator").Replace("Deep knowledge of the domain", "Strong leadership and mediation skills").Replace("Ability to synthesize complex information", "Ability to guide discussions and ensure productive outcomes").Replace("Strong research and analytical skills", "Excellent communication and conflict resolution skills").Replace("Excellent communication skills", "Experience with group dynamics and teamwork")
+                $ExpertPrompt = $ExpertPrompt_.Replace("Domain Expert", "Facilitator").Replace("Deep knowledge of the domain", "Strong leadership and mediation skills").Replace("Ability to synthesize complex information", "Ability to guide discussions and ensure productive outcomes").Replace("Strong research and analytical skills", "Excellent communication and conflict resolution skills").Replace("Excellent communication skills", "Experience with group dynamics and teamwork")
 
             }
             Default {}
         }
         # Create a new language model with the assigned role and instructions
-        $expert = [LanguageModel]::new($name)
+        $expert = [LanguageModel]::new($name, $ExpertPrompt)
         # Add the new expert to the experts array
         $experts += $expert
     }
+    $expert = ""
+    #$experts | ConvertTo-Json
     # Randomly select a number of experts based on the expertCount parameter
-    $experts = $experts | get-random -Count $expertCount
+    #$experts = $experts | get-random -Count $expertCount
+    $experts = $experts[0, 2]
     write-host ($experts.name -join ", ")
+
     # Start discussion rounds
     for ($round = 1; $round -le $rounds; $round++) {
-        Write-Host "Round $round" -BackgroundColor White -ForegroundColor Blue
+        Write-Host "Round $round" -BackgroundColor DarkGreen
         $ExpertsMemory = ""
 
         $ModeratorMemory = Remove-EmptyLines $($moderator.GetLastNMemoryElements(1))
@@ -137,7 +148,8 @@ Data:
 You are a $($moderator.name) with the following skills: basic domain knowledge, excellent communication, conflict resolution, experience in group dynamics and teamwork.
 Your main task is to answer the topic '$($topic.trim())'
 {0}
-You MUST provide accurate and insightful data analysis. Enrich your answer with questions and answers to questions, if any. Use a clean and professional tone.
+$responseGuide
+
 "@
         if (-not [string]::IsNullOrWhiteSpace($ExpertsMemory) ) {
             $moderatorPrompt = $moderatorPrompt -f $moderatorPromptData
@@ -145,16 +157,29 @@ You MUST provide accurate and insightful data analysis. Enrich your answer with 
         else {
             $moderatorPrompt = $moderatorPrompt -f $null
         }
+        Write-Host $moderator.name -BackgroundColor White -ForegroundColor Blue -NoNewline
         $moderatorResponse = $moderator.InvokeLLM($moderatorPrompt)
+        Write-Host $moderatorResponse -ForegroundColor Green
+        while (-not (Test-IsValidJson -jsonString $moderatorResponse)) {
+            Write-Host "TextToJSON conversion..." -BackgroundColor Blue -NoNewline
+            $moderatorResponseJSON = AIConvertto-Json -text $moderatorResponse -Entity $moderator
+            if (Test-IsValidJson -jsonString $moderatorResponseJSON) {
+                $moderatorResponse = $moderatorResponseJSON
+                break
+            }
+            Write-Host "Converting to JSON. Sleep 10 seconds" -BackgroundColor DarkMagenta
+            Start-Sleep -Seconds 10
+        }
+        if (Test-IsValidJson -jsonString $moderatorResponse) {
+            $Questions = SearchIn-Json -json ($moderatorResponse) -key "questions"
+            if ($Questions) {
+                Write-Host "Questions" -ForegroundColor DarkGray
+                Write-Host ($questions -join "`n") -ForegroundColor Gray
+            }
+        }
+        $Questions = ""
 
-        if (-not $Thoughts) {
-            Write-Host "Moderator: $moderatorResponse" -ForegroundColor Green
-            #$moderatorResponseJSON
-            #$moderatorResponseObj
-        }
-        else {
-            Write-Host $moderatorResponse -ForegroundColor Green
-        }
+        #$moderatorResponseObj
         $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
         $filename = "$round-$($moderator.name)-prompt-$timestamp.txt"
         $filepath = Join-Path -Path $script:TeamDiscussionDataFolder -ChildPath $filename
@@ -162,21 +187,19 @@ You MUST provide accurate and insightful data analysis. Enrich your answer with 
         $filename = "$round-$($moderator.name)-response-$timestamp.txt"
         $filepath = Join-Path -Path $script:TeamDiscussionDataFolder -ChildPath $filename
         $moderatorResponse | Out-File -FilePath $filepath
-
         $lastMemoryElement = ""
+
         # Each expert responds
         foreach ($expert in $experts) {
             $ExpertsMemory = ""   
-            foreach ($expert in $experts) {
-                $lastMemoryElement = $($expert.GetLastNMemoryElements(1))
+            foreach ($expert_ in $experts) {
+                $lastMemoryElement = $($expert_.GetLastNMemoryElements(1))
                 if ($lastMemoryElement) {
                     $ExpertsMemory += @"
-$lastMemoryElement
+$($lastMemoryElement.trim())
 "@
-                    
                 }
             }
-    
 
             #$lastMemoryElement = $($expert.GetLastNMemoryElements(1))
             $ModeratorMemory = $($moderator.GetLastNMemoryElements(1))
@@ -193,17 +216,33 @@ $ExpertsMemory
             $expertpromptData = @"
 {0}
 "@
-            $questionWithmemory = $($ExpertPrompt -f $(Remove-EmptyLines $($expertpromptData -f $lastMemoryElement.trim())))
+
+            $questionWithmemory = $($expert.ExpertPrompt -f $(Remove-EmptyLines $($expertpromptData -f $lastMemoryElement.trim())))
+            Write-Host $($expert.name) -BackgroundColor White -ForegroundColor Blue -NoNewline
             $expertResponse = $expert.InvokeLLM($questionWithmemory)
             #$expertResponse = Extract-JSON $expertResponse | ConvertFrom-Json
-            if (-not $Thoughts) {
-                Write-Host "$($expert.name): $expertResponse" 
-                #$expertResponseJSON
-                #$expertResponseObj
+            Write-Host $expertResponse -ForegroundColor DarkBlue
+            while (-not (Test-IsValidJson -jsonString $expertResponse)) {
+                Write-Host "TextToJSON conversion..." -BackgroundColor Blue -NoNewline
+                $expertResponseJSON = AIConvertto-Json -text $expertResponse -Entity $moderator
+                if (Test-IsValidJson -jsonString $expertResponseJSON) {
+                    $expertResponse = $expertResponseJSON
+                    break
+                }
+                Write-Host "Converting to JSON. Sleep 10 seconds" -BackgroundColor DarkMagenta
+                Start-Sleep -Seconds 10
             }
-            else {
-                Write-Host $expertResponse
+            if (Test-IsValidJson -jsonString $expertResponse) {
+                $questions = SearchIn-Json -json ($expertResponse) -key "questions"
+                if ($questions) {
+                    Write-Host "Questions" -ForegroundColor Gray
+                    Write-Host ($questions -join "`n") -ForegroundColor Gray
+                }
             }
+            $Questions = ""
+            #$expertResponseJSON
+            #$expertResponseObj
+
             $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
             $filename = "$round-$($expert.name)-prompt-$timestamp.txt"
             $filepath = Join-Path -Path $script:TeamDiscussionDataFolder -ChildPath $filename
@@ -218,11 +257,14 @@ $ExpertsMemory
             $expertResponse = ""
             $questionWithmemory = ""
         }
+
         $moderatorPrompt = ""
         $moderatorResponse = ""
     }
-    foreach ($expert in $experts) {
-        $lastMemoryElement = $($expert.GetLastNMemoryElements(1))
+
+
+    foreach ($expert_ in $experts) {
+        $lastMemoryElement = $($expert_.GetLastNMemoryElements(1))
         if ($lastMemoryElement) {
             $ExpertsMemory += @"
 $lastMemoryElement
@@ -250,20 +292,39 @@ $ExpertsMemory
     $questionWithmemory = $($expertpromptData -f $lastMemoryElement)
 
     $Summarize = @"
-You are Discussion Summarizer. There was a thought-provoking discussion about '$topic'. Your main task is to synthesize what was learned to craft the Big Picture.
+Your role is a Discussion Summarizer. There was a thought-provoking discussion about topic '$topic'. Your main task is to synthesize the data and craft the Big Picture: 
+- Recap the Key Points to briefly summarize the main discussion points. Use clear, concise language and incorporate key phrases or data mentioned by participants. 
+- Weaving the Threads to explain how the different perspectives and information shared relate to the original topic. 
+- Final response: Based on the collective data, craft a detailed, and final response to the topic.
+Answer questions, if any. Use CoT for reasoning.
 $questionWithmemory
-Recap the Key Points to briefly summarize the main discussion points. Use clear, concise language and incorporate key phrases or data mentioned by participants.
-Weaving the Threads to explain how the different perspectives and information shared relate to the original topic. Did the discussion reveal new aspects, or solidify existing knowledge?
-Towards an Answer: Based on the collective data, insights, craft an answer or multiple perspectives if applicable, to the original topic.
+$responseSummarizerGuide
+
 "@
 
 
-    Write-Host "Finalizing" -BackgroundColor White -ForegroundColor Blue
+    Write-Host "Finalizing" -BackgroundColor White -ForegroundColor Blue  -NoNewline
     #$Summarize += $NewSupplement
     $FinalResponse = $moderator.InvokeLLM($Summarize)
-    #write-Host ($FinalResponse) -BackgroundColor Green
-    Write-Host "Answer:" -BackgroundColor DarkGreen
     Write-Host $FinalResponse
+    while (-not (Test-IsValidJson -jsonString $FinalResponse)) {
+        Write-Host "TextToJSON conversion..." -BackgroundColor Blue -NoNewline
+        $FinalResponseJSON = AIConvertto-Json -text $FinalResponse -Entity $moderator
+        if (Test-IsValidJson -jsonString $FinalResponseJSON) {
+            $FinalResponse = $FinalResponseJSON
+            break
+        }
+        Write-Host "Converting to JSON. Sleep 10 seconds" -BackgroundColor DarkMagenta
+        Start-Sleep -Seconds 5
+    }
+    if (Test-IsValidJson -jsonString $FinalResponse) {
+        $Questions = SearchIn-Json -json ($FinalResponse) -key "questions"
+        if ($Questions) {
+            Write-Host "Questions" -ForegroundColor Gray
+            Write-Host ($questions -join "`n") -ForegroundColor Gray
+        }
+    }
+    $Questions = ""
 
     #Write-Host "Key Findings:" -BackgroundColor DarkGreen
     #Write-Host $($FinalResponseObj.keyFindings.insights)

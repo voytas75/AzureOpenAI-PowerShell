@@ -604,7 +604,7 @@ Generate a JSON object that includes$($ExperCountToChoose)name(s) of expert(s).
     ]
 }
 "@ | out-string
-$Message = @"
+    $Message = @"
 Given the following information: "$usermessage"
 ###Expert###
 $($Experts.foreach{"Name: '"+$($_.name.trim()), "', Experet description: "+$_.Description,", Expert' skills: "+$($_.Skills -join ", ")+"`n"})
@@ -618,7 +618,7 @@ Suggest best$($ExperCountToChoose)name(s) of expert(s), generate a JSON object, 
 }
 "@
 
-# Write the message to the verbose output
+    # Write the message to the verbose output
     #Write-Host $Message
     # Prepare the arguments for the InvokeCompletion method
     $arguments = @($Message, 500, "Focused", $Entity.name, $Entity.GPTModel, $true)
@@ -801,3 +801,116 @@ function Remove-EmptyLines {
 
     return $textWithoutEmptyLines
 }
+
+<#
+.SYNOPSIS
+A function to search for a key in a JSON object and return its value.
+
+.DESCRIPTION
+The SearchIn-Json function takes a JSON object and a key as input. It searches for the key in the JSON object and returns its value. The search is performed at any depth of the JSON object.
+
+.PARAMETER json
+The JSON object to search in.
+
+.PARAMETER key
+The key to search for in the JSON object.
+
+.EXAMPLE
+$json = @"
+{
+    "name": "John",
+    "age": 30,
+    "city": "New York"
+}
+"@
+SearchIn-Json -json $json -key "name"
+
+This will output "John".
+#>
+function SearchIn-Json {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$json,
+        [Parameter(Mandatory = $true)]
+        [string]$key
+    )
+
+    # Convert the JSON string to a PowerShell object
+    $jsonObject = ConvertFrom-Json -InputObject $json
+
+    # Recursive function to search for the key in the JSON object
+    function Search-Object {
+        param (
+            [Parameter(Mandatory = $true)]
+            $object,
+            [Parameter(Mandatory = $true)]
+            [string]$key
+        )
+
+        # Iterate over each property in the object
+        foreach ($property in $object.PSObject.Properties) {
+            # If the property name matches the key, return the value
+            if ($property.Name -eq $key) {
+                return $property.Value
+            }
+            # If the property value is another object, search it recursively
+            elseif ($property.Value -is [PSCustomObject]) {
+                $result = Search-Object -object $property.Value -key $key
+                if ($null -ne $result) {
+                    return $result
+                }
+            }
+        }
+    }
+
+    # Call the recursive function to start the search
+    return (Search-Object -object $jsonObject -key $key)
+}
+
+
+<#
+.SYNOPSIS
+This function converts a text to a JSON format using the entity invoke completion method.
+
+.DESCRIPTION
+The function takes a text as input and uses the entity invoke completion method to convert it into a JSON format. The function returns the JSON formatted text.
+
+.PARAMETER text
+The text to be converted to JSON format.
+
+.EXAMPLE
+AIConvertto-Json -text "name: John, age: 30, city: New York"
+#>
+function AIConvertto-Json {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$text,
+        [object] $Entity
+    )
+
+    if ([string]::IsNullOrEmpty($text)) {
+        Write-Error "Input text cannot be null or empty"
+        return $null
+    }
+
+    $prompt = @"
+You MUST convert given text to JSON object:
+###
+$($text.trim())
+###
+Show the JSON object only.
+"@
+    try {
+        # Use the entity invoke completion method to convert the text to JSON
+        $json = $Entity.InvokeLLM($prompt)
+    }
+    catch {
+        Write-Error "Failed to convert text to JSON: $_. Returning given text."
+        return $text
+    }
+
+    # Return the JSON formatted text
+    return $json
+}
+
