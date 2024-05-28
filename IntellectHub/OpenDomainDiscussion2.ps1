@@ -134,10 +134,10 @@ Data:
             $moderatorPromptData = ($moderatorPromptData -f $ModeratorMemoryData.trim(), $ExpertsMemory.trim())
         } 
         $moderatorPrompt = @"
-You are $($moderator.name) with the following skills: excellent communication, conflict resolution, experience in group dynamics and teamwork.
-Your main task is respond to the topic '$($topic.trim())'
+You are a $($moderator.name) with the following skills: basic domain knowledge, excellent communication, conflict resolution, experience in group dynamics and teamwork.
+Your main task is to answer the topic '$($topic.trim())'
 {0}
-You MUST provide a thorough, insightful, and forward-thinking data analysis. Enrich your response with questions, and with answer to ones, if any. Use clear and professional tone.
+You MUST provide accurate and insightful data analysis. Enrich your answer with questions and answers to questions, if any. Use a clean and professional tone.
 "@
         if (-not [string]::IsNullOrWhiteSpace($ExpertsMemory) ) {
             $moderatorPrompt = $moderatorPrompt -f $moderatorPromptData
@@ -250,12 +250,11 @@ $ExpertsMemory
     $questionWithmemory = $($expertpromptData -f $lastMemoryElement)
 
     $Summarize = @"
-We've had a thought-provoking discussion about $topic, and now it's time to synthesize what we've learned
-You MUST craft the Big Picture.
+You are Discussion Summarizer. There was a thought-provoking discussion about '$topic'. Your main task is to synthesize what was learned to craft the Big Picture.
 $questionWithmemory
-Recap the Key Points: Briefly summarize the main discussion points. Use clear, concise language and incorporate key phrases or data mentioned by participants.
-Weaving the Threads: Explain how the different perspectives and information shared relate to the original topic. Did the discussion reveal new aspects, or solidify existing knowledge?
-Towards an Answer: Based on the collective insights, craft an answer (or multiple perspectives if applicable) to the original question about the topic.
+Recap the Key Points to briefly summarize the main discussion points. Use clear, concise language and incorporate key phrases or data mentioned by participants.
+Weaving the Threads to explain how the different perspectives and information shared relate to the original topic. Did the discussion reveal new aspects, or solidify existing knowledge?
+Towards an Answer: Based on the collective data, insights, craft an answer or multiple perspectives if applicable, to the original topic.
 "@
 
 
