@@ -3,7 +3,8 @@ param(
     [string] $Topic = "Explain impact of GPT on IT Microsoft Administrators",
     [int] $Rounds = 2,
     [int] $expertCount = 2,
-    [switch] $Thoughts
+    [switch] $Thoughts,
+    [bool] $Stream = $false
 )
 
 # Define Language Model class
@@ -18,12 +19,12 @@ class LanguageModel {
         $this.memory = @()
     }
 
-    [string] InvokeLLM([string] $prompt) {
+    [string] InvokeLLM([string] $prompt, [bool] $Stream) {
         try {
             # Simulate language model response
             #write-host $prompt -ForegroundColor DarkYellow
             $arguments = @($prompt, 3000, "Precise", $this.name, "udtgpt35turbo", $true)
-            $response = Invoke-PSAOAICompletion @arguments -LogFolder $script:TeamDiscussionDataFolder -verbose:$false -Stream $true
+            $response = Invoke-PSAOAICompletion @arguments -LogFolder $script:TeamDiscussionDataFolder -verbose:$false -Stream $Stream
             $this.memory += $response
             #return "This is $($this.name)'s response to:`n$($prompt)`n '$response'"
             #return "This is $($this.name)'s response:`n===`n$($response.trim())`n==="
@@ -158,16 +159,18 @@ $responseGuide
             $moderatorPrompt = $moderatorPrompt -f $null
         }
         Write-Host $moderator.name -BackgroundColor White -ForegroundColor Blue -NoNewline
-        $moderatorResponse = $moderator.InvokeLLM($moderatorPrompt)
-        Write-Host $moderatorResponse -ForegroundColor Green
-        while (-not (Test-IsValidJson -jsonString $moderatorResponse) -and (-not [string]::IsNullOrEmpty($moderatorResponse))) {
+        $moderatorResponse = $moderator.InvokeLLM($moderatorPrompt, $Stream)
+        if (-not $stream) { 
+            Write-Host $moderatorResponse -ForegroundColor Green 
+        } 
+        while (-not (Test-IsValidJson -jsonString $moderatorResponse) -or [string]::IsNullOrEmpty($moderatorResponse)) {
             Write-Host "TextToJSON conversion..." -BackgroundColor Blue -NoNewline
-            $moderatorResponseJSON = AIConvertto-Json -text $moderatorResponse -Entity $moderator
+            $moderatorResponseJSON = AIConvertto-Json -text $moderatorResponse -Entity $moderator -Stream $Stream
             if (Test-IsValidJson -jsonString $moderatorResponseJSON) {
                 $moderatorResponse = $moderatorResponseJSON
                 break
             }
-            Write-Host "Converting to JSON. Sleep 10 seconds" -BackgroundColor DarkMagenta
+            Write-Host "Sleeping 10 seconds to keep TPM in limit." -BackgroundColor DarkMagenta
             Start-Sleep -Seconds 10
         }
         if (Test-IsValidJson -jsonString $moderatorResponse) {
@@ -219,12 +222,14 @@ $ExpertsMemory
 
             $questionWithmemory = $($expert.ExpertPrompt -f $(Remove-EmptyLines $($expertpromptData -f $lastMemoryElement.trim())))
             Write-Host $($expert.name) -BackgroundColor White -ForegroundColor Blue -NoNewline
-            $expertResponse = $expert.InvokeLLM($questionWithmemory)
+            $expertResponse = $expert.InvokeLLM($questionWithmemory, $Stream)
             #$expertResponse = Extract-JSON $expertResponse | ConvertFrom-Json
-            Write-Host $expertResponse -ForegroundColor DarkBlue
-            while (-not (Test-IsValidJson -jsonString $expertResponse) -and (-not [string]::IsNullOrEmpty($expertResponse))) {
+            if (-not $stream) { 
+                Write-Host $expertResponse -ForegroundColor DarkBlue
+            }
+            while (-not (Test-IsValidJson -jsonString $expertResponse) -or [string]::IsNullOrEmpty($expertResponse)) {
                 Write-Host "TextToJSON conversion..." -BackgroundColor Blue -NoNewline
-                $expertResponseJSON = AIConvertto-Json -text $expertResponse -Entity $moderator
+                $expertResponseJSON = AIConvertto-Json -text $expertResponse -Entity $moderator -Stream $Stream
                 if (Test-IsValidJson -jsonString $expertResponseJSON) {
                     $expertResponse = $expertResponseJSON
                     break
@@ -292,7 +297,7 @@ $ExpertsMemory
     $questionWithmemory = $($expertpromptData -f $lastMemoryElement)
 
     $Summarize = @"
-Your role is a Discussion Summarizer. There was a thought-provoking discussion about topic '$topic'. Your main task is to synthesize the data and craft the Big Picture: 
+Your role is a Discussion Summarizer. Your main task is to synthesize the data and craft detailed Big Picture for the task '$topic': 
 - Recap the Key Points to briefly summarize the main discussion points. Use clear, concise language and incorporate key phrases or data mentioned by participants. 
 - Weaving the Threads to explain how the different perspectives and information shared relate to the original topic. 
 - Final response: Based on the collective data, craft a detailed, and final response to the topic.
@@ -305,11 +310,13 @@ $responseSummarizerGuide
 
     Write-Host "Finalizing" -BackgroundColor White -ForegroundColor Blue  -NoNewline
     #$Summarize += $NewSupplement
-    $FinalResponse = $moderator.InvokeLLM($Summarize)
-    Write-Host $FinalResponse
-    while (-not (Test-IsValidJson -jsonString $FinalResponse) -and (-not [string]::IsNullOrEmpty($FinalResponse))) {
+    $FinalResponse = $moderator.InvokeLLM($Summarize, $Stream)
+    if (-not $stream) { 
+        Write-Color $FinalResponse -Color DarkBlue -BackGroundColor DarkGreen -LinesBefore -ShowTime
+    }
+    while (-not (Test-IsValidJson -jsonString $FinalResponse) -or [string]::IsNullOrEmpty($FinalResponse)) {
         Write-Host "TextToJSON conversion..." -BackgroundColor Blue -NoNewline
-        $FinalResponseJSON = AIConvertto-Json -text $FinalResponse -Entity $moderator
+        $FinalResponseJSON = AIConvertto-Json -text $FinalResponse -Entity $moderator -Stream $Stream
         if (Test-IsValidJson -jsonString $FinalResponseJSON) {
             $FinalResponse = $FinalResponseJSON
             break

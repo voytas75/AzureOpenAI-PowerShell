@@ -8,25 +8,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Added
 
-- Logfolder parameter to Completion - [#3](https://github.com/voytas75/AzureOpenAI-PowerShell/issues/3)
-- Completion: Added timestamp to log filename
-- Completion: Streaming response
+- Logfolder parameter to Completion - [#3](https://github.com/voytas75/AzureOpenAI-PowerShell/issues/3),
+- Completion: Added timestamp to log filename,
+- Completion: Streaming response,
+- Compatibility with PS Core version.
 
 ### Fix
 
-- Completion: logfileDirectory
+- Completion: logfileDirectory.
 
 ## [0.1.0]
 
 ### Added
 
-- Posiotional parameters
-- [#1](https://github.com/voytas75/AzureOpenAI-PowerShell/issues/1)
-- Error handling: [#2](https://github.com/voytas75/AzureOpenAI-PowerShell/issues/2)
+- Posiotional parameters,
+- [#1](https://github.com/voytas75/AzureOpenAI-PowerShell/issues/1),
+- Error handling: [#2](https://github.com/voytas75/AzureOpenAI-PowerShell/issues/2).
 
 ### Fix
 
-- Passing temperature, topp, and mode parameters
+- Passing temperature, topp, and mode parameters.
 
 ## [0.0.2] - 2024.04.17
 

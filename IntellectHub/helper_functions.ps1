@@ -886,7 +886,8 @@ function AIConvertto-Json {
     param (
         [Parameter(Mandatory = $true)]
         [string]$text,
-        [object] $Entity
+        [object] $Entity,
+        [bool] $Stream
     )
 
     if ([string]::IsNullOrEmpty($text)) {
@@ -903,7 +904,7 @@ Show the JSON object only.
 "@
     try {
         # Use the entity invoke completion method to convert the text to JSON
-        $json = $Entity.InvokeLLM($prompt)
+        $json = $Entity.InvokeLLM($prompt,$Stream)
     }
     catch {
         Write-Error "Failed to convert text to JSON: $_. Returning given text."

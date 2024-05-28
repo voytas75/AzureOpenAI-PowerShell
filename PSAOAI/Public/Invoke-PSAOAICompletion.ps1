@@ -378,12 +378,15 @@ function Invoke-PSAOAICompletion {
         }
         #write-host $bodyJSON -BackgroundColor Blue
         if ($Stream) {
-            $response = Invoke-PSAOAIApiRequestStream -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240
-            if (-not $($response)) {
+            #write-host $urlChat
+            #write-host $headers
+            #write-host $bodyJSON
+            $response = Invoke-PSAOAIApiRequestStream -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240 | out-string
+            if ([string]::IsNullOrEmpty($response)) {
                 Write-Warning "Response is empty"
                 return
             }
-            $responseText = (Show-ResponseMessage -content $response -stream "console" -simpleresponse:$simpleresponse | out-String)
+            #$responseText = (Show-ResponseMessage -content $response -stream "console" -simpleresponse:$simpleresponse | out-String)
             $responseText = $response
         }
         else {
@@ -399,10 +402,10 @@ function Invoke-PSAOAICompletion {
             if (-not $Stream) {
                 Show-FinishReason -finishReason $response.choices.finish_reason
                 Show-Usage -usage $response.usage
-                Write-LogMessage -Message "Text completion:`n$($responseText.trim())" -LogFile $logFullNamePath
             } 
         }
-                return $responseText
+        Write-LogMessage -Message "Text completion:`n$($responseText.trim())" -LogFile $logFullNamePath
+        return $responseText
     }
     catch {
         Format-Error -ErrorVar $_

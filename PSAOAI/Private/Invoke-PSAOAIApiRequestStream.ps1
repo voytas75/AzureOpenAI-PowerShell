@@ -56,13 +56,13 @@ function Invoke-PSAOAIApiRequestStream {
         $httpClient.DefaultRequestHeaders.Add("api-key", $($headers."api-key"))
 
         # Create the HttpContent object with the request body
-        $content = [System.Net.Http.StringContent]::new($body, [System.Text.Encoding]::UTF8, "application/json")
+        $content = [System.Net.Http.StringContent]::new($bodyJSON, [System.Text.Encoding]::UTF8, "application/json")
 
         # Send the HTTP POST request asynchronously
         $response = $httpClient.PostAsync($apiEndpoint, $content).Result
 
         # Ensure the response is successful
-        $response.EnsureSuccessStatusCode()
+        #$response.EnsureSuccessStatusCode()
 
         # Get the response stream
         $stream = $response.Content.ReadAsStreamAsync().Result
@@ -70,8 +70,8 @@ function Invoke-PSAOAIApiRequestStream {
         # Create a StreamReader to read the response stream
         $reader = [System.IO.StreamReader]::new($stream)
 
-        $completeText = $prompt
-        write-host $prompt -nonewline
+        #$completeText = $prompt
+        #write-host $prompt -nonewline
         # Read and output each line from the response stream
         while ($null -ne ($line = $reader.ReadLine())) {
 		
@@ -88,6 +88,8 @@ function Invoke-PSAOAIApiRequestStream {
                 write-host $parsedJson.choices[0].text -nonewline
             }
         }
+        Write-Host ""
+        $completeText += "`n"
 
         # Clean up
         $reader.Close()
