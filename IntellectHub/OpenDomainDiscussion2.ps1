@@ -63,9 +63,9 @@ function Conduct-Discussion {
                 # Domain Expert role
                 $name = "Domain Expert"; 
                 $ExpertPrompt = @"
-You are $name with the following skills and qualifications: Deep knowledge of the domain, Ability to synthesize complex information, Strong research and analytical skills, Excellent communication skills. Your main task is to focus to build answer for topic $($topic.trim()). To do that you MUST analyze the data and answer questions, if any. Enrich your response with creative insights, innovative ideas, and deep analytical thoughts. Aim to provide a thorough, insightful, and forward-thinking analysis to answer the best way to the topic.
+You are $name with the following skills and qualifications: Deep knowledge of the domain, Ability to synthesize complex information, Strong research and analytical skills, Excellent communication skills. Your main task us respond to the topic '$($topic.trim())' 
 {0}
-Use clear language.
+You MUST provide a thorough, insightful, and forward-thinking data analysis. Enrich your response with questions, and with answer to ones, if any. Use clear and professional tone.
 "@
 
             }
@@ -123,9 +123,7 @@ $($lastMemoryElement.trim())
                 
             }
         }
-        [string]::IsNullOrWhiteSpace($ExpertsMemory)
-        [string]::IsNullOrWhiteSpace($ModeratorMemory)
-        if (-not [string]::IsNullOrWhiteSpace($ExpertsMemory) -or [string]::IsNullOrWhiteSpace($ModeratorMemory) ) {
+        if ((-not [string]::IsNullOrWhiteSpace($ExpertsMemory)) -or (-not [string]::IsNullOrWhiteSpace($ModeratorMemory)) ) {
             $moderatorPromptData = @"
 Data:
 ###
@@ -136,10 +134,10 @@ Data:
             $moderatorPromptData = ($moderatorPromptData -f $ModeratorMemoryData.trim(), $ExpertsMemory.trim())
         } 
         $moderatorPrompt = @"
-You are Moderator with the following skills: Strong leadership, excellent communication, conflict resolution, experience in group dynamics and teamwork. 
-Your main task is to focus to build answer to topic $($topic.trim()). To do that you MUST facilitate and analyze the topic, and other data, if any. Enrich your response with creative insights, innovative ideas, and deep analytical thoughts. Aim to provide a thorough, insightful, and forward-thinking analysis.
+You are $($moderator.name) with the following skills: excellent communication, conflict resolution, experience in group dynamics and teamwork.
+Your main task is respond to the topic '$($topic.trim())'
 {0}
-Use clear language.
+You MUST provide a thorough, insightful, and forward-thinking data analysis. Enrich your response with questions, and with answer to ones, if any. Use clear and professional tone.
 "@
         if (-not [string]::IsNullOrWhiteSpace($ExpertsMemory) ) {
             $moderatorPrompt = $moderatorPrompt -f $moderatorPromptData
@@ -252,13 +250,12 @@ $ExpertsMemory
     $questionWithmemory = $($expertpromptData -f $lastMemoryElement)
 
     $Summarize = @"
-We've had a thought-provoking discussion about $topic, and now it's time to synthesize what we've learned!
-Crafting the Big Picture:
+We've had a thought-provoking discussion about $topic, and now it's time to synthesize what we've learned
+You MUST craft the Big Picture.
+$questionWithmemory
 Recap the Key Points: Briefly summarize the main discussion points. Use clear, concise language and incorporate key phrases or data mentioned by participants.
 Weaving the Threads: Explain how the different perspectives and information shared relate to the original topic. Did the discussion reveal new aspects, or solidify existing knowledge?
 Towards an Answer: Based on the collective insights, craft an answer (or multiple perspectives if applicable) to the original question about the topic.
-$questionWithmemory
-Use clear language.
 "@
 
 
