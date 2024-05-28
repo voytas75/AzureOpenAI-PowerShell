@@ -54,8 +54,9 @@
 
         # Return the headers for the API request
         return @{
-            "Content-Type" = "application/json"
+            "Content-Type" = "application/json; charset=utf-8"
             "api-key"      = $ApiKey
+            'OpenAI-Debug' = 'true'
         }
                
     }
