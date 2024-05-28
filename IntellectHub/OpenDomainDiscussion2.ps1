@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string] $Topic = "The Impact of GPT on IT Microsoft Administrators",
+    [string] $Topic = "Explain impact of GPT on IT Microsoft Administrators",
     [int] $Rounds = 2,
     [int] $expertCount = 2,
     [switch] $Thoughts
@@ -63,10 +63,9 @@ function Conduct-Discussion {
                 # Domain Expert role
                 $name = "Domain Expert"; 
                 $ExpertPrompt = @"
-###Instructions###
-You are $name with the following skills and qualifications: Deep knowledge of the domain, Ability to synthesize complex information, Strong research and analytical skills, Excellent communication skills. Your main task is to focus to build answer for topic `"$($topic.trim())`". To do that you MUST analyze the data and answer questions, if any. Enrich your response with creative insights, innovative ideas, and deep analytical thoughts. Aim to provide a thorough, insightful, and forward-thinking analysis to answer the best way to the topic. Use clear language. Response MUST be text block without any new or empty lines.
-
+You are $name with the following skills and qualifications: Deep knowledge of the domain, Ability to synthesize complex information, Strong research and analytical skills, Excellent communication skills. Your main task is to focus to build answer for topic $($topic.trim()). To do that you MUST analyze the data and answer questions, if any. Enrich your response with creative insights, innovative ideas, and deep analytical thoughts. Aim to provide a thorough, insightful, and forward-thinking analysis to answer the best way to the topic.
 {0}
+Use clear language.
 "@
 
             }
@@ -106,41 +105,46 @@ You are $name with the following skills and qualifications: Deep knowledge of th
     # Start discussion rounds
     for ($round = 1; $round -le $rounds; $round++) {
         Write-Host "Round $round" -BackgroundColor White -ForegroundColor Blue
+        $ExpertsMemory = ""
 
-        $ModeratorMemory = $($moderator.GetLastNMemoryElements(1))
-        $ModeratorMemoryData = @"
-(Memory of Moderator)
+        $ModeratorMemory = Remove-EmptyLines $($moderator.GetLastNMemoryElements(1))
+        if ($ModeratorMemory) {
+            $ModeratorMemoryData = @"
 $ModeratorMemory
 "@
+        }
         
-        $ExpertsMemory = ""
         foreach ($expert in $experts) {
             $lastMemoryElement = $($expert.GetLastNMemoryElements(1))
             if ($lastMemoryElement) {
                 $ExpertsMemory += @"
-(Memory of $($expert.name))
 $($lastMemoryElement.trim())
 "@
                 
             }
         }
-        if (-not [string]::IsNullOrWhiteSpace($ExpertsMemory) ) {
+        [string]::IsNullOrWhiteSpace($ExpertsMemory)
+        [string]::IsNullOrWhiteSpace($ModeratorMemory)
+        if (-not [string]::IsNullOrWhiteSpace($ExpertsMemory) -or [string]::IsNullOrWhiteSpace($ModeratorMemory) ) {
             $moderatorPromptData = @"
+Data:
+###
 {0}
 {1}
+###
 "@
-            $moderatorPromptData = ($moderatorPromptData -f $ModeratorMemoryData.trim(),$ExpertsMemory.trim())
+            $moderatorPromptData = ($moderatorPromptData -f $ModeratorMemoryData.trim(), $ExpertsMemory.trim())
         } 
         $moderatorPrompt = @"
-###Instructions###
 You are Moderator with the following skills: Strong leadership, excellent communication, conflict resolution, experience in group dynamics and teamwork. 
-Your main task is to focus to build answer to topic `"$($topic.trim())`". To do that you MUST facilitate and analyze the topic, and other data, if any. Enrich your response with creative insights, innovative ideas, and deep analytical thoughts. Aim to provide a thorough, insightful, and forward-thinking analysis. Use clear language. Response MUST be text block without any new or empty lines.
-
+Your main task is to focus to build answer to topic $($topic.trim()). To do that you MUST facilitate and analyze the topic, and other data, if any. Enrich your response with creative insights, innovative ideas, and deep analytical thoughts. Aim to provide a thorough, insightful, and forward-thinking analysis.
 {0}
+Use clear language.
 "@
         if (-not [string]::IsNullOrWhiteSpace($ExpertsMemory) ) {
             $moderatorPrompt = $moderatorPrompt -f $moderatorPromptData
-        } else {
+        }
+        else {
             $moderatorPrompt = $moderatorPrompt -f $null
         }
         $moderatorResponse = $moderator.InvokeLLM($moderatorPrompt)
@@ -169,8 +173,7 @@ Your main task is to focus to build answer to topic `"$($topic.trim())`". To do 
                 $lastMemoryElement = $($expert.GetLastNMemoryElements(1))
                 if ($lastMemoryElement) {
                     $ExpertsMemory += @"
-    (Memory of $($expert.name))
-    $lastMemoryElement
+$lastMemoryElement
 "@
                     
                 }
@@ -181,16 +184,18 @@ Your main task is to focus to build answer to topic `"$($topic.trim())`". To do 
             $ModeratorMemory = $($moderator.GetLastNMemoryElements(1))
             if ($lastMemoryElement -or $ModeratorMemory) {
                 $lastMemoryElement = @"
-(Memory of Moderator)
+Data:
+###
 $ModeratorMemory
 $ExpertsMemory
+###
 "@
 
             }
             $expertpromptData = @"
 {0}
 "@
-            $questionWithmemory = $($ExpertPrompt -f $($expertpromptData -f $lastMemoryElement.trim()))
+            $questionWithmemory = $($ExpertPrompt -f $(Remove-EmptyLines $($expertpromptData -f $lastMemoryElement.trim())))
             $expertResponse = $expert.InvokeLLM($questionWithmemory)
             #$expertResponse = Extract-JSON $expertResponse | ConvertFrom-Json
             if (-not $Thoughts) {
@@ -222,7 +227,6 @@ $ExpertsMemory
         $lastMemoryElement = $($expert.GetLastNMemoryElements(1))
         if ($lastMemoryElement) {
             $ExpertsMemory += @"
-(Memory of $($expert.name))
 $lastMemoryElement
 "@
             
@@ -234,26 +238,27 @@ $lastMemoryElement
     $ModeratorMemory = $($moderator.GetLastNMemoryElements(1))
     if ($lastMemoryElement -or $ModeratorMemory) {
         $lastMemoryElement = @"
-(Memory of Moderator)
+Data:
+###
 $ModeratorMemory
 $ExpertsMemory
+###
 "@
 
     }
     $expertpromptData = @"
 {0}
 "@
-    $questionWithmemory = $($expertpromptData -f $lastMemoryElement.trim())
+    $questionWithmemory = $($expertpromptData -f $lastMemoryElement)
 
     $Summarize = @"
-###Instruction###
-We've had a thought-provoking discussion about `"$topic`", and now it's time to synthesize what we've learned!
+We've had a thought-provoking discussion about $topic, and now it's time to synthesize what we've learned!
 Crafting the Big Picture:
 Recap the Key Points: Briefly summarize the main discussion points. Use clear, concise language and incorporate key phrases or data mentioned by participants.
 Weaving the Threads: Explain how the different perspectives and information shared relate to the original topic. Did the discussion reveal new aspects, or solidify existing knowledge?
 Towards an Answer: Based on the collective insights, craft an answer (or multiple perspectives if applicable) to the original question about the topic.
-
 $questionWithmemory
+Use clear language.
 "@
 
 

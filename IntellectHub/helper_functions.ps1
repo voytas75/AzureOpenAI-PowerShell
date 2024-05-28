@@ -778,3 +778,26 @@ function Shorten-Text {
         return $text
     }
 }
+
+function Remove-EmptyLines {
+    param (
+        [Parameter(Mandatory = $false)]
+        [string]$text
+    )
+
+    # Check if text is null, empty or whitespace
+    if ([string]::IsNullOrWhiteSpace($text) -or [string]::IsNullOrEmpty($text)) {
+        return ""
+    }
+
+    # Split the text into lines
+    $lines = $text -split "`n"
+
+    # Filter out empty lines
+    $nonEmptyLines = $lines | Where-Object { $_.Trim() -ne "" }
+
+    # Join the non-empty lines back together
+    $textWithoutEmptyLines = $nonEmptyLines -join "`n"
+
+    return $textWithoutEmptyLines
+}
