@@ -8,10 +8,10 @@ $Public = @( Get-ChildItem -Path $PSScriptRoot\Public\*.ps1 -ErrorAction Silentl
 $Private = @( Get-ChildItem -Path $PSScriptRoot\Private\*.ps1 -ErrorAction SilentlyContinue -Recurse )
 
 # If the PowerShell edition is 'core', terminate the script
-if ($PSEdition -eq 'core') {
-    Write-Error "Module can not be run on core edition!"
-    exit
-}
+#if ($PSEdition -eq 'core') {
+#    Write-Error "Module can not be run on core edition!"
+#    exit
+#}
 
 # Import all public and private scripts, and handle any potential errors
 $FoundErrors = @(

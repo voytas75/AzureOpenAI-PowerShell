@@ -378,12 +378,13 @@ function Invoke-PSAOAICompletion {
         }
         #write-host $bodyJSON -BackgroundColor Blue
         if ($Stream) {
-            $response = Invoke-PSAOAIApiRequestStream -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240    
+            $response = Invoke-PSAOAIApiRequestStream -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240
             if (-not $($response)) {
                 Write-Warning "Response is empty"
                 return
             }
             $responseText = (Show-ResponseMessage -content $response -stream "console" -simpleresponse:$simpleresponse | out-String)
+            $responseText = $response
         }
         else {
             $response = Invoke-PSAOAIApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240

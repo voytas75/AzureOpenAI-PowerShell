@@ -23,7 +23,7 @@ class LanguageModel {
             # Simulate language model response
             #write-host $prompt -ForegroundColor DarkYellow
             $arguments = @($prompt, 3000, "Precise", $this.name, "udtgpt35turbo", $true)
-            $response = Invoke-PSAOAICompletion @arguments -LogFolder $script:TeamDiscussionDataFolder -verbose:$false
+            $response = Invoke-PSAOAICompletion @arguments -LogFolder $script:TeamDiscussionDataFolder -verbose:$false -Stream $true
             $this.memory += $response
             #return "This is $($this.name)'s response to:`n$($prompt)`n '$response'"
             #return "This is $($this.name)'s response:`n===`n$($response.trim())`n==="
@@ -160,7 +160,7 @@ $responseGuide
         Write-Host $moderator.name -BackgroundColor White -ForegroundColor Blue -NoNewline
         $moderatorResponse = $moderator.InvokeLLM($moderatorPrompt)
         Write-Host $moderatorResponse -ForegroundColor Green
-        while (-not (Test-IsValidJson -jsonString $moderatorResponse)) {
+        while (-not (Test-IsValidJson -jsonString $moderatorResponse) -and (-not [string]::IsNullOrEmpty($moderatorResponse))) {
             Write-Host "TextToJSON conversion..." -BackgroundColor Blue -NoNewline
             $moderatorResponseJSON = AIConvertto-Json -text $moderatorResponse -Entity $moderator
             if (Test-IsValidJson -jsonString $moderatorResponseJSON) {
@@ -222,7 +222,7 @@ $ExpertsMemory
             $expertResponse = $expert.InvokeLLM($questionWithmemory)
             #$expertResponse = Extract-JSON $expertResponse | ConvertFrom-Json
             Write-Host $expertResponse -ForegroundColor DarkBlue
-            while (-not (Test-IsValidJson -jsonString $expertResponse)) {
+            while (-not (Test-IsValidJson -jsonString $expertResponse) -and (-not [string]::IsNullOrEmpty($expertResponse))) {
                 Write-Host "TextToJSON conversion..." -BackgroundColor Blue -NoNewline
                 $expertResponseJSON = AIConvertto-Json -text $expertResponse -Entity $moderator
                 if (Test-IsValidJson -jsonString $expertResponseJSON) {
@@ -307,7 +307,7 @@ $responseSummarizerGuide
     #$Summarize += $NewSupplement
     $FinalResponse = $moderator.InvokeLLM($Summarize)
     Write-Host $FinalResponse
-    while (-not (Test-IsValidJson -jsonString $FinalResponse)) {
+    while (-not (Test-IsValidJson -jsonString $FinalResponse) -and (-not [string]::IsNullOrEmpty($FinalResponse))) {
         Write-Host "TextToJSON conversion..." -BackgroundColor Blue -NoNewline
         $FinalResponseJSON = AIConvertto-Json -text $FinalResponse -Entity $moderator
         if (Test-IsValidJson -jsonString $FinalResponseJSON) {
