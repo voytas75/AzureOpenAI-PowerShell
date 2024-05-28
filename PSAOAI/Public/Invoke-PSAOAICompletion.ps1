@@ -377,20 +377,31 @@ function Invoke-PSAOAICompletion {
             Write-Host "{MaxTokens:'$MaxTokens', temp:'$Temperature', top_p:'$TopP', fp:'$FrequencyPenalty', pp:'$PresencePenalty', user:'$User', n:'$N', stop:'$Stop', stream:'$Stream'} " -ForegroundColor Magenta
         }
         #write-host $bodyJSON -BackgroundColor Blue
-        $response = Invoke-PSAOAIApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240
-        if (-not $($response.choices[0].text)) {
-            Write-Warning "Response is empty"
-            return
+        if ($Stream) {
+            $response = Invoke-PSAOAIApiRequestStream -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240    
+            if (-not $($response)) {
+                Write-Warning "Response is empty"
+                return
+            }
+            $responseText = (Show-ResponseMessage -content $response -stream "console" -simpleresponse:$simpleresponse | out-String)
         }
-        $responseText = (Show-ResponseMessage -content $response.choices[0].text -stream "console" -simpleresponse:$simpleresponse | out-String)
-        
+        else {
+            $response = Invoke-PSAOAIApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240
+            if (-not $($response.choices[0].text)) {
+                Write-Warning "Response is empty"
+                return
+            }
+            $responseText = (Show-ResponseMessage -content $response.choices[0].text -stream "console" -simpleresponse:$simpleresponse | out-String)
+        }
+                
         if (-not $simpleresponse) {
-            Show-FinishReason -finishReason $response.choices.finish_reason
-            Show-Usage -usage $response.usage
+            if (-not $Stream) {
+                Show-FinishReason -finishReason $response.choices.finish_reason
+                Show-Usage -usage $response.usage
+                Write-LogMessage -Message "Text completion:`n$($responseText.trim())" -LogFile $logFullNamePath
+            } 
         }
-        Write-LogMessage -Message "Text completion:`n$($responseText.trim())" -LogFile $logFullNamePath
-
-        return $responseText
+                return $responseText
     }
     catch {
         Format-Error -ErrorVar $_
