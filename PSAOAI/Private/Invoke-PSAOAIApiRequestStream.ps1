@@ -1,28 +1,41 @@
 # This function makes an API request and stores the response
 using namespace System.Net.Http
 function Invoke-PSAOAIApiRequestStream {
-    <#
+<#
 .SYNOPSIS
     Invokes the Azure OpenAI API using a stream request.
+
 .DESCRIPTION
-    This script allows you to invoke the Azure OpenAI API using a stream request. It accepts various parameters such as `Uri`, `Method`, `Headers`, and `Body`.
+    This function allows you to invoke the Azure OpenAI API using a stream request. It accepts various parameters such as `Url`, `Headers`, `BodyJSON`, and an optional `Timeout`.
     The function provides the capability for streaming the API response.
-.PARAMETER Uri
-    The URI of the Azure OpenAI API endpoint.
-.PARAMETER Method
-    The HTTP method to use for the API request (e.g., GET, POST, PUT, DELETE).
+
+.PARAMETER Url
+    The URL of the Azure OpenAI API endpoint.
+
 .PARAMETER Headers
-    A hashtable containing any custom headers to include in the API request.
-.PARAMETER Body
-    The request body to send to the API.
+    A hashtable containing any custom headers to include in the API request, including the required API key.
+
+.PARAMETER BodyJSON
+    The JSON-formatted request body to send to the API.
+
+.PARAMETER Timeout
+    The timeout in seconds for the API request. Default is 60 seconds.
+
 .EXAMPLE
-    $apiUri = "https://api.openai.com/v1/endpoint"
+    $apiUrl = "https://api.openai.com/v1/endpoint"
     $requestBody = @{
         prompt = "Translate this English text to French."
     } | ConvertTo-Json
-    $response = Invoke-PSAOAIApiRequestStream -Uri $apiUri -Method POST -Headers $headers -Body $requestBody
+    $headers = @{
+        "api-key" = "your_api_key_here"
+    }
+    $response = Invoke-PSAOAIApiRequestStream -Url $apiUrl -Headers $headers -BodyJSON $requestBody
     # Process the response stream (e.g., read and parse the data)
-#>    
+
+.NOTES
+    Author: voytas
+    Date: 2024-05-28
+#>
     param(
         [Parameter(Mandatory = $true)]
         [string]$url, # The URL for the API request
