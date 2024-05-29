@@ -93,7 +93,8 @@ function Invoke-PSAOAIApiRequestStream {
         # Clean up
         $reader.Close()
         $httpClient.Dispose()
-
+				
+				# Return the API response object
         return $completeText
     }
     # Catch any errors and write a warning
