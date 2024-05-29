@@ -192,6 +192,7 @@ $responseGuideModerator
             if ($Questions) {
                 Write-Host "Questions" -ForegroundColor DarkGray
                 Write-Host ($questions -join "`n") -ForegroundColor Gray
+                $QuestionsArray += $Questions
             }
         }
         $Questions = ""
@@ -261,6 +262,7 @@ $ExpertsMemory
                 if ($questions) {
                     Write-Host "Questions" -ForegroundColor Gray
                     Write-Host ($questions -join "`n") -ForegroundColor Gray
+                    $QuestionsArray += $Questions
                 }
             }
             $Questions = ""
@@ -315,20 +317,6 @@ $ExpertsMemory
 "@
     $questionWithmemory = $($expertpromptData -f $lastMemoryElement)
 
-    $responseSummarizerGuide = ""
-
-
-    $Summarize = @"
-Your role is a Discussion Summarizer. Your main task is to synthesize the data and craft detailed Big Picture for the task '$topic': 
-- Recap the Key Points to briefly summarize the main discussion points. Use clear, concise language and incorporate key phrases or data mentioned by participants. 
-- Weaving the Threads to explain how the different perspectives and information shared relate to the original topic. 
-- Final response: Based on the collective data, craft a detailed, and final response to the topic.
-Answer questions, if any. Use CoT for reasoning.
-$questionWithmemory
-$responseSummarizerGuide
-
-"@
-
     $Summarize = @"
 You must do summarization:
 1. Summarization & Analysis:
@@ -337,7 +325,7 @@ You must do summarization:
     - Output: Generate a concise summary that incorporates these key points in a clear and well-organized manner. Do not show the summary, yet.
 2. Answer Formulation:
     - Task: Based on the summarized information, formulate a direct and informative answer to the topic.
-    - Focus: Ensure the answer directly addresses thetopic and avoids unnecessary conversational elements. Show the answer.
+    - Focus: Ensure the answer directly addresses thetopic and avoids unnecessary conversational elements.
 $questionWithmemory
 Use a professional tone in response. The scaffolding of a response is a JSON object with any key structure.
 "@
@@ -349,28 +337,34 @@ Use a professional tone in response. The scaffolding of a response is a JSON obj
     if (-not $stream) { 
         Write-Color $FinalResponse -Color DarkBlue -BackGroundColor DarkGreen -LinesBefore -ShowTime
     }
-    while (-not (Test-IsValidJson -jsonString $FinalResponse) -or [string]::IsNullOrEmpty($FinalResponse)) {
-        if (-not $stream) {
-            Write-Color "TextToJSON conversion..." -BackgroundColor Blue -NoNewline  -ShowTime
+    if (-not [string]::IsNullOrEmpty($FinalResponse)) {
+        while (-not (Test-IsValidJson -jsonString $FinalResponse)) {
+            if (-not $stream) {
+                Write-Color "TextToJSON conversion..." -BackgroundColor Blue -NoNewline  -ShowTime
+            }
+            else {
+                Write-Color "TextToJSON conversion..." -BackgroundColor Blue  -ShowTime
+            }
+            $FinalResponseJSON = AIConvertto-Json -text $FinalResponse -Entity $moderator -Stream $Stream
+            if (Test-IsValidJson -jsonString $FinalResponseJSON) {
+                $FinalResponse = $FinalResponseJSON
+                break
+            }
+            Write-Host "Converting to JSON. Sleep 10 seconds" -BackgroundColor DarkMagenta
+            Start-Sleep -Seconds 5
         }
-        else {
-            Write-Color "TextToJSON conversion..." -BackgroundColor Blue  -ShowTime
+        if (Test-IsValidJson -jsonString $FinalResponse) {
+            $Questions = SearchIn-Json -json ($FinalResponse) -key "questions"
+            if ($Questions) {
+                Write-Host "Questions" -ForegroundColor Gray
+                Write-Host ($questions -join "`n") -ForegroundColor Gray        
+                $QuestionsArray += $Questions
+            }
         }
-        $FinalResponseJSON = AIConvertto-Json -text $FinalResponse -Entity $moderator -Stream $Stream
-        if (Test-IsValidJson -jsonString $FinalResponseJSON) {
-            $FinalResponse = $FinalResponseJSON
-            break
-        }
-        Write-Host "Converting to JSON. Sleep 10 seconds" -BackgroundColor DarkMagenta
-        Start-Sleep -Seconds 5
+    } else {
+        Write-Warning "Empty response fot Finalizing"
     }
-    if (Test-IsValidJson -jsonString $FinalResponse) {
-        $Questions = SearchIn-Json -json ($FinalResponse) -key "questions"
-        if ($Questions) {
-            Write-Host "Questions" -ForegroundColor Gray
-            Write-Host ($questions -join "`n") -ForegroundColor Gray
-        }
-    }
+
     $Questions = ""
 
     #Write-Host "Key Findings:" -BackgroundColor DarkGreen
@@ -390,6 +384,11 @@ Use a professional tone in response. The scaffolding of a response is a JSON obj
     $filepath = Join-Path -Path $script:TeamDiscussionDataFolder -ChildPath $filename
     $FinalResponse | Out-File -FilePath $filepath
 
+    $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    $filename = "Questions-$timestamp.txt"
+    $filepath = Join-Path -Path $script:TeamDiscussionDataFolder -ChildPath $filename
+    $QuestionsArray | ConvertTo-Json | Out-File -FilePath $filepath
+
     # Provide a general response related to the user's topic
     #$generalResponse = "In conclusion, regarding the topic '$topic', the experts have provided valuable insights."
     #Write-Host $generalResponse
@@ -406,6 +405,7 @@ Import-module "D:\dane\voytas\Dokumenty\visual_studio_code\github\AzureOpenAI-Po
 import-module PSWriteColor
 
 $IHGUID = [System.Guid]::NewGuid().ToString()
+$QuestionsArray = @()
 
 #region Importing Modules
 $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Definition
