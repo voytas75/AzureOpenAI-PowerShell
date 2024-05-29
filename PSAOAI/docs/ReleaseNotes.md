@@ -10,13 +10,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 - Logfolder parameter to Completion - [#3](https://github.com/voytas75/AzureOpenAI-PowerShell/issues/3),
 - Completion: Added timestamp to log filename,
-- Completion: Streaming response,
+- Completion, Chat: Streaming response,
 - Ready for core edition,
 - Streaming response: timeout.
 
 ### Fix
 
-- Completion: logfileDirectory.
+- Completion, Chat: logfileDirectory.
 
 ## [0.1.0]
 

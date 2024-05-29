@@ -105,6 +105,8 @@ function Invoke-PSAOAIChatCompletion {
         [Parameter(Mandatory = $false)]
         [string]$logfile,
         [Parameter(Mandatory = $false)]
+        [string]$LogFolder,
+        [Parameter(Mandatory = $false)]
         [string]$usermessagelogfile,
         [Parameter(Position = 4, Mandatory = $false)]
         [switch]$simpleresponse,
@@ -380,9 +382,13 @@ function Invoke-PSAOAIChatCompletion {
         }
     }
 
-
     if ($OneTimeUserPrompt) {
         [string]$OneTimeUserPrompt = ($usermessage | out-string)
+    }
+
+    $logfileDirectory = Join-Path -Path ([Environment]::GetFolderPath("MyDocuments")) -ChildPath $script:modulename
+    if ($LogFolder) {
+        $logfileDirectory = $LogFolder
     }
 
     if ($VerbosePreference -eq "Continue") {
@@ -405,6 +411,7 @@ function Invoke-PSAOAIChatCompletion {
         Write-Host "logfile: $(if($logfile){$logfile}else{"not set"})"
         Write-Host "simpleresponse: $simpleresponse"
         Write-Host "usermessagelogfile: $usermessagelogfile"
+        Write-Host "LogFolder: $logfileDirectory"
     }
 
     try {
@@ -416,8 +423,7 @@ function Invoke-PSAOAIChatCompletion {
 
         # Check if logfile is not set
         if (-not $logfile) {
-            $logfileDirectory = Join-Path -Path ([Environment]::GetFolderPath("MyDocuments")) -ChildPath $script:modulename
-
+        
             if (!(Test-Path -Path $logfileDirectory)) {
                 # Create the directory if it does not exist
                 New-Item -ItemType Directory -Path $logfileDirectory -Force | Out-Null
@@ -495,7 +501,7 @@ function Invoke-PSAOAIChatCompletion {
         $urlChat = Get-PSAOAIUrl -Endpoint $Endpoint -Deployment $Deployment -APIVersion $APIVersion -Mode chat
 
         # Write the URL to the verbose output
-        Write-Verbose "urtChat: $urlChat"
+        Write-Verbose "urlChat: $urlChat"
 
         # Write the system prompt to the log file
         Write-LogMessage -Message "System promp:`n$system_message" -LogFile $logfile
@@ -522,24 +528,33 @@ function Invoke-PSAOAIChatCompletion {
                     Write-Host "{SysPrompt, temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
                 }
             }
-            
+           
             # Invoke the API request
-            $response = Invoke-PSAOAIApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240
-            
-            # If the response is null, break the loop
-            if ($null -eq $response) {
-                Write-Verbose "Response is empty"
-                break
+            if ($Stream) {
+                #write-host $urlChat
+                #write-host $headers
+                #write-host $bodyJSON
+                $response = Invoke-PSAOAIApiRequestStream -url $urlChat -headers $headers -bodyJSON $bodyJSON -Chat -timeout 240 | out-string
+                if ([string]::IsNullOrEmpty($response)) {
+                    Write-Warning "Response is empty"
+                    return
+                }
+                #$responseText = (Show-ResponseMessage -content $response -stream "console" -simpleresponse:$simpleresponse | out-String)
+                
             }
-
-            # Write the received job to verbose output
-            Write-Verbose ("Receive job:`n$($response | ConvertTo-Json)" | Out-String)
-
-            # Get the assistant response
-            $assistant_response = $response.choices[0].message.content
-
-            # Add the assistant response to the messages
-            $messages += @{"role" = "assistant"; "content" = $assistant_response }
+            else {
+                $response = Invoke-PSAOAIApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240
+                if ([string]::IsNullOrEmpty($($response.choices[0].text))) {
+                    Write-Warning "Response is empty"
+                    return
+                }
+                # Write the received job to verbose output
+                Write-Verbose ("Receive job:`n$($response | ConvertTo-Json)" | Out-String)
+                # Get the assistant response
+                $assistant_response = $response.choices[0].message.content
+                # Add the assistant response to the messages
+                $messages += @{"role" = "assistant"; "content" = $assistant_response }
+            }
 
             # If there is a one-time user prompt, process it
             if ($OneTimeUserPrompt) {
@@ -554,9 +569,13 @@ function Invoke-PSAOAIChatCompletion {
                 }
                 Write-Verbose "Show-ResponseMessage - return"
 
-                # Get the response text
-                $responseText = (Show-ResponseMessage -content $assistant_response -stream "assistant" -simpleresponse:$simpleresponse | Out-String)
-
+                if (-not $Stream) {
+                    # Get the response text
+                    $responseText = (Show-ResponseMessage -content $assistant_response -stream "assistant" -simpleresponse:$simpleresponse | Out-String)
+                }
+                else {
+                    $responseText = $response
+                }
                 # Write the one-time user prompt and response text to the log file
                 Write-LogMessage -Message "OneTimeUserPrompt:`n$OneTimeUserPrompt" -LogFile $logfile
                 Write-LogMessage -Message "ResponseText:`n$responseText" -LogFile $logfile

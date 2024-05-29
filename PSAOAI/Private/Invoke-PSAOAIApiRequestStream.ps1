@@ -1,7 +1,19 @@
-# This function makes an API request and stores the response
-using namespace System.Net.Http
-function Invoke-PSAOAIApiRequestStream {
+Add-Type -AssemblyName System.Net.Http
+#using namespace System.Net.Http
+
+
 <#
+nie moge otrzymac streamingu 
+koles pisze, ze tez nie moze: https://github.com/PowerShell/PowerShell/issues/23783
+
+#>
+
+
+
+
+# This function makes an API request and stores the response
+function Invoke-PSAOAIApiRequestStream {
+    <#
 .SYNOPSIS
     Invokes the Azure OpenAI API using a stream request.
 
@@ -47,6 +59,9 @@ function Invoke-PSAOAIApiRequestStream {
         [string]$bodyJSON, # The body for the API request
 
         [Parameter(Mandatory = $false)]
+        [switch]$Chat, 
+
+        [Parameter(Mandatory = $false)]
         $timeout = 60 # The timeout for the API request
     )
 
@@ -70,6 +85,7 @@ function Invoke-PSAOAIApiRequestStream {
 
         # Send the HTTP POST request asynchronously
         $response = $httpClient.PostAsync($apiEndpoint, $content).Result
+        #$response = $httpClient.GetAsync($apiEndpoint).Result
 
         # Get the response stream
         $stream = $response.Content.ReadAsStreamAsync().Result
@@ -91,9 +107,18 @@ function Invoke-PSAOAIApiRequestStream {
                 # Parse the JSON part
                 $parsedJson = $jsonPart | ConvertFrom-Json
 
-                # Extract the text and append it to the complete text
-                $completeText += $parsedJson.choices[0].text
-                write-host $parsedJson.choices[0].text -nonewline
+                if (-not $Chat) {
+
+                    # Extract the text and append it to the complete text - Text Completion
+                    $completeText += $parsedJson.choices[0].text
+                    write-host $parsedJson.choices[0].text -nonewline
+                }
+                else {
+                    # Extract the text and append it to the complete text - Chat Completion
+                    $delta = $parsedJson.choices[0].delta.content
+                    $completeText += $delta
+                    write-host $delta -nonewline
+                }
             }
         }
         Write-Host ""
@@ -103,7 +128,7 @@ function Invoke-PSAOAIApiRequestStream {
         $reader.Close()
         $httpClient.Dispose()
 				
-	# Return the API response object
+        # Return the API response object
         return $completeText
     }
     # Catch any errors and write a warning

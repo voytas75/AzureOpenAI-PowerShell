@@ -743,7 +743,7 @@ $responsejson1
     Write-Verbose $Message
     $arguments = @($Message, 500, "Focused", $Entity.name, $Entity.GPTModel, $true)
     try {
-        $output = $Entity.InvokeCompletion("PSAOAI", "Invoke-PSAOAICompletion", $arguments, $false)
+        $output = $Entity.TextCompletion($Message,$true)
         return $output
     }
     catch {
@@ -906,7 +906,7 @@ The scaffolding of a response must be a JSON object with any key structure. Show
 "@
     try {
         # Use the entity invoke completion method to convert the text to JSON
-        $json = $Entity.InvokeLLM($prompt,$Stream)
+        $json = $Entity.TextCompletion($prompt,$Stream)
     }
     catch {
         Write-Error "Failed to convert text to JSON: $_. Returning given text."

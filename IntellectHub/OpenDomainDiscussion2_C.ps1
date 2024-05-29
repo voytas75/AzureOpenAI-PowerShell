@@ -19,12 +19,30 @@ class LanguageModel {
         $this.memory = @()
     }
 
-    [string] InvokeLLM([string] $prompt, [bool] $Stream) {
+    [string] TextCompletion([string] $prompt, [bool] $Stream) {
         try {
             # Simulate language model response
-            write-host $prompt -ForegroundColor DarkYellow
+            #write-host $prompt -ForegroundColor DarkYellow
             $arguments = @($prompt, 3000, "Precise", $this.name, "udtgpt35turbo", $true)
             $response = Invoke-PSAOAICompletion @arguments -LogFolder $script:TeamDiscussionDataFolder -verbose:$false -Stream $Stream
+            $this.memory += $response
+            #return "This is $($this.name)'s response to:`n$($prompt)`n '$response'"
+            #return "This is $($this.name)'s response:`n===`n$($response.trim())`n==="
+            return $response
+
+        }
+        catch {
+            return "An error occurred while invoking the language model: $_"
+        }
+    }
+
+    [string] ChatCompletion([string] $SystemPrompt, [string] $UserPrompt, [bool] $Stream) {
+        try {
+            # Simulate language model response
+            #write-host $prompt -ForegroundColor DarkYellow
+            $arguments = @($SystemPrompt, $UserPrompt, "Precise", $true, $true, $this.name, "udtgpt4turbo", $true)
+
+            $response = Invoke-PSAOAIChatCompletion @arguments -LogFolder $script:TeamDiscussionDataFolder -verbose:$false -Stream $Stream
             $this.memory += $response
             #return "This is $($this.name)'s response to:`n$($prompt)`n '$response'"
             #return "This is $($this.name)'s response:`n===`n$($response.trim())`n==="
@@ -168,7 +186,7 @@ $responseGuideModerator
             $moderatorPrompt = $moderatorPrompt -f $null
         }
         Write-Host $moderator.name -BackgroundColor White -ForegroundColor Blue -NoNewline
-        $moderatorResponse = $moderator.InvokeLLM($moderatorPrompt, $Stream)
+        $moderatorResponse = $moderator.TextCompletion($moderatorPrompt, $Stream)
         if (-not $stream) { 
             Write-Host $moderatorResponse -ForegroundColor Green 
         } 
@@ -237,7 +255,7 @@ $ExpertsMemory
 
             $questionWithmemory = $($expert.ExpertPrompt -f $(Remove-EmptyLines $($expertpromptData -f $lastMemoryElement.trim())))
             Write-Host $($expert.name) -BackgroundColor White -ForegroundColor Blue -NoNewline
-            $expertResponse = $expert.InvokeLLM($questionWithmemory, $Stream)
+            $expertResponse = $expert.TextCompletion($questionWithmemory, $Stream)
             #$expertResponse = Extract-JSON $expertResponse | ConvertFrom-Json
             if (-not $stream) { 
                 Write-Host $expertResponse -ForegroundColor DarkBlue
@@ -339,7 +357,7 @@ Respond using a professional tone as report style. Structure your response as a 
 
     Write-Host "Finalizing" -BackgroundColor White -ForegroundColor Blue  -NoNewline
     #$Summarize += $NewSupplement
-    $FinalResponse = $moderator.InvokeLLM($Summarize, $Stream)
+    $FinalResponse = $moderator.TextCompletion($Summarize, $Stream)
     if (-not $stream) { 
         Write-Color $FinalResponse -Color DarkBlue -BackGroundColor DarkGreen -LinesBefore -ShowTime
     }
@@ -421,7 +439,7 @@ Reflect on your facilitation experience and session outcomes, identifying succes
     if ($Stream) {
         Write-Host "`n"
     }
-    $MoTResponse = $moderator.InvokeLLM($MoTPrompt, $Stream)
+    $MoTResponse = $moderator.TextCompletion($MoTPrompt, $Stream)
     if (-not $stream) { 
         Write-Color $MoTResponse -Color DarkBlue -BackGroundColor DarkGreen -LinesBefore 1 -LinesAfter 1 -ShowTime 
     }
