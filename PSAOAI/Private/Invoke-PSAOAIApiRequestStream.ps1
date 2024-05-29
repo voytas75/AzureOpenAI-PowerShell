@@ -2,28 +2,27 @@
 using namespace System.Net.Http
 function Invoke-PSAOAIApiRequestStream {
     <#
-    .SYNOPSIS
-    Sends a POST request to the specified API and stores the response.
-
-    .DESCRIPTION
-    The Invoke-ApiRequest function sends a POST request to the API specified by the url parameter. It uses the provided headers and bodyJSON for the request. 
-    If the request is successful, it returns the response. If an error occurs during the request, it handles the error and returns null.
-
-    .PARAMETER url
-    Specifies the URL for the API request. This parameter is mandatory.
-
-    .PARAMETER headers
-    Specifies the headers for the API request. This parameter is mandatory.
-
-    .PARAMETER bodyJSON
-    Specifies the body for the API request. This parameter is mandatory.
-
-    .EXAMPLE
-    Invoke-ApiRequest -url $url -headers $headers -bodyJSON $bodyJSON
-
-    .OUTPUTS
-    If successful, it outputs the response from the API request. If an error occurs, it outputs null.
-    #>    
+.SYNOPSIS
+    Invokes the Azure OpenAI API using a stream request.
+.DESCRIPTION
+    This script allows you to invoke the Azure OpenAI API using a stream request. It accepts various parameters such as `Uri`, `Method`, `Headers`, and `Body`.
+    The function provides the capability for streaming the API response.
+.PARAMETER Uri
+    The URI of the Azure OpenAI API endpoint.
+.PARAMETER Method
+    The HTTP method to use for the API request (e.g., GET, POST, PUT, DELETE).
+.PARAMETER Headers
+    A hashtable containing any custom headers to include in the API request.
+.PARAMETER Body
+    The request body to send to the API.
+.EXAMPLE
+    $apiUri = "https://api.openai.com/v1/endpoint"
+    $requestBody = @{
+        prompt = "Translate this English text to French."
+    } | ConvertTo-Json
+    $response = Invoke-PSAOAIApiRequestStream -Uri $apiUri -Method POST -Headers $headers -Body $requestBody
+    # Process the response stream (e.g., read and parse the data)
+#>    
     param(
         [Parameter(Mandatory = $true)]
         [string]$url, # The URL for the API request
