@@ -58,7 +58,7 @@ function Conduct-Discussion {
     # Create expert language models
     $experts = @()
 
-    $responseGuide = "The scaffolding of a response is a JSON object with any key structure. Add key 'questions'.`nYou provide a thorough, insightful, and forward-thinking data analysis. Set clear goal to respond to the topic. Add questions, and with answer to ones, if any. Use CoT, and professional tone in your response."
+    $responseGuide = "You provide a thorough, insightful, and forward-thinking data analysis. Set clear goal to respond to the topic. Add your questions, and answer to existing ones. Use Chain of Thoughts, and professional tone in your response. Provide the user information in JSON format."
        
 
     # Loop to create different types of expert language models
@@ -69,7 +69,7 @@ function Conduct-Discussion {
                 # Domain Expert role
                 $name = "Domain Expert"; 
                 $ExpertPrompt_ = @"
-You are in role of $name with the following skills and qualifications: Deep knowledge of the domain, Ability to synthesize complex information, Strong research and analytical skills, Excellent communication skills. Your main task is to respond to the topic '$($topic.trim())' based on the available data.
+You are in role of $name with the following skills and qualifications: Deep knowledge of the domain, Ability to synthesize complex information, Strong research and analytical skills, Excellent communication skills. Your main task is to respond to the topic '$($topic.trim())' and its goal based on the available data. The data are to be used to expand and enrich your analysis and answers.
 {0}
 $responseGuide
 
@@ -125,8 +125,8 @@ $ModeratorMemory
 "@
         }
         
-        foreach ($expert in $experts) {
-            $lastMemoryElement = $($expert.GetLastNMemoryElements(1))
+        foreach ($expert_ in $experts) {
+            $lastMemoryElement = $($expert_.GetLastNMemoryElements(1))
             if ($lastMemoryElement) {
                 $ExpertsMemory += @"
 $($lastMemoryElement.trim())
@@ -325,11 +325,17 @@ You must do summarization:
     - Output: Generate a concise summary that incorporates these key points in a clear and well-organized manner. Do not show the summary, yet.
 2. Answer Formulation:
     - Task: Based on the summarized information, formulate a direct and informative answer to the topic.
-    - Focus: Ensure the answer directly addresses thetopic and avoids unnecessary conversational elements.
+    - Focus: Ensure the answer directly addresses the topic and avoids unnecessary conversational elements.
 $questionWithmemory
 Use a professional tone in response. The scaffolding of a response is a JSON object with any key structure.
 "@
     #Use professional tone. You must use only JSON object output when responding {`"response`": `"`"}.
+    $Summarize = @"
+You MUST perform the data summarization and analysis. Analyze the provided data to identify key points directly addressing the topic. Concentrate on the most relevant information to comprehensively answer the question. Generate a concise summary that presents these key points clearly and cohesively. Main task is to create answer Formulation: Based on the summarized information, craft a direct and informative response to the topic, ensure the answer directly tackles the topic without unnecessary conversational elements.
+$questionWithmemory
+Respond using a professional tone as report style. Structure your response as a JSON object.
+"@
+
 
     Write-Host "Finalizing" -BackgroundColor White -ForegroundColor Blue  -NoNewline
     #$Summarize += $NewSupplement
@@ -361,7 +367,8 @@ Use a professional tone in response. The scaffolding of a response is a JSON obj
                 $QuestionsArray += $Questions
             }
         }
-    } else {
+    }
+    else {
         Write-Warning "Empty response fot Finalizing"
     }
 
@@ -396,6 +403,29 @@ Use a professional tone in response. The scaffolding of a response is a JSON obj
     #$moderator.GetLastNMemoryElements(1)
     #$moderator.GetLastNMemoryElements(2)
     #$moderator.GetLastNMemoryElements(3)
+
+
+    $MoTPrompt = @"
+Start by acquainting yourself with the Mirror of Thoughts technique, understanding its methodology, principles, and anticipated outcomes. Gather the necessary materials, including prompts relevant to the session's topic, ensuring diversity and inclusivity in content. Plan the session's structure, considering factors like group size, objectives, and available time. If needed, designate roles such as facilitator and timekeeper.
+
+Introduce the technique to participants, emphasizing its objectives and the significance of reflective practice in brainstorming. Encourage adherence to principles like inclusivity, reflection, collaboration, and continuous improvement.
+
+Guide participants through each stage of the process. Initiate with a warm-up activity prompting exploration of initial thoughts and assumptions related to the topic: **$($topic)**. Provide clear instructions for individual reflection, encouraging silent introspection using diverse mediums like writing, drawing, or verbal expression. Facilitate pair sharing, ensuring active listening and constructive feedback. Lead group discussions, synthesizing individual reflections and fostering collaborative idea generation. Encourage participants to build on each other's ideas and explore diverse perspectives.
+
+Conclude the session with an evaluation and feedback phase, allowing participants to reflect on the technique's effectiveness and offer suggestions for improvement. Gather feedback through surveys, discussions, or written reflections, and use it to refine the technique iteratively for future sessions.
+
+Reflect on your facilitation experience and session outcomes, identifying successes and areas for improvement. Continuously iterate and refine the technique based on participant feedback and your own observations, adapting it as necessary to suit different group dynamics and brainstorming contexts.
+"@
+
+    Write-Color "MoT" -BackgroundColor White -ForegroundColor Blue -NoNewline -LinesBefore 1
+    if ($Stream) {
+        Write-Host "`n"
+    }
+    $MoTResponse = $moderator.InvokeLLM($MoTPrompt, $Stream)
+    if (-not $stream) { 
+        Write-Color $MoTResponse -Color DarkBlue -BackGroundColor DarkGreen -LinesBefore 1 -LinesAfter 1 -ShowTime 
+    }
+
 }
 
 # Import modules and scripts
