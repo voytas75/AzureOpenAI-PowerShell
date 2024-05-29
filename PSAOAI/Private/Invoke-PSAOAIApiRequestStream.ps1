@@ -47,17 +47,16 @@ function Invoke-PSAOAIApiRequestStream {
         [string]$bodyJSON, # The body for the API request
 
         [Parameter(Mandatory = $false)]
-        $timeout = 60
+        $timeout = 60 # The timeout for the API request
     )
 
     # Try to send the API request and handle any errors
     try {
 
-        # Define the API endpoint and the API key
+        # Define the API endpoint
         $apiEndpoint = $url
         
-        #write-host $bodyjson
-
+        # Convert the bodyJSON from a JSON string to a PowerShell object
         $body = $($bodyJSON | convertfrom-json)
         $prompt = $body.prompt
         
@@ -73,28 +72,26 @@ function Invoke-PSAOAIApiRequestStream {
         # Send the HTTP POST request asynchronously
         $response = $httpClient.PostAsync($apiEndpoint, $content).Result
 
-        # Ensure the response is successful
-        #$response.EnsureSuccessStatusCode()
-
         # Get the response stream
         $stream = $response.Content.ReadAsStreamAsync().Result
 
         # Create a StreamReader to read the response stream
         $reader = [System.IO.StreamReader]::new($stream)
 
-        #$completeText = $prompt
-        #write-host $prompt -nonewline
+        # Initialize the completeText variable
+        $completeText = ""
+
         # Read and output each line from the response stream
         while ($null -ne ($line = $reader.ReadLine())) {
 		
-            #Write-Output $line
+            # Check if the line starts with "data: " and is not "data: [DONE]"
             if ($line.StartsWith("data: ") -and $line -ne "data: [DONE]") {
                 # Extract the JSON part from the line
                 $jsonPart = $line.Substring(6)
-                #$jsonPart
+
                 # Parse the JSON part
                 $parsedJson = $jsonPart | ConvertFrom-Json
-                #$parsedJson
+
                 # Extract the text and append it to the complete text
                 $completeText += $parsedJson.choices[0].text
                 write-host $parsedJson.choices[0].text -nonewline
@@ -107,7 +104,7 @@ function Invoke-PSAOAIApiRequestStream {
         $reader.Close()
         $httpClient.Dispose()
 				
-				# Return the API response object
+	# Return the API response object
         return $completeText
     }
     # Catch any errors and write a warning
