@@ -896,11 +896,13 @@ function AIConvertto-Json {
     }
 
     $prompt = @"
-You MUST convert given text to JSON object:
+You MUST convert given text data to JSON object.
+Data:
 ###
 $($text.trim())
 ###
-Show the JSON object only.
+The scaffolding of a response must be a JSON object with any key structure. Show the JSON object only.
+
 "@
     try {
         # Use the entity invoke completion method to convert the text to JSON

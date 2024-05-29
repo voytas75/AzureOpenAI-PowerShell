@@ -22,7 +22,7 @@ class LanguageModel {
     [string] InvokeLLM([string] $prompt, [bool] $Stream) {
         try {
             # Simulate language model response
-            #write-host $prompt -ForegroundColor DarkYellow
+            write-host $prompt -ForegroundColor DarkYellow
             $arguments = @($prompt, 3000, "Precise", $this.name, "udtgpt35turbo", $true)
             $response = Invoke-PSAOAICompletion @arguments -LogFolder $script:TeamDiscussionDataFolder -verbose:$false -Stream $Stream
             $this.memory += $response
@@ -58,9 +58,8 @@ function Conduct-Discussion {
     # Create expert language models
     $experts = @()
 
-    $responseGuide = "You must use only JSON object output when respond. Add key 'questions'.`nYou provide a thorough, insightful, and forward-thinking data analysis. Set clear goal to respond to the topic. Add questions, and with answer to ones, if any. Use CoT, and professional tone in your response."
-    
-    $responseSummarizerGuide = "Use professional tone. You must use only JSON object output when responding {`"response`": `"`"}"
+    $responseGuide = "The scaffolding of a response is a JSON object with any key structure. Add key 'questions'.`nYou provide a thorough, insightful, and forward-thinking data analysis. Set clear goal to respond to the topic. Add questions, and with answer to ones, if any. Use CoT, and professional tone in your response."
+       
 
     # Loop to create different types of expert language models
     for ($i = 0; $i -le 4; $i++) {
@@ -70,7 +69,7 @@ function Conduct-Discussion {
                 # Domain Expert role
                 $name = "Domain Expert"; 
                 $ExpertPrompt_ = @"
-You are $name with the following skills and qualifications: Deep knowledge of the domain, Ability to synthesize complex information, Strong research and analytical skills, Excellent communication skills. Your main task us respond to the topic '$($topic.trim())' 
+You are in role of $name with the following skills and qualifications: Deep knowledge of the domain, Ability to synthesize complex information, Strong research and analytical skills, Excellent communication skills. Your main task is to respond to the topic '$($topic.trim())' based on the available data.
 {0}
 $responseGuide
 
@@ -145,11 +144,21 @@ Data:
 "@
             $moderatorPromptData = ($moderatorPromptData -f $ModeratorMemoryData.trim(), $ExpertsMemory.trim())
         } 
+
+        $responseGuideModerator = @"
+Before you answer, you need to do:
+    - thorough, insightful, and forward-thinking data analysis using Chain of Thoughts,
+    - set clear goal to respond to the topic,
+    - answer questions, if any,
+    - add your own questions to the topic.
+Response focusing only on the topic goal. Use a professional tone in response. The scaffolding of a response is a JSON object with any key structure.
+"@
+
         $moderatorPrompt = @"
 You are a $($moderator.name) with the following skills: basic domain knowledge, excellent communication, conflict resolution, experience in group dynamics and teamwork.
-Your main task is to answer the topic '$($topic.trim())'
+Your main task is to answer the topic '$($topic.trim())' based on the available data.
 {0}
-$responseGuide
+$responseGuideModerator
 
 "@
         if (-not [string]::IsNullOrWhiteSpace($ExpertsMemory) ) {
@@ -164,7 +173,12 @@ $responseGuide
             Write-Host $moderatorResponse -ForegroundColor Green 
         } 
         while (-not (Test-IsValidJson -jsonString $moderatorResponse) -or [string]::IsNullOrEmpty($moderatorResponse)) {
-            Write-Host "TextToJSON conversion..." -BackgroundColor Blue -NoNewline
+            if (-not $stream) {
+                Write-Color "TextToJSON conversion..." -BackgroundColor Blue -NoNewline -ShowTime
+            }
+            else {
+                Write-Color "TextToJSON conversion..." -BackgroundColor Blue  -ShowTime
+            }
             $moderatorResponseJSON = AIConvertto-Json -text $moderatorResponse -Entity $moderator -Stream $Stream
             if (Test-IsValidJson -jsonString $moderatorResponseJSON) {
                 $moderatorResponse = $moderatorResponseJSON
@@ -228,7 +242,12 @@ $ExpertsMemory
                 Write-Host $expertResponse -ForegroundColor DarkBlue
             }
             while (-not (Test-IsValidJson -jsonString $expertResponse) -or [string]::IsNullOrEmpty($expertResponse)) {
-                Write-Host "TextToJSON conversion..." -BackgroundColor Blue -NoNewline
+                if (-not $stream) {
+                    Write-Color "TextToJSON conversion..." -BackgroundColor Blue -NoNewline  -ShowTime
+                }
+                else {
+                    Write-Color "TextToJSON conversion..." -BackgroundColor Blue  -ShowTime
+                }
                 $expertResponseJSON = AIConvertto-Json -text $expertResponse -Entity $moderator -Stream $Stream
                 if (Test-IsValidJson -jsonString $expertResponseJSON) {
                     $expertResponse = $expertResponseJSON
@@ -296,6 +315,9 @@ $ExpertsMemory
 "@
     $questionWithmemory = $($expertpromptData -f $lastMemoryElement)
 
+    $responseSummarizerGuide = ""
+
+
     $Summarize = @"
 Your role is a Discussion Summarizer. Your main task is to synthesize the data and craft detailed Big Picture for the task '$topic': 
 - Recap the Key Points to briefly summarize the main discussion points. Use clear, concise language and incorporate key phrases or data mentioned by participants. 
@@ -307,6 +329,19 @@ $responseSummarizerGuide
 
 "@
 
+    $Summarize = @"
+You must do summarization:
+1. Summarization & Analysis:
+    - Task: Analyze the provided data and identify the key points that directly address the topic.
+    - Focus: Focus on the information most relevant to answering the question comprehensively, if any.
+    - Output: Generate a concise summary that incorporates these key points in a clear and well-organized manner. Do not show the summary, yet.
+2. Answer Formulation:
+    - Task: Based on the summarized information, formulate a direct and informative answer to the topic.
+    - Focus: Ensure the answer directly addresses thetopic and avoids unnecessary conversational elements. Show the answer.
+$questionWithmemory
+Use a professional tone in response. The scaffolding of a response is a JSON object with any key structure.
+"@
+    #Use professional tone. You must use only JSON object output when responding {`"response`": `"`"}.
 
     Write-Host "Finalizing" -BackgroundColor White -ForegroundColor Blue  -NoNewline
     #$Summarize += $NewSupplement
@@ -315,7 +350,12 @@ $responseSummarizerGuide
         Write-Color $FinalResponse -Color DarkBlue -BackGroundColor DarkGreen -LinesBefore -ShowTime
     }
     while (-not (Test-IsValidJson -jsonString $FinalResponse) -or [string]::IsNullOrEmpty($FinalResponse)) {
-        Write-Host "TextToJSON conversion..." -BackgroundColor Blue -NoNewline
+        if (-not $stream) {
+            Write-Color "TextToJSON conversion..." -BackgroundColor Blue -NoNewline  -ShowTime
+        }
+        else {
+            Write-Color "TextToJSON conversion..." -BackgroundColor Blue  -ShowTime
+        }
         $FinalResponseJSON = AIConvertto-Json -text $FinalResponse -Entity $moderator -Stream $Stream
         if (Test-IsValidJson -jsonString $FinalResponseJSON) {
             $FinalResponse = $FinalResponseJSON
