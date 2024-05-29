@@ -56,15 +56,14 @@ function Invoke-PSAOAIApiRequestStream {
         # Define the API endpoint
         $apiEndpoint = $url
         
-        # Convert the bodyJSON from a JSON string to a PowerShell object
-        $body = $($bodyJSON | convertfrom-json)
-        $prompt = $body.prompt
-        
         # Create an instance of HttpClient
         $httpClient = [System.Net.Http.HttpClient]::new()
 
         # Set the required headers
         $httpClient.DefaultRequestHeaders.Add("api-key", $($headers."api-key"))
+
+        # Set the timeout for the HttpClient
+        $httpClient.Timeout = New-TimeSpan -Seconds $timeout
 
         # Create the HttpContent object with the request body
         $content = [System.Net.Http.StringContent]::new($bodyJSON, [System.Text.Encoding]::UTF8, "application/json")
