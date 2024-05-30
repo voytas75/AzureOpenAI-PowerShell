@@ -534,7 +534,7 @@ function Invoke-PSAOAIChatCompletion {
                 #write-host $urlChat
                 #write-host $headers
                 #write-host $bodyJSON
-                $response = Invoke-PSAOAIApiRequestStream -url $urlChat -headers $headers -bodyJSON $bodyJSON -Chat -timeout 240 | out-string
+                $response = Invoke-PSAOAIApiRequestStream -url $urlChat -headers $headers -bodyJSON $bodyJSON -Chat -timeout 240 -logfile $logfile | out-string
                 if ([string]::IsNullOrEmpty($response)) {
                     Write-Warning "Response is empty"
                     return
@@ -559,7 +559,7 @@ function Invoke-PSAOAIChatCompletion {
             # If there is a one-time user prompt, process it
             if ($OneTimeUserPrompt) {
                 Write-Verbose "OneTimeUserPrompt output with return"
-                if (-not $simpleresponse) {
+                if (-not $simpleresponse -and (-not $Stream)) {
                     Write-Verbose "Show-FinishReason"
                     Write-Information -MessageData (Show-FinishReason -finishReason $response.choices.finish_reason | Out-String) -InformationAction Continue
                     Write-Verbose "Show-PromptFilterResults"
@@ -585,9 +585,10 @@ function Invoke-PSAOAIChatCompletion {
             }
             else {
                 Write-Verbose "NO OneTimeUserPrompt"
-
-                # Show the response message
-                Show-ResponseMessage -content $assistant_response -stream "assistant" -simpleresponse:$simpleresponse
+                if (-not $Stream) {
+                    # Show the response message
+                    Show-ResponseMessage -content $assistant_response -stream "assistant" -simpleresponse:$simpleresponse
+                }
             
                 # Write the assistant response to the log file
                 Write-LogMessage -Message "Assistant response:`n$assistant_response" -LogFile $logfile

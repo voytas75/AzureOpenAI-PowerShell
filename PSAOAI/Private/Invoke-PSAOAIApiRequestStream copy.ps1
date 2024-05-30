@@ -15,7 +15,7 @@ moze byc powiazane: https://stackoverflow.com/questions/60707843/806889
 
 
 # This function makes an API request and stores the response
-function Invoke-PSAOAIApiRequestStream {
+function Invoke-PSAOAIApiRequestStream2 {
     <#
 .SYNOPSIS
     Invokes the Azure OpenAI API using a stream request.
@@ -65,111 +65,83 @@ function Invoke-PSAOAIApiRequestStream {
         [switch]$Chat, 
 
         [Parameter(Mandatory = $false)]
-        $logfile,
-
-        [Parameter(Mandatory = $false)]
         $timeout = 60 # The timeout for the API request
     )
 
     # Try to send the API request and handle any errors
     try {
-        # Create an instance of HttpClientHandler and disable buffering
-        $httpClientHandler = [System.Net.Http.HttpClientHandler]::new()
-        $httpClientHandler.AllowAutoRedirect = $false
-        $httpClientHandler.UseCookies = $false
-        $httpClientHandler.AutomaticDecompression = [System.Net.DecompressionMethods]::GZip -bor [System.Net.DecompressionMethods]::Deflate
 
+        # Define the API endpoint
+        $apiEndpoint = $url
+        
         # Create an instance of HttpClient
-        $httpClient = [System.Net.Http.HttpClient]::new($httpClientHandler)
-        Write-LogMessage "HttpClient instance created with custom handler." -LogFile $logfile
-    
+        $httpClient = [System.Net.Http.HttpClient]::new()
+
         # Set the required headers
         $httpClient.DefaultRequestHeaders.Add("api-key", $($headers."api-key"))
-        Write-LogMessage "API key header added." -LogFile $logfile
-    
+
         # Set the timeout for the HttpClient
         $httpClient.Timeout = New-TimeSpan -Seconds $timeout
-        Write-LogMessage "HttpClient timeout set to $timeout seconds." -LogFile $logfile
-    
+
         # Create the HttpContent object with the request body
         $content = [System.Net.Http.StringContent]::new($bodyJSON, [System.Text.Encoding]::UTF8, "application/json")
-        Write-LogMessage "HttpContent created with request body." -LogFile $logfile
-    
+
         # Send the HTTP POST request asynchronously
-        $response = $httpClient.PostAsync($url, $content).Result
-        Write-LogMessage "HTTP POST request sent to ${url}." -LogFile $logfile
-    
-        # Ensure the request was successful
-        if ($response.IsSuccessStatusCode) {
-            Write-LogMessage "Received successful response from server." -LogFile $logfile
-        }
-        else {
-            Write-LogMessage "Received error response: $($response.StatusCode) - $($response.ReasonPhrase)" "ERROR" -LogFile $logfile
-            throw "Error in HTTP response: $($response.StatusCode) - $($response.ReasonPhrase)"
-        }
-    
+        $response = $httpClient.PostAsync($apiEndpoint, $content).Result
+        #$response = $httpClient.GetAsync($apiEndpoint).Result
+
         # Get the response stream
         $stream = $response.Content.ReadAsStreamAsync().Result
+
+        # Create a StreamReader to read the response stream
         $reader = [System.IO.StreamReader]::new($stream)
-        Write-LogMessage "Response stream obtained and StreamReader initialized." -LogFile $logfile
-    
+
         # Initialize the completeText variable
         $completeText = ""
-        # Initialize a progress indicator
-        $progress = 0
+
         # Read and output each line from the response stream
-        while (-not $reader.EndOfStream) {
-            $reader.ReadLine()
-        }
-        <#
+
         while ($null -ne ($line = $reader.ReadLine())) {
-            # Log each received line
-            Write-LogMessage "Received line: $line" -LogFile $logfile
-    
+		
             # Check if the line starts with "data: " and is not "data: [DONE]"
             if ($line.StartsWith("data: ") -and $line -ne "data: [DONE]") {
                 # Extract the JSON part from the line
                 $jsonPart = $line.Substring(6)
-    
-                try {
-                    # Parse the JSON part
-                    $parsedJson = $jsonPart | ConvertFrom-Json
-                    #Write-LogMessage "Parsed JSON: $jsonPart" -LogFile $logfile
-    
-                    if (-not $Chat) {
-                        # Extract the text and append it to the complete text - Text Completion
-                        $textChunk = $parsedJson.choices[0].text
-                        $completeText += $textChunk
-                        Write-Host $textChunk
-                    }
-                    else {
-                        # Extract the text and append it to the complete text - Chat Completion
-                        $delta = $parsedJson.choices[0].delta.content
-                        $completeText += $delta
-                        Write-Host $delta
-                    }
-                    # Update progress indicator
-                    $progress++
-                    Write-Progress -Activity "Streaming data..." -Status "Processing chunk $progress" -PercentComplete (($progress / 100) * 100)
 
+                # Parse the JSON part
+                $parsedJson = $jsonPart | ConvertFrom-Json
+
+                if (-not $Chat) {
+
+                    # Extract the text and append it to the complete text - Text Completion
+                    $completeText += $parsedJson.choices[0].text
+                    write-host $parsedJson.choices[0].text -nonewline
                 }
-                catch {
-                    Write-LogMessage "Error parsing JSON: $_" "ERROR" -LogFile $logfile
+                else {
+                    # Extract the text and append it to the complete text - Chat Completion
+                    $delta = $parsedJson.choices[0].delta.content
+                    $completeText += $delta
+                    write-host $delta -nonewline
                 }
             }
         }
-    #>
-        Write-Output ""
+
+        Write-Host ""
         $completeText += "`n"
-    
-        Write-LogMessage "Streaming completed. Full text: $completeText" -LogFile $logfile
-    
+
         # Clean up
         $reader.Close()
         $httpClient.Dispose()
-        Write-LogMessage "Resources cleaned up." -LogFile $logfile
+				
+        # Return the API response object
+        return $completeText
     }
+    # Catch any errors and write a warning
     catch {
-        Write-LogMessage "An error occurred: $_" "ERROR" -LogFile $logfile
+        Write-Error "Error: $($_.Exception.Message)"
+        if ($null -ne $_.Exception.Response) {
+            Write-Error "HTTP Status Code: $($_.Exception.Response.StatusCode)"
+            Write-Error "HTTP Reason Phrase: $($_.Exception.Response.ReasonPhrase)"
+        }
     }
 }
