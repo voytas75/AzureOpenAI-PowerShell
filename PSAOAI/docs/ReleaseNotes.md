@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Added
 
+- 
+
+### Fix
+
+- 
+
+## [0.2.0] - 2024.05.30
+
+### Added
+
 - Logfolder parameter to Completion - [#3](https://github.com/voytas75/AzureOpenAI-PowerShell/issues/3),
 - Completion: Added timestamp to log filename,
 - Completion, Chat: Streaming response,
@@ -18,7 +28,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 - Completion, Chat: logfileDirectory.
 
-## [0.1.0]
+## [0.1.0] - 2024.04.26
 
 ### Added
 

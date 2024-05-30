@@ -362,6 +362,8 @@ function Invoke-PSAOAIChatCompletion {
         }
     }
 
+    $userWasAsked = $false
+
     # Adjust parameters based on switches.
     #if ($Creative -or $Precise) {
     if ($UltraPrecise -or $Precise -or $Focused -or $Balanced -or $Informative -or $Creative -or $Surreal) {
@@ -433,9 +435,9 @@ function Invoke-PSAOAIChatCompletion {
             $logfileExtension = ".txt"
             if ($usermessage) {
                 $userMessageHash = Get-Hash -InputString $usermessage -HashType MD5
-                $logfileBaseName = "usermessage-$userMessageHash-"
+                $logfileBaseName = "$($script:modulename)Chat-usermessage-$userMessageHash-"
                 if ($OneTimeUserPrompt) {
-                    $logfileBaseName = "usermessage-OneTimeUserPrompt-$userMessageHash-"
+                    $logfileBaseName = "$($script:modulename)Chat-usermessage-OneTimeUserPrompt-$userMessageHash-"
                 }
             }
             if ($SystemPrompt) {
@@ -455,6 +457,12 @@ function Invoke-PSAOAIChatCompletion {
             # Set logfile to the unique logfile name
             $logfile = Join-Path $logfileDirectory ($logfileBaseName + $logfileNumber + $logfileExtension)
         }
+
+        # log mode, temp, and topP
+        if ($Mode) {
+            Write-LogMessage -Message "Mode: $mode" -LogFile $logfile
+        }
+        Write-LogMessage -Message "temperature=$Temperature, topP=$TopP" -LogFile $logfile
 
         # Call functions to execute API request and output results
         $headers = Get-Headers -ApiKeyVariable $script:API_AZURE_OPENAI_KEY -Secure
@@ -504,9 +512,9 @@ function Invoke-PSAOAIChatCompletion {
         Write-Verbose "urlChat: $urlChat"
 
         # Write the system prompt to the log file
-        Write-LogMessage -Message "System promp:`n$system_message" -LogFile $logfile
+        Write-LogMessage -Message "System promp:`n======`n$system_message`n======`n" -LogFile $logfile
         # Write the user message to the log file
-        Write-LogMessage -Message "User message:`n$userMessage" -LogFile $logfile
+        Write-LogMessage -Message "User message:`n======`n$userMessage`n======`n" -LogFile $logfile
 
         do {
             # Get the body of the message
@@ -516,7 +524,7 @@ function Invoke-PSAOAIChatCompletion {
             $bodyJSON = ($body | ConvertTo-Json)
             
             # If not a simple response, display chat completion and other details
-            if (-not $simpleresponse) {
+            if (-not $simpleresponse -and -not $userWasAsked) {
                 Write-Host "[Chat completion]" -ForegroundColor Green
                 if ($logfile) {
                     Write-Host "{Logfile:'${logfile}'} " -ForegroundColor Magenta
@@ -531,21 +539,24 @@ function Invoke-PSAOAIChatCompletion {
            
             # Invoke the API request
             if ($Stream) {
+                Write-host ""
+                Write-host ""
                 #write-host $urlChat
                 #write-host $headers
                 #write-host $bodyJSON
                 $response = Invoke-PSAOAIApiRequestStream -url $urlChat -headers $headers -bodyJSON $bodyJSON -Chat -timeout 240 -logfile $logfile | out-string
                 if ([string]::IsNullOrEmpty($response)) {
                     Write-Warning "Response is empty"
+                    Write-LogMessage -Message "Response is empty"  "WARNING" -LogFile $logfile
                     return
                 }
-                #$responseText = (Show-ResponseMessage -content $response -stream "console" -simpleresponse:$simpleresponse | out-String)
-                
+                $assistant_response = $response
             }
             else {
                 $response = Invoke-PSAOAIApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240
                 if ([string]::IsNullOrEmpty($($response.choices[0].text))) {
                     Write-Warning "Response is empty"
+                    Write-LogMessage -Message "Response is empty"  "WARNING" -LogFile $logfile
                     return
                 }
                 # Write the received job to verbose output
@@ -553,8 +564,9 @@ function Invoke-PSAOAIChatCompletion {
                 # Get the assistant response
                 $assistant_response = $response.choices[0].message.content
                 # Add the assistant response to the messages
-                $messages += @{"role" = "assistant"; "content" = $assistant_response }
+                
             }
+            $messages += @{"role" = "assistant"; "content" = $assistant_response }
 
             # If there is a one-time user prompt, process it
             if ($OneTimeUserPrompt) {
@@ -577,11 +589,15 @@ function Invoke-PSAOAIChatCompletion {
                     $responseText = $response
                 }
                 # Write the one-time user prompt and response text to the log file
-                Write-LogMessage -Message "OneTimeUserPrompt:`n$OneTimeUserPrompt" -LogFile $logfile
-                Write-LogMessage -Message "ResponseText:`n$responseText" -LogFile $logfile
-
+                Write-LogMessage -Message "OneTimeUserPrompt:`n======`n$OneTimeUserPrompt`n======`n" -LogFile $logfile
+                Write-LogMessage -Message "ResponseText:`n======`n$responseText`n======`n" -LogFile $logfile
+                Write-LogMessage -Message "Chat finished" -LogFile $logfile
                 # Return the response text
-                return $responseText
+                if (-not $Stream) {
+                    return $responseText
+                } else {
+                    return
+                }           
             }
             else {
                 Write-Verbose "NO OneTimeUserPrompt"
@@ -591,15 +607,23 @@ function Invoke-PSAOAIChatCompletion {
                 }
             
                 # Write the assistant response to the log file
-                Write-LogMessage -Message "Assistant response:`n$assistant_response" -LogFile $logfile
-
+                Write-LogMessage -Message "Assistant response:`n======`n$assistant_response`n======`n" -LogFile $logfile
+                
                 # Get the user message
-                $user_message = Read-Host "Enter chat message (user)" 
+                Write-LogMessage -Message "Waiting for user input" -LogFile $logfile
+                write-host "`n >> Enter chat message ('Q'-exit): " -BackgroundColor Cyan -ForegroundColor DarkYellow -NoNewline
+                $user_message = read-host
+                $userWasAsked = $true
+                if ($user_message -eq "Q") {
+                    Write-Host "Exiting script as per user request."
+                    Write-LogMessage -Message "Chat finished as per user request." -LogFile $logfile
+                    return 
+                }
                 # Add the user message to the messages
                 $messages += @{"role" = "user"; "content" = $user_message }
 
                 # Write the user response to the log file
-                Write-LogMessage -Message "User response:`n$user_message" -LogFile $logfile
+                Write-LogMessage -Message "User input:`n======`n$user_message`n======`n" -LogFile $logfile
             }
             
         } while ($true)
@@ -607,8 +631,8 @@ function Invoke-PSAOAIChatCompletion {
     catch {
         Format-Error -ErrorVar $_
         Show-Error -ErrorVar $_
+        Write-LogMessage "An error occurred: $_" "ERROR" -LogFile $logfile
     }
-
 }
 
 <#

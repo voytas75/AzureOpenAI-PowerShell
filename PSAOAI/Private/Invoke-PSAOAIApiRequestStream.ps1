@@ -170,11 +170,16 @@ function Invoke-PSAOAIApiRequestStream {
                 }
             }
         }
-        Write-Output ""
+        Write-Host ""
         $completeText += "`n"
     
-        Write-LogMessage "Streaming completed. Full text: $completeText" -LogFile $logfile
-    
+        if ($VerbosePreference -eq "Continue") {
+            Write-Verbose "Streaming completed. Full text: $completeText"
+            Write-LogMessage "Streaming completed. Full text: $completeText" "VERBOSE" -LogFile $logfile 
+        }
+        else {
+            Write-LogMessage "Streaming completed." -LogFile $logfile
+        }
         # Clean up
         $reader.Close()
         $httpClient.Dispose()

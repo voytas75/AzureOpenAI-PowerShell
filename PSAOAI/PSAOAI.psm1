@@ -7,12 +7,6 @@ $script:ModuleNameFull = "PowerShell Azure OpenAI"
 $Public = @( Get-ChildItem -Path $PSScriptRoot\Public\*.ps1 -ErrorAction SilentlyContinue -Recurse )
 $Private = @( Get-ChildItem -Path $PSScriptRoot\Private\*.ps1 -ErrorAction SilentlyContinue -Recurse )
 
-# If the PowerShell edition is 'core', terminate the script
-#if ($PSEdition -eq 'core') {
-#    Write-Error "Module can not be run on core edition!"
-#    exit
-#}
-
 # Import all public and private scripts, and handle any potential errors
 $FoundErrors = @(
     Foreach ($Import in @($Public + $Private)) {
@@ -37,7 +31,7 @@ if ($FoundErrors.Count -gt 0) {
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 
 # Determine the installed version of the module
-$ModuleVersion = [version]"0.1.0"
+$ModuleVersion = [version]"0.2.0"
 
 # Query the PSGallery repository for the most recent version of the module
 $LatestModule = Find-Module -Name $script:ModuleName -Repository PSGallery -ErrorAction SilentlyContinue
