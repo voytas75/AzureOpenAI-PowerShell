@@ -28,6 +28,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 - Completion, Chat: logfileDirectory.
 
+### Changed
+
+- Chat: logfilename suffix
+
 ## [0.1.0] - 2024.04.26
 
 ### Added
