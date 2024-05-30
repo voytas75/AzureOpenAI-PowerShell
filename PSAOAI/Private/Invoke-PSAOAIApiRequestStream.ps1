@@ -1,23 +1,13 @@
 Add-Type -AssemblyName System.Net.Http
-#using namespace System.Net.Http
-
 
 <#
-nie moge otrzymac streamingu 
-koles pisze, ze tez nie moze: https://github.com/PowerShell/PowerShell/issues/23783
+Problem with streaming response, similar: https://github.com/PowerShell/PowerShell/issues/23783
+can be connected: https://stackoverflow.com/questions/60707843/806889
 
-analiza problemu: https://chatgpt.com/share/6e0d8df3-7418-426f-8ed0-5130b7d7e2af
-
-moze byc powiazane: https://stackoverflow.com/questions/60707843/806889
-
-pomogło:
+solved:
 modify the code to use SendAsync with HttpCompletionOption.ResponseHeadersRead. This will return control to your code as soon as the headers are read, allowing you to start processing the response body as a stream immediately.
-
 This modification will send the HTTP POST request with HttpCompletionOption.ResponseHeadersRead, which means that the SendAsync method will complete as soon as it has read the headers from the response. This allows you to start reading the response body as a stream immediately, which can give you a streaming-like behavior.
-
 #>
-
-
 
 
 # This function makes an API request and stores the response
@@ -27,8 +17,7 @@ function Invoke-PSAOAIApiRequestStream {
     Invokes the Azure OpenAI API using a stream request.
 
 .DESCRIPTION
-    This function allows you to invoke the Azure OpenAI API using a stream request. It accepts various parameters such as `Url`, `Headers`, `BodyJSON`, and an optional `Timeout`.
-    The function provides the capability for streaming the API response.
+    This function sends a POST request to the Azure OpenAI API and processes the response as a stream. This is particularly useful for large responses that can be processed incrementally.
 
 .PARAMETER Url
     The URL of the Azure OpenAI API endpoint.
@@ -38,6 +27,12 @@ function Invoke-PSAOAIApiRequestStream {
 
 .PARAMETER BodyJSON
     The JSON-formatted request body to send to the API.
+
+.PARAMETER Chat
+    A switch parameter to indicate if the request is for a chat completion.
+
+.PARAMETER Logfile
+    The path to the log file where the function will write log messages.
 
 .PARAMETER Timeout
     The timeout in seconds for the API request. Default is 60 seconds.
@@ -71,7 +66,7 @@ function Invoke-PSAOAIApiRequestStream {
         [switch]$Chat, 
 
         [Parameter(Mandatory = $false)]
-        $logfile,
+        [string]$logfile,
 
         [Parameter(Mandatory = $false)]
         $timeout = 60 # The timeout for the API request
@@ -191,3 +186,4 @@ function Invoke-PSAOAIApiRequestStream {
         Write-LogMessage "An error occurred: $_" "ERROR" -LogFile $logfile
     }
 }
+
