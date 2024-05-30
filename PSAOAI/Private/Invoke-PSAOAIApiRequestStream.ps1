@@ -6,6 +6,7 @@ Add-Type -AssemblyName System.Net.Http
 nie moge otrzymac streamingu 
 koles pisze, ze tez nie moze: https://github.com/PowerShell/PowerShell/issues/23783
 
+analiza problemu: https://chatgpt.com/share/6e0d8df3-7418-426f-8ed0-5130b7d7e2af
 #>
 
 
