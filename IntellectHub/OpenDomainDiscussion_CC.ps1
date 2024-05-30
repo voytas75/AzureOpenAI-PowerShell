@@ -41,7 +41,7 @@ class LanguageModel {
             # Simulate language model response
             #write-host $prompt -ForegroundColor DarkYellow
             $arguments = @($SystemPrompt, $UserPrompt, "Precise", $true, $true, $this.name, "udtgpt4turbo")
-            $response = Invoke-PSAOAIChatCompletion @arguments -LogFolder $script:TeamDiscussionDataFolder -verbose:$true -Stream $Stream
+            $response = Invoke-PSAOAIChatCompletion @arguments -LogFolder $script:TeamDiscussionDataFolder -verbose:$false -Stream $Stream
             $this.memory += $response
             #return "This is $($this.name)'s response to:`n$($prompt)`n '$response'"
             #return "This is $($this.name)'s response:`n===`n$($response.trim())`n==="
@@ -186,8 +186,12 @@ $responseGuideModerator
         else {
             $moderatorPromptUser = $moderatorPromptUser -f $null
         }
-        Write-Host $moderator.name -BackgroundColor White -ForegroundColor Blue -NoNewline
+        Write-Host $moderator.name -BackgroundColor White -ForegroundColor Blue
+        $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
         $moderatorResponse = $moderator.ChatCompletion($moderatorPrompt, $moderatorPromptUser, $Stream)
+        $stopwatch.Stop()
+        $runtime = $stopwatch.Elapsed.TotalSeconds
+        Write-Color "Runtime: $runtime seconds" -BackGroundColor DarkGray -Color White -StartTab 1 -LinesAfter 2 -LinesBefore 1
         if (-not $stream) { 
             Write-Host $moderatorResponse -ForegroundColor Green 
         } 
@@ -226,8 +230,6 @@ $responseGuideModerator
         $moderatorResponse | Out-File -FilePath $filepath
         $lastMemoryElement = ""
 
-return
-
         # Each expert responds
         foreach ($expert in $experts) {
             $ExpertsMemory = ""   
@@ -257,7 +259,7 @@ $ExpertsMemory
 "@
 
             $questionWithmemory = $($expert.ExpertPrompt -f $(Remove-EmptyLines $($expertpromptData -f $lastMemoryElement.trim())))
-            Write-Host $($expert.name) -BackgroundColor White -ForegroundColor Blue -NoNewline
+            Write-Host $($expert.name) -BackgroundColor White -ForegroundColor Blue
             $expertResponse = $expert.TextCompletion($questionWithmemory, $Stream)
             #$expertResponse = Extract-JSON $expertResponse | ConvertFrom-Json
             if (-not $stream) { 
@@ -358,7 +360,7 @@ Respond using a professional tone as report style. Structure your response as a 
 "@
 
 
-    Write-Host "Finalizing" -BackgroundColor White -ForegroundColor Blue  -NoNewline
+    Write-Host "Finalizing" -BackgroundColor White -ForegroundColor Blue
     #$Summarize += $NewSupplement
     $FinalResponse = $moderator.TextCompletion($Summarize, $Stream)
     if (-not $stream) { 
