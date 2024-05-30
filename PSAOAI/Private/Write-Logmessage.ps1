@@ -20,7 +20,7 @@ The level of the log message (e.g., "INFO", "VERBOSE", "ERROR"). This parameter 
 Write-LogMessage -Message "System prompt:`n$system_message" -LogFile $logfile -Level "VERBOSE"
 #>
     param(
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
         [string]$Message,
         [Parameter(Mandatory = $true)]
         [string]$LogFile,

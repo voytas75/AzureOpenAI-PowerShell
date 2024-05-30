@@ -9,6 +9,12 @@ koles pisze, ze tez nie moze: https://github.com/PowerShell/PowerShell/issues/23
 analiza problemu: https://chatgpt.com/share/6e0d8df3-7418-426f-8ed0-5130b7d7e2af
 
 moze byc powiazane: https://stackoverflow.com/questions/60707843/806889
+
+pomogło:
+modify the code to use SendAsync with HttpCompletionOption.ResponseHeadersRead. This will return control to your code as soon as the headers are read, allowing you to start processing the response body as a stream immediately.
+
+This modification will send the HTTP POST request with HttpCompletionOption.ResponseHeadersRead, which means that the SendAsync method will complete as soon as it has read the headers from the response. This allows you to start reading the response body as a stream immediately, which can give you a streaming-like behavior.
+
 #>
 
 
@@ -78,30 +84,45 @@ function Invoke-PSAOAIApiRequestStream {
         $httpClientHandler.AllowAutoRedirect = $false
         $httpClientHandler.UseCookies = $false
         $httpClientHandler.AutomaticDecompression = [System.Net.DecompressionMethods]::GZip -bor [System.Net.DecompressionMethods]::Deflate
-
+        
         # Create an instance of HttpClient
         $httpClient = [System.Net.Http.HttpClient]::new($httpClientHandler)
+        #$httpClient = [System.Net.Http.HttpClient]::new()
         Write-LogMessage "HttpClient instance created with custom handler." -LogFile $logfile
-    
+            
         # Set the required headers
         $httpClient.DefaultRequestHeaders.Add("api-key", $($headers."api-key"))
         Write-LogMessage "API key header added." -LogFile $logfile
-    
+            
         # Set the timeout for the HttpClient
         $httpClient.Timeout = New-TimeSpan -Seconds $timeout
-        Write-LogMessage "HttpClient timeout set to $timeout seconds." -LogFile $logfile
-    
+        
         # Create the HttpContent object with the request body
         $content = [System.Net.Http.StringContent]::new($bodyJSON, [System.Text.Encoding]::UTF8, "application/json")
         Write-LogMessage "HttpContent created with request body." -LogFile $logfile
-    
-        # Send the HTTP POST request asynchronously
-        $response = $httpClient.PostAsync($url, $content).Result
+     
+        $request = New-Object System.Net.Http.HttpRequestMessage ([System.Net.Http.HttpMethod]::Post, $url)
+        $request.Content = $content
+     
+        # Send the HTTP POST request asynchronously with HttpCompletionOption.ResponseHeadersRead
+        $response = $httpClient.SendAsync($request, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead).Result
+     
         Write-LogMessage "HTTP POST request sent to ${url}." -LogFile $logfile
+     
+        #Write-LogMessage "HTTP POST request sent to ${url}." -LogFile $logfile
     
         # Ensure the request was successful
         if ($response.IsSuccessStatusCode) {
             Write-LogMessage "Received successful response from server." -LogFile $logfile
+            # Inspect headers for Transfer-Encoding
+            $transferEncoding = $response.Headers.TransferEncoding.ToString()
+            #$transferEncoding | ConvertTo-Json | Write-LogMessage -LogFile $logfile
+            if ($transferEncoding -contains "chunked") {
+                Write-LogMessage "The API endpoint supports streaming (chunked transfer encoding)." -LogFile $logfile
+            }
+            else {
+                Write-LogMessage "The API endpoint does not support streaming (no chunked transfer encoding)." -LogFile $logfile
+            }
         }
         else {
             Write-LogMessage "Received error response: $($response.StatusCode) - $($response.ReasonPhrase)" "ERROR" -LogFile $logfile
@@ -115,16 +136,13 @@ function Invoke-PSAOAIApiRequestStream {
     
         # Initialize the completeText variable
         $completeText = ""
-        # Initialize a progress indicator
-        $progress = 0
         # Read and output each line from the response stream
-        while (-not $reader.EndOfStream) {
-            $reader.ReadLine()
-        }
-        <#
-        while ($null -ne ($line = $reader.ReadLine())) {
+        #while (-not $reader.EndOfStream) {
+        #    Write-Information ($reader.ReadLine()) -InformationAction Continue
+        #}
+        while ($null -ne ($line = $reader.ReadLine()) -or (-not $reader.EndOfStream)) {
             # Log each received line
-            Write-LogMessage "Received line: $line" -LogFile $logfile
+            #Write-LogMessage "Received line: $line" -LogFile $logfile
     
             # Check if the line starts with "data: " and is not "data: [DONE]"
             if ($line.StartsWith("data: ") -and $line -ne "data: [DONE]") {
@@ -140,17 +158,16 @@ function Invoke-PSAOAIApiRequestStream {
                         # Extract the text and append it to the complete text - Text Completion
                         $textChunk = $parsedJson.choices[0].text
                         $completeText += $textChunk
-                        Write-Host $textChunk
+                        Write-Host $textChunk -NoNewline
                     }
                     else {
                         # Extract the text and append it to the complete text - Chat Completion
                         $delta = $parsedJson.choices[0].delta.content
                         $completeText += $delta
-                        Write-Host $delta
+                        Write-Host $delta -NoNewline
                     }
                     # Update progress indicator
-                    $progress++
-                    Write-Progress -Activity "Streaming data..." -Status "Processing chunk $progress" -PercentComplete (($progress / 100) * 100)
+                    #Write-Progress -Activity "Streaming data..."
 
                 }
                 catch {
@@ -158,7 +175,6 @@ function Invoke-PSAOAIApiRequestStream {
                 }
             }
         }
-    #>
         Write-Output ""
         $completeText += "`n"
     
@@ -168,6 +184,8 @@ function Invoke-PSAOAIApiRequestStream {
         $reader.Close()
         $httpClient.Dispose()
         Write-LogMessage "Resources cleaned up." -LogFile $logfile
+
+        return $completeText
     }
     catch {
         Write-LogMessage "An error occurred: $_" "ERROR" -LogFile $logfile

@@ -381,7 +381,7 @@ function Invoke-PSAOAICompletion {
             #write-host $urlChat
             #write-host $headers
             #write-host $bodyJSON
-            $response = Invoke-PSAOAIApiRequestStream -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240 | out-string
+            $response = Invoke-PSAOAIApiRequestStream -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240 -LogFile $logFullNamePath | out-string
             if ([string]::IsNullOrEmpty($response)) {
                 Write-Warning "Response is empty"
                 return
