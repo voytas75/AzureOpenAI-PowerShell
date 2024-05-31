@@ -1,30 +1,33 @@
 # IntellectHub
 
-IntellectHub is a project that leverages the power of PowerShell to conduct open domain discussions. It uses a technique called "Mirror of Thoughts" to generate diverse and inclusive content.
+IntellectHub is a project that leverages the power of AZURE OpenAI with PowerShell to conduct different tasks.
 
 ## Getting Started
 
-To get started with IntellectHub, you need to familiarize yourself with the Mirror of Thoughts technique. Understand its methodology, principles, and anticipated outcomes. Gather the necessary materials, including prompts relevant to the session's topic.
+To get started with IntellectHub, you need first to install PowerShell modules:
+    - `PSAOAI`
+    - `PSWriteColor`
 
-## Running the Script
+After downloading, import the choosen project file or clone repo. Scripts in portfolio:
+    - [IH](IH.ps1)
+    - [PowerShellTeam](PowerShellTeam.ps1)
+    - [OpenDomainDiscussion](OpenDomainDiscussion.ps1)
+    - [DynamicExpertDiscussion](DynamicExpertDiscussion.ps1)
+    - [OpenDomainDiscussion2_C](OpenDomainDiscussion2_C.ps1)
+    - [OpenDomainDiscussion_CC](OpenDomainDiscussion_CC.ps1)
 
-The main script for conducting the discussion is `OpenDomainDiscussion_CC.ps1`. This script conducts the discussion with a specified number of rounds and experts.
+## Running the Script `OpenDomainDiscussion_CC.ps1`
+
+The script for conducting the discussion is `OpenDomainDiscussion_CC.ps1`. This script conducts the discussion with a specified number of rounds and experts.
 
 ```powershell
-# Conduct the discussion with 3 rounds and 5 experts
-Conduct-Discussion -topic $topic -rounds $Rounds -expertCount $expertCount
+# Conduct the discussion with 3 rounds and 2 experts. Streaming response HTTP.
+.\OpenDomainDiscussion_CC.ps1 -Topic "suggest guide for python learning" -Rounds 3 -Stream $true
 ```
 
-## Creating a Team Discussion Folder
+### A Team Discussion Folder
 
-The script also creates a team discussion folder where all the discussion data is stored. The folder is created with the current date and time as the name in the example path.
-
-```powershell
-# Get the current date and time
-$currentDateTime = Get-Date -Format "yyyyMMdd_HHmmss"
-# Create a folder with the current date and time as the name in the example path
-$script:TeamDiscussionDataFolder = Create-FolderInGivenPath -FolderPath $(Create-FolderInUserDocuments -FolderName "OpenDomainDiscussion") -FolderName $currentDateTime
-```
+The script additionally generates a team discussion folder, which serves as a repository for all the data produced during the discussion. This folder is uniquely named with the current date and time. The root and default folder, named `OpenDomainDiscussion`, is located within the user's Document directory.
 
 ## Contributing
 

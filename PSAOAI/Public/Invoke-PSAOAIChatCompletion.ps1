@@ -596,7 +596,7 @@ function Invoke-PSAOAIChatCompletion {
                 if (-not $Stream) {
                     return $responseText
                 } else {
-                    return
+                    return $responseText
                 }           
             }
             else {
