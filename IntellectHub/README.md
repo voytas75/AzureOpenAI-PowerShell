@@ -1,1 +1,1 @@
-# IntelliHub
+# IntellectHub
