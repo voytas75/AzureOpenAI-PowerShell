@@ -1,9 +1,48 @@
+<#
+.SYNOPSIS
+This script simulates a team of experts working on a PowerShell project.
+
+.DESCRIPTION
+The script creates a team of experts, each with a specific role in the project. Each expert processes the input, performs their role, and passes the result to the next expert. The process continues until all experts have completed their tasks.
+
+.PARAMETER userInput
+A string that describes the project. The default value is "A PowerShell project to monitor RAM load and display a single color block based on the load."
+
+.PARAMETER Stream
+A boolean value that indicates whether to stream the output. The default value is $true.
+
+.EXAMPLE
+.\PowerShellTeam.ps1 -userInput "A PowerShell project to monitor CPU load and display a graph based on the load." -Stream $false
+
+.LINK
+https://chatgpt.com/share/92f8cea1-88a6-497e-b894-6146e3c2a81c
+#>
 param(
     [string] $userInput = "A PowerShell project to monitor RAM load and display a single color block based on the load.",
     [bool] $Stream = $true
 )
 
 #region LanguageModelClass
+<#
+.SYNOPSIS
+The ProjectTeam class represents an expert in the team.
+
+.DESCRIPTION
+Each expert has a name, role, prompt, and a function to process the input. The expert can also log their actions, store their responses, and pass the input to the next expert.
+
+.METHODS
+DisplayInfo: Displays the expert's information.
+DisplayHeader: Displays the expert's name and role.
+ProcessInput: Processes the input and returns the response.
+SetNextExpert: Sets the next expert in the workflow.
+GetNextExpert: Returns the next expert in the workflow.
+AddLogEntry: Adds an entry to the log.
+Notify: Sends a notification (currently just displays a message).
+GetMemory: Returns the expert's memory (responses).
+GetLastMemory: Returns the last response from the expert's memory.
+SummarizeMemory: Summarizes the expert's memory.
+ProcessBySpecificExpert: Processes the input by a specific expert.
+#>
 class ProjectTeam {
     [string] $Name
     [string] $Role
