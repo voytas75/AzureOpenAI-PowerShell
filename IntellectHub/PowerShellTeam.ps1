@@ -46,9 +46,9 @@ class ProjectTeam {
     }
 
     [void] DisplayHeader() {
-        Write-Host "----------------------------------------"
+        Write-Host "---------------------------------------------------------------------------------------"
         Write-Host "Current Expert: $($this.Name) - $($this.Role)"
-        Write-Host "----------------------------------------"
+        Write-Host "---------------------------------------------------------------------------------------"
     }
 
     [string] ProcessInput([string] $input) {
@@ -88,6 +88,10 @@ class ProjectTeam {
 
     [void] SetNextExpert([ProjectTeam] $nextExpert) {
         $this.NextExpert = $nextExpert
+    }
+
+    [ProjectTeam] GetNextExpert() {
+        return $this.NextExpert
     }
 
     [void] AddLogEntry([string] $entry) {
@@ -132,6 +136,10 @@ class ProjectTeam {
             throw $_
         }
     }
+
+    [string] ProcessBySpecificExpert([ProjectTeam] $expert, [string] $input) {
+        return $expert.ProcessInput($input)
+    }
 }
 #endregion LanguageModelClass
 
@@ -175,95 +183,204 @@ Catch {
 $requirementsAnalyst = [ProjectTeam]::new(
     "Requirements Analyst",
     "Requirements Analyst",
-    "Analyze the requirements for a PowerShell project. Document the detailed specifications, define the scope, and create use case scenarios based on the user's input.",
+    @"
+You are tasked with analyzing the feasibility and requirements of a PowerShell program. The goal is to clearly define the program's objectives, identify the necessary components, and outline the implementation strategy.
+
+Background Information: PowerShell is a task automation and configuration management framework from Microsoft, consisting of a command-line shell and scripting language. It is widely used for managing and automating tasks across various Microsoft and non-Microsoft environments.
+
+Instructions: 
+- Evaluate the feasibility of creating the described PowerShell program.
+- Define the program's objectives and key features.
+- Identify the necessary components and tools within PowerShell to achieve this.
+- Outline a high-level implementation strategy.
+- Document any potential challenges or limitations.
+"@,
     0.6,
     0.9,
     [scriptblock]::Create({
+            param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $true -LogFolder $script:TeamDiscussionDataFolder
+            return $response
+        })
+)
+
+$domainExpert = [ProjectTeam]::new(
+    "Domain Expert",
+    "Domain Expert",
+    "Provide specialized insights and recommendations based on the specific domain requirements of the project. This includes:
+    1. Ensuring compatibility with the domain-specific environment.
+    2. Providing best practices for performance, security, and optimization.
+    3. Recommending specific configurations and settings.
+    4. Testing the script within the domain to identify and resolve any issues.
+    5. Documenting any domain-specific requirements or dependencies.",
+    0.65,
+    0.9,
+    [scriptblock]::Create({
         param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-        $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $true -LogFolder $script:TeamDiscussionDataFolder
+        $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4turbo" -simpleresponse -OneTimeUserPrompt -Stream $true
         return $response
     })
 )
 
+
+
 $systemArchitect = [ProjectTeam]::new(
     "System Architect",
     "System Architect",
-    "Design the architecture for a PowerShell project. Outline the program's structure, identify necessary modules and functions, and provide a detailed architectural design document.",
+    "Design the architecture for a PowerShell project. This includes:
+    1. Outlining the overall structure of the program.
+    2. Identifying and defining necessary modules and functions.
+    3. Creating a detailed architectural design document.
+    4. Ensuring the architecture supports scalability, maintainability, and performance.
+    5. Defining data flow and interaction between different components.
+    6. Selecting appropriate technologies and tools for the project.
+    7. Providing guidelines for coding standards and best practices.
+    8. Documenting security considerations and ensuring the architecture adheres to best security practices.
+    9. Creating a roadmap for development phases and milestones.
+    10. Collaborating with stakeholders to refine and validate the architectural design.
+    11. Reviewing and updating the architecture based on feedback and testing results.",
     0.7,
     0.85,
     [scriptblock]::Create({
-        param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-        $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $true -LogFolder $script:TeamDiscussionDataFolder
-        return $response
-    })
+            param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $true -LogFolder $script:TeamDiscussionDataFolder
+            return $response
+        })
 )
 
 $powerShellDeveloper = [ProjectTeam]::new(
     "PowerShell Developer",
     "PowerShell Developer",
-    "Develop a PowerShell script based on the design. Implement features, ensure code follows best practices, and provide initial unit tests.",
+    @"
+You are tasked with developing the PowerShell program based on the provided requirements and implementation strategy. Your goal is to write clean, efficient, and functional code that meets the specified objectives.
+
+Background Information: PowerShell scripts can interact with a wide range of systems and applications, making it a versatile tool for system administrators and developers. Ensure your code adheres to best practices for readability, maintainability, and performance.
+
+Instructions:
+- Develop the PowerShell program according to the provided requirements and strategy.
+- Ensure the code is modular and well-documented.
+- Include error handling and logging where appropriate.
+- Provide comments and explanations for complex sections of the code.
+- Prepare a brief usage guide or documentation.
+"@,
     0.65,
     0.8,
     [scriptblock]::Create({
-        param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-        $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4turbo" -simpleresponse -OneTimeUserPrompt -Stream $true -LogFolder $script:TeamDiscussionDataFolder
-        return $response
-    })
+            param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4turbo" -simpleresponse -OneTimeUserPrompt -Stream $true -LogFolder $script:TeamDiscussionDataFolder
+            return $response
+        })
 )
 
 $qaEngineer = [ProjectTeam]::new(
     "QA Engineer",
     "QA Engineer",
-    "Test the PowerShell project to ensure it meets the requirements and is free of bugs. Create and execute test plans, conduct functional and non-functional testing, and report issues.",
+    @"
+You are tasked with testing and verifying the functionality of the developed PowerShell program. Your goal is to ensure the program works as intended, is free of bugs, and meets the specified requirements.
+
+Background Information: PowerShell scripts can perform a wide range of tasks, so thorough testing is essential to ensure reliability and performance. Testing should cover all aspects of the program, including edge cases and potential failure points.
+
+Instructions:
+- Test the PowerShell program for functionality and performance.
+- Verify that the program meets all specified requirements and objectives.
+- Identify and document any bugs or issues.
+- Suggest improvements or optimizations if necessary.
+- Provide a final report on the program's quality and readiness for deployment.
+"@,
     0.6,
     0.9,
     [scriptblock]::Create({
-        param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-        $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $true -LogFolder $script:TeamDiscussionDataFolder
-        return $response
-    })
+            param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $true -LogFolder $script:TeamDiscussionDataFolder
+            return $response
+        })
 )
 
 $documentationSpecialist = [ProjectTeam]::new(
     "Documentation Specialist",
     "Documentation Specialist",
-    "Create comprehensive documentation for the PowerShell project, including user guides, developer notes, and installation instructions.",
+    "Create comprehensive documentation for the PowerShell project. This includes:
+    1. Writing a detailed user guide that explains how to install, configure, and use the script.
+    2. Creating developer notes that outline the code structure, key functions, and logic.
+    3. Providing step-by-step installation instructions.
+    4. Documenting any dependencies and prerequisites.
+    5. Writing examples of use cases and expected outputs.
+    6. Including troubleshooting tips and common issues.
+    7. Creating a changelog to document updates and changes.
+    8. Preparing a FAQ section to address common questions.
+    9. Ensuring all documentation is clear, concise, and easy to follow.
+    10. Reviewing and editing the documentation for accuracy and completeness.",
     0.6,
     0.8,
     [scriptblock]::Create({
-        param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-        $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $true -LogFolder $script:TeamDiscussionDataFolder
-        return $response
-    })
+            param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $true -LogFolder $script:TeamDiscussionDataFolder
+            return $response
+        })
 )
 
 $projectManager = [ProjectTeam]::new(
     "Project Manager",
     "Project Manager",
-    "Coordinate the development of the PowerShell project. Manage timelines, facilitate communication between team members, and ensure the project stays on track.",
+    "Provide a comprehensive summary of the PowerShell project based on the completed tasks of each expert. This includes:
+    1. Reviewing the documented requirements from the Requirements Analyst.
+    2. Summarizing the architectural design created by the System Architect.
+    3. Detailing the script development work done by the PowerShell Developer.
+    4. Reporting the testing results and issues found by the QA Engineer.
+    5. Highlighting the documentation prepared by the Documentation Specialist.
+    6. Compiling these summaries into a final project report.
+    7. Identifying key achievements, challenges faced, and lessons learned throughout the project.
+    8. Ensuring that all aspects of the project are covered and documented comprehensively.
+    9. Providing a clear and concise summary that reflects the overall progress and status of the project.",
     0.7,
     0.85,
     [scriptblock]::Create({
-        param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-        $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $true -LogFolder $script:TeamDiscussionDataFolder
-        return $response
-    })
+            param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $true -LogFolder $script:TeamDiscussionDataFolder
+            return $response
+        })
 )
 
 # Link the expert objects to form a team workflow
 $requirementsAnalyst.SetNextExpert($systemArchitect)
-$systemArchitect.SetNextExpert($powerShellDeveloper)
+$systemArchitect.SetNextExpert($domainExpert)
+$domainExpert.SetNextExpert($powerShellDeveloper)
 $powerShellDeveloper.SetNextExpert($qaEngineer)
-$qaEngineer.SetNextExpert($documentationSpecialist)
-#$documentationSpecialist.SetNextExpert($projectManager)
+
 
 # Example of starting the process
 $response = $requirementsAnalyst.ProcessInput($userInput)
 
+# Example of re-routing: QA Engineer's response goes to PowerShell Developer and then Documentation Specialist
+$devandqamemory = $(($qaEngineer.GetLastMemory().Response,$powerShellDeveloper.GetLastMemory().Response) -join "`n")+"`nImprove and optimize the code based on the QA Engineer's feedback"
+
+$powerShellDeveloper.SetNextExpert($documentationSpecialist)
+#$devResponse = $powerShellDeveloper.ProcessInput($qaResponse)
+#$finalResponse = $documentationSpecialist.ProcessInput($devResponse)
+$response = $powerShellDeveloper.ProcessInput($devandqamemory)
+
 # Log final response to file
-$response | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "finalresponse.log")
+$response | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "Documentation.log")
+
+# Gather memory from all experts
+$allExpertsMemory = ($requirementsAnalyst.GetLastMemory().Response, $systemArchitect.GetLastMemory().Response, $powerShellDeveloper.GetLastMemory().Response, $domainExpert.GetLastMemory().Response, $qaEngineer.GetLastMemory().Response, $documentationSpecialist.GetLastMemory()).Response -join "`n"
+
+# Example of summarizing all steps
+$projectSummary = $projectManager.ProcessInput($allExpertsMemory)
+
+# Display the project summary
+#Write-Host "Project Summary: $projectSummary"
+
+# Log final response to file
+$projectSummary | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "ProjectSummary.log")
+
+# Log Developer last memory
+($powerShellDeveloper.GetLastMemory().Response) | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "TheCode.log")
+
+
+
 # Display the final response
-Write-Host "Final Response: $response"
+#Write-Host "Final Response: $response"
 
 # Display the memory of each expert
 <#
