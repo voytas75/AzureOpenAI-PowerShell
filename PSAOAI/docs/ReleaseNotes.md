@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 - 
 
+### Changed
+
+- Set default stream to TRUE
+
 ## [0.2.0] - 2024.05.30
 
 ### Added

@@ -102,7 +102,7 @@ function Invoke-PSAOAICompletion {
         [Parameter(Mandatory = $false)]
         [string[]]$Stop = $null,
         [Parameter(Mandatory = $false)]
-        [bool]$Stream = $false,
+        [bool]$Stream = $true,
         [Parameter(Mandatory = $false)]
         $logit_bias = @{},
         [Parameter(Mandatory = $false)]

@@ -127,7 +127,7 @@ function Invoke-PSAOAIChatCompletion {
         [Parameter(Mandatory = $false)]
         [string]$Stop = $null,
         [Parameter(Mandatory = $false)]
-        [bool]$Stream = $false
+        [bool]$Stream = $true
     )
 
     # Function to assemble system and user messages
