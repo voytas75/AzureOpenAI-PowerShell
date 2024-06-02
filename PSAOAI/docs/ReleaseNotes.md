@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Fix
 
-- 
+- Chat: error returned as response (`Show-Error`, `Format-Error`)
 
 ### Changed
 
