@@ -34,7 +34,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Changed
 
-- Chat: logfilename suffix
+- Chat: logfilename suffix - [#4](https://github.com/voytas75/AzureOpenAI-PowerShell/issues/4)
 
 ## [0.1.0] - 2024.04.26
 
