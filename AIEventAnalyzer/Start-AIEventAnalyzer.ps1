@@ -313,10 +313,14 @@ function Format-ContinuousText {
   # The `-replace` operator is used to replace all newline characters with a space.
   # The result is returned as the output of the function.
 
-  $text = $text -replace "`r`n", " " # Replace carriage return and newline characters
-  return $text -replace "`n", " " # Replace newline characters
+  if (![string]::IsNullOrEmpty($text)) {
+    $text = $text -replace "`r`n", " " # Replace carriage return and newline characters
+    return $text -replace "`n", " " # Replace newline characters
+  }
+  else {
+    return ""
+  }
 }
-
 function Update-PromptData {
   <#
 .SYNOPSIS
@@ -396,9 +400,19 @@ function Get-SummarizeSession {
 }
 
 function Start-AIEventAnalyzer {
-  [CmdletBinding()]
+  [CmdletBinding(DefaultParameterSetName = "Default")]
   param (
-    [Parameter()]
+    [Parameter(Mandatory = $true, ParameterSetName = "LogName")]
+    [string]$LogName,
+    [Parameter(Mandatory = $true, ParameterSetName = "LogName")]
+    [ValidateSet("Critical", "Error", "Warning", "Information", "Verbose", "All")]
+    [string]$Serverity,
+    [Parameter(Mandatory = $true, ParameterSetName = "LogName")]
+    [ValidateSet("Analyze", "Troubleshoot", "Correlate", "Predict", "Optimize", "Audit", "Automate", "Educate", "Documentation", "Summarize")]
+    [string]$Action,
+    [Parameter(Mandatory = $true, ParameterSetName = "LogName")]
+    [int]$Events,
+    [Parameter(Mandatory = $false)]
     [string]$LogFolder
   )
 
@@ -723,80 +737,90 @@ Example of a JSON response with two records:
   $actions = @("Analyze", "Troubleshoot", "Correlate", "Predict", "Optimize", "Audit", "Automate", "Educate", "Documentation", "Summarize")
   # Define the list of prompts corresponding to each action
   $prompts = @($promptAnalyze, $promptTroubleshoot, $promptCorrelate, $promptPredict, $promptOptimize, $promptAudit, $promptAutomate, $promptEducate, $promptDocumentation, $promptSummarize)
-    
-  do {
-    # Display the list of actions to the user
-    Write-Host "Please choose an action for Windows events:" -ForegroundColor DarkCyan
-    for ($i = 0; $i -lt $actions.Length; $i++) {
-      Write-Host "$($i+1). $($actions[$i])" -ForegroundColor Cyan
-    }
-    Write-Host ""
-
-    # Ask the user to choose an action
-    Write-Host "Enter the number of your chosen action (default: 1 - Analyze)" -ForegroundColor DarkCyan -NoNewline
-    $chosenActionIndex = Read-Host " "
-    if ([string]::IsNullOrEmpty($chosenActionIndex)) {
-      $chosenActionIndex = 1
-      break
-    }
-    # Validate the user's input
-  } while ($chosenActionIndex -notmatch '^\d+$' -or [int]$chosenActionIndex -lt 1 -or [int]$chosenActionIndex -gt $actions.Length)
   
-  Write-Verbose $chosenActionIndex
+  if (-not $Action) {
+    do {
+      # Display the list of actions to the user
+      Write-Host "Please choose an action for Windows events:" -ForegroundColor DarkCyan
+      for ($i = 0; $i -lt $actions.Length; $i++) {
+        Write-Host "$($i+1). $($actions[$i])" -ForegroundColor Cyan
+      }
+      Write-Host ""
+  
+      # Ask the user to choose an action
+      Write-Host "Enter the number of your chosen action (default: 1 - Analyze)" -ForegroundColor DarkCyan -NoNewline
+      $chosenActionIndex = Read-Host " "
+      if ([string]::IsNullOrEmpty($chosenActionIndex)) {
+        $chosenActionIndex = 1
+        break
+      }
+      # Validate the user's input
+    } while ($chosenActionIndex -notmatch '^\d+$' -or [int]$chosenActionIndex -lt 1 -or [int]$chosenActionIndex -gt $actions.Length)
+    Write-Verbose $chosenActionIndex
 
-  # Get the chosen action and corresponding prompt
-  $chosenAction = $actions[$chosenActionIndex - 1]
-  Write-Verbose $chosenAction 
-  $prompt_one = $prompts[$chosenActionIndex - 1]
-  Write-Verbose $prompt_one
-
+    # Get the chosen action and corresponding prompt
+    $chosenAction = $actions[$chosenActionIndex - 1]
+    Write-Verbose $chosenAction 
+    $prompt_one = $prompts[$chosenActionIndex - 1]
+    Write-Verbose $prompt_one
+  }
+  else {
+    $ActionIndex = $actions.IndexOf($Action)
+    $prompt_one = $prompts[$ActionIndex]
+    $chosenAction = $Action
+  }
+    
   # Display the chosen action to the user
   Write-Host "Your selected action is: $chosenAction" -ForegroundColor Green
   Write-Host ""  
   # Clean the system prompt by removing non-ASCII characters
-  #$prompt_one = [System.Text.RegularExpressions.Regex]::Replace($prompt_one, "[^\x00-\x7F]", " ")        
+  $prompt_one = [System.Text.RegularExpressions.Regex]::Replace($prompt_one, "[^\x00-\x7F]", " ")        
 
   # Get a list of all Windows event logs, sort them by record count in descending order, and select the top 25 logs
   $logs = Get-WinEvent -ListLog * -ErrorAction SilentlyContinue | Sort-Object RecordCount -Descending | Select-Object LogName, RecordCount
+  if (-not $LogName) {
+    $minEventCountDefault = 2100
+    Write-Host "Please enter the minimum number of events a log should have to be shown in the list." -ForegroundColor DarkCyan
+    Write-Host "Enter the minimum event count (default: $minEventCountDefault)" -ForegroundColor DarkCyan -NoNewline
+    $minEventCount = Read-Host " "
+    if ([string]::IsNullOrEmpty($minEventCount) -or $minEventCount -lt 0) {
+      $minEventCount = $minEventCountDefault
+    }
+    Write-Host "You have chosen to display logs with at least $minEventCount events." -ForegroundColor Green
+    Write-Host ""
+  
+    $logs = $logs | Where-Object { $_.RecordCount -ge $minEventCount }
 
-  $minEventCountDefault = 2100
-  Write-Host "Please enter the minimum number of events a log should have to be shown in the list." -ForegroundColor DarkCyan
-  Write-Host "Enter the minimum event count (default: $minEventCountDefault)" -ForegroundColor DarkCyan -NoNewline
-  $minEventCount = Read-Host " "
-  if ([string]::IsNullOrEmpty($minEventCount) -or $minEventCount -lt 0) {
-    $minEventCount = $minEventCountDefault
-  }
-  Write-Host "You have chosen to display logs with at least $minEventCount events." -ForegroundColor Green
-  Write-Host ""
+    # Display the name and record count of each log
+    #$logs | ForEach-Object {Write-Host "$($_.LogName) - $($_.RecordCount) records"}
+    try {
+      $LogsFiltered = $logs.where{ $_.RecordCount -gt $minEventCount }
+      foreach ($log in $LogsFiltered) {
+        Write-Host "$($log.LogName) - " -ForegroundColor Cyan -NoNewline
+        Write-Host "$($log.RecordCount) records" -ForegroundColor DarkCyan
+      }
+    }
+    catch [System.Management.Automation.HaltCommandException] {
+      # Handle termination here (e.g., write message)
+      Write-Host "Command stopped by user (Quit)" -ForegroundColor DarkMagenta
+    
+    }
+    Write-Host ""
 
-
-  $logs = $logs | Where-Object { $_.RecordCount -ge $minEventCount }
-
-  # Display the name and record count of each log
-  #$logs | ForEach-Object {Write-Host "$($_.LogName) - $($_.RecordCount) records"}
-  try {
-    $LogsFiltered = $logs.where{ $_.RecordCount -gt $minEventCount }
-    foreach ($log in $LogsFiltered) {
-      Write-Host "$($log.LogName) - " -ForegroundColor Cyan -NoNewline
-      Write-Host "$($log.RecordCount) records" -ForegroundColor DarkCyan
+    $LogNameDefault = $logs[0].LogName
+    # Prompt the user to enter the log name for analysis
+    Write-Host "Please enter the LogName from the list above to analyze events (default: $LogNameDefault)" -ForegroundColor DarkCyan -NoNewline
+    $chosenLogName = Read-Host " "
+  
+    # Check if the chosen log name is empty or null. If it is, set it to the first log name in the logs list
+    if ([string]::IsNullOrEmpty($chosenLogName)) {
+      $chosenLogName = $LogNameDefault
     }
   }
-  catch [System.Management.Automation.HaltCommandException] {
-    # Handle termination here (e.g., write message)
-    Write-Host "Command stopped by user (Quit)" -ForegroundColor DarkMagenta
-    
+  else {
+    $chosenLogName = $Logname  
   }
-  Write-Host ""
-
-  $LogNameDefault = $logs[0].LogName
-  # Prompt the user to enter the log name for analysis
-  Write-Host "Please enter the LogName from the list above to analyze events (default: $LogNameDefault)" -ForegroundColor DarkCyan -NoNewline
-  $chosenLogName = Read-Host " "
-
-  # Check if the chosen log name is empty or null. If it is, set it to the first log name in the logs list
-  if ([string]::IsNullOrEmpty($chosenLogName)) {
-    $chosenLogName = $LogNameDefault
-  }
+  
   Write-Host "You have chosen the log: $chosenLogName" -ForegroundColor Green
   Write-Host ""
 
@@ -805,26 +829,38 @@ Example of a JSON response with two records:
   # Display the record count for the chosen log name
   Write-Host "The log '$chosenLogName' has $logRecordCount events of all severity levels."
   Write-Host ""
-
+  
   # Loop until a valid severity level is entered
   do {
-    Write-Host "Counting the number of events for each severity level, this may take some time..." -ForegroundColor DarkCyan
-    $severityLevels = @("Critical", "Error", "Warning", "Information", "Verbose")
-    foreach ($level in $severityLevels) {
-      $count = Get-EventLogInfo -logName $chosenLogName -severityLevel $level
-      Write-Host "The log '$chosenLogName' has $count events of '$level' severity level." -ForegroundColor DarkCyan
+    if (-not $Serverity) {
+      Write-Host "Counting the number of events for each severity level, this may take some time..." -ForegroundColor DarkCyan
+      $severityLevels = @("Critical", "Error", "Warning", "Information", "Verbose")
+      foreach ($level in $severityLevels) {
+        $count = Get-EventLogInfo -logName $chosenLogName -severityLevel $level
+        Write-Host "The log '$chosenLogName' has $count events of '$level' severity level." -ForegroundColor DarkCyan
+      }
+      Write-Host ""
+    
+      # Ask the user to enter the severity level
+      Write-Host "Please enter the severity level of the events you want to analyze. Options are: Critical, Error, Warning, Information, Verbose, or All." -ForegroundColor DarkCyan
+      Write-Host "Enter the severity level (default: All)" -ForegroundColor DarkCyan -NoNewline
+      $chosenSeverityLevel = Read-Host " "
     }
-    Write-Host ""
-    # Ask the user to enter the severity level
-    Write-Host "Please enter the severity level of the events you want to analyze. Options are: Critical, Error, Warning, Information, Verbose, or All." -ForegroundColor DarkCyan
-    Write-Host "Enter the severity level (default: All)" -ForegroundColor DarkCyan -NoNewline
-    $chosenSeverityLevel = Read-Host " "
+    else {      
+      $chosenSeverityLevel = $Serverity
+      if ($Serverity -ne "All") {
+        Write-Host "You have chosen the severity level: $chosenSeverityLevel ($(Get-EventSeverity -Severity $chosenSeverityLevel))" -ForegroundColor Green
+        Write-Host "Counting the number of events, this may take some time..." -ForegroundColor DarkCyan
+      }
+    }
     # If the entered severity level is valid, get the events for that severity level
     if ($chosenSeverityLevel -in @("Critical", "Error", "Warning", "Information", "Verbose")) {
+      if (-not $Serverity) {
+        Write-Host "You have chosen the severity level: $chosenSeverityLevel ($(Get-EventSeverity -Severity $chosenSeverityLevel))" -ForegroundColor Green
+      }      
       $filterXPath = "*[System[(Level=$(Get-EventSeverity -Severity $chosenSeverityLevel))]]"
       $data_to_analyze = Get-WinEvent -LogName $chosenLogName -FilterXPath $filterXPath -ErrorAction SilentlyContinue | Select-Object Message, Level, ProviderName, ProviderId, LogName, TimeCreated 
       $logRecordServerityCount = $data_to_analyze.Count
-      Write-Host "You have chosen the severity level: $chosenSeverityLevel ($(Get-EventSeverity -Severity $chosenSeverityLevel))" -ForegroundColor Green
       Write-Host ""
     }
     # If the entered severity level is empty or null, set it to "All" and get all events
@@ -842,18 +878,24 @@ Example of a JSON response with two records:
       Write-Host ""
     }
   } until ([int]$logRecordServerityCount -gt 0)
+  
+  
+  if (-not $Events) {
+    $logRecordServerityCountDefault = 50
+    if ($logRecordServerityCount -lt $logRecordServerityCountDefault) {
+      $logRecordServerityCountDefault = $logRecordServerityCount
+    }
+    # Ask the user to enter the number of most recent events they want to analyze
+    Write-Host "Please enter the number of most recent '$chosenLogName' for '$chosenSeverityLevel' serverity events you want to analyze (1-$logRecordServerityCount) (default: $logRecordServerityCountDefault)" -ForegroundColor DarkCyan -NoNewline
+    $chosenLogNameNewest = Read-Host " "
 
-  $logRecordServerityCountDefault = 50
-  if ($logRecordServerityCount -lt $logRecordServerityCountDefault) {
-    $logRecordServerityCountDefault = $logRecordServerityCount
+    # If the entered number is empty or null, set it to 10
+    if ([string]::IsNullOrEmpty($chosenLogNameNewest)) {
+      $chosenLogNameNewest = $logRecordServerityCountDefault
+    }
   }
-  # Ask the user to enter the number of most recent events they want to analyze
-  Write-Host "Please enter the number of most recent '$chosenLogName' for '$chosenSeverityLevel' serverity events you want to analyze (1-$logRecordServerityCount) (default: $logRecordServerityCountDefault)" -ForegroundColor DarkCyan -NoNewline
-  $chosenLogNameNewest = Read-Host " "
-
-  # If the entered number is empty or null, set it to 10
-  if ([string]::IsNullOrEmpty($chosenLogNameNewest)) {
-    $chosenLogNameNewest = $logRecordServerityCountDefault
+  else {
+    $chosenLogNameNewest = $Events
   }
   Write-Host "You have chosen $chosenLogNameNewest most recent events." -ForegroundColor Green
   Write-Host ""
@@ -863,10 +905,11 @@ Example of a JSON response with two records:
     $data_to_analyze = Get-WinEvent -LogName $chosenLogName -MaxEvents $chosenLogNameNewest | Select-Object Message, Level, ProviderName, ProviderId, LogName, TimeCreated 
   }
   else {
-    $data_to_analyze = $data_to_analyze | Select-Object -First $chosenLogNameNewest
+    $data_to_analyze = $data_to_analyze | Select-Object -First $chosenLogNameNewest | Select-Object Message, Level, ProviderName, ProviderId, LogName, TimeCreated 
   }
   $logRecordServerityCount = $data_to_analyze.Count
-
+  $data_to_analyze = $($data_to_analyze.foreach{ $(Format-ContinuousText $_.Message) + ', ' + $_.ProviderName }) + "`n Analyze data and response as JSON" | Out-String
+  
   # Display the chosen log name, severity level, and event count
   Write-Host "Action: $chosenAction" -ForegroundColor Yellow
   Write-Host "LogName: $chosenLogName" -ForegroundColor Magenta
@@ -895,17 +938,22 @@ Example of a JSON response with two records:
 
   Write-Verbose "Log with event data: $logFileNameEventData"
 
-  Write-Host "Generating prompts for '$chosenAction' action..." -ForegroundColor Green -NoNewline
-
   # Invoke the AI model with the prompt and the data to analyze
-  $json_data = ($data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $prompt_one -LogFile $logFileNameEventData -Verbose:$false -Stream $false)
-
-  LogData -LogFolder $script:LogFolder -FileName $logFileName -Data $json_data -Type "system"
+  do {
+    $data_to_analyze = [System.Text.RegularExpressions.Regex]::Replace($data_to_analyze, "[^\x00-\x7F]", " ")        
+    Write-Host "Generating prompts for '$chosenAction' action..." -ForegroundColor Green -NoNewline
+    $json_data = $data_to_analyze | out-string | Invoke-AIEventAnalyzer -NaturalLanguageQuery $prompt_one -LogFile $logFileNameEventData -Verbose:$true -Stream $false
+    if (-not [string]::IsNullOrEmpty($json_data)) {
+      break
+    }
+    Write-Host "Do you want to run the analysis again? (Y/N)" -ForegroundColor Cyan
+    $userInput = Read-Host
+  } while ($userInput -eq 'Y' -or $userInput -eq 'y')
 
   write-Verbose ($json_data | out-string)
   
   if ([string]::IsNullOrEmpty($json_data)) {
-    LogData -LogFolder $script:LogFolder -FileName $logFileName -Data "Empty generated prompts for '$chosenAction' action." -Type "system"
+    LogData -LogFolder $script:LogFolder -FileName $logFileName -Data "Empty response for '$chosenAction' action." -Type "system"
     Write-Host "No response received. Possible reasons:
 1. Distraction by other tasks.
 2. Technical issues (e.g., network problems).
@@ -922,6 +970,8 @@ Example of a JSON response with two records:
     return
   }
 
+  LogData -LogFolder $script:LogFolder -FileName $logFileName -Data ($json_data | Out-String) -Type "system"
+  
   # Clean the returned JSON data
   $json_data = Clear-LLMDataJSON -data $json_data
 
