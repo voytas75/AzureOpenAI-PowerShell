@@ -24,5 +24,5 @@ Format-Error -ErrorVar $Error
     )
 
     # Output the ErrorRecord object
-    Write-Output $ErrorVar
+    Write-Host $ErrorVar
 }

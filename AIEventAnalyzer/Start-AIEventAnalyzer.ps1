@@ -950,7 +950,7 @@ Example of a JSON response with two records:
     $userInput = Read-Host
   } while ($userInput -eq 'Y' -or $userInput -eq 'y')
 
-  write-Verbose ($json_data | out-string)
+  write-Verbose ($json_data | out-string) -verbose
   
   if ([string]::IsNullOrEmpty($json_data)) {
     LogData -LogFolder $script:LogFolder -FileName $logFileName -Data "Empty response for '$chosenAction' action." -Type "system"
@@ -1156,8 +1156,7 @@ Check-ForUpdate -currentVersion "1.1" -scriptName "Start-AIEventAnalyzer"
 
 $moduleName = "PSAOAI"
 if (Get-Module -ListAvailable -Name $moduleName) {
-  #[void](Import-module -name PSAOAI)
-  import-module d:\dane\voytas\Dokumenty\visual_studio_code\github\AzureOpenAI-PowerShell\PSAOAI\PSAOAI.psd1 -Force
+  [void](Import-module -name PSAOAI -Force)
 }
 else {
   Write-Host "You need to install '$moduleName' module. USe: 'Install-Module PSAOAI'"

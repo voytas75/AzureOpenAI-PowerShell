@@ -32,7 +32,7 @@ function Show-Error {
     Write-Host "[e] Error in file: $($ErrorVar.InvocationInfo.ScriptName)" -ForegroundColor DarkRed
     Write-Host "[e] Error in line: $($ErrorVar.InvocationInfo.ScriptLineNumber)" -ForegroundColor DarkRed
     Write-Host "[e] Error at char: $($ErrorVar.InvocationInfo.OffsetInLine)" -ForegroundColor DarkRed
-    Write-Host "[e] An error occurred: " -NoNewline
+    Write-Host "[e] An error occurred: " -NoNewline  -ForegroundColor DarkRed
     Write-Host "$($ErrorVar.Exception.Message)" -ForegroundColor DarkRed
     
     # Manage specific types of exceptions for more detailed error messages
