@@ -1,6 +1,6 @@
 <#PSScriptInfo
 
-.VERSION 1.0
+.VERSION 1.1
 
 .GUID 4ff39349-66db-44eb-a12f-eb4249b0f24b
 
@@ -25,7 +25,8 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
-
+  1.1 - add check update (#15), Stream response as default, fix filtering events by serveritylevel.
+  1.0 - initializing
 
 .PRIVATEDATA
 
@@ -34,12 +35,12 @@
 <#
 
 .DESCRIPTION
- Analyze Windows event logs using AZURE OpenAI
+ Analyze Windows event logs using AZURE OpenAI (PSAOAI Module).
 
  #>
- using namespace System.Diagnostics
+using namespace System.Diagnostics
  
- Param()
+Param()
 
 function LogData {
   <#
@@ -119,7 +120,9 @@ Invoke-AICopilot -InputObject $InputObject -NaturalLanguageQuery "Show only proc
     [string]$NaturalLanguageQuery,
 
     [Parameter(Mandatory = $false)]
-    [string]$LogFile
+    [string]$LogFile,
+
+    [bool]$stream = $true
   )
 
   begin {
@@ -140,8 +143,10 @@ Invoke-AICopilot -InputObject $InputObject -NaturalLanguageQuery "Show only proc
     # Convert the array of input objects into a single string
     $inputString = $inputObjects | Out-String
 
+    LogData -LogFolder $script:LogFolder -FileName $logFileName -Data $inputString -Type "system"
+
     # Call the Invoke-AzureOpenAIChatCompletion function to interpret the input using a language model and the user's query
-    $response = Invoke-PSAOAIChatCompletion -SystemPrompt $NaturalLanguageQuery -usermessage $inputString -OneTimeUserPrompt -Mode Precise -simpleresponse -LogFile $LogFile
+    $response = Invoke-PSAOAIChatCompletion -SystemPrompt $NaturalLanguageQuery -usermessage $inputString -OneTimeUserPrompt -Mode Precise -simpleresponse -LogFile $LogFile -Stream $Stream
 
     # Return the response from the Azure OpenAI Chat Completion function
     return $response 
@@ -245,9 +250,15 @@ function Get-EventLogInfo {
   # Create an object of the specified Windows Event Log
   $eventLog = new-object System.Diagnostics.EventLog($logName)
 
-  # Filter the entries of the Event Log based on the provided severity level
-  $filteredEvents = $eventLog.Entries | Where-Object { $_.EntryType -eq $([System.Diagnostics.EventLogEntryType]::$severityLevel) }
-  
+  try {
+    # Filter the entries of the Event Log based on the provided severity level
+    $filteredEvents = $eventLog.Entries | Where-Object { $_.EntryType -eq $([System.Diagnostics.EventLogEntryType]::$severityLevel) }
+    
+  }
+  catch {
+    $filteredEvents = (Get-WinEvent -LogName $logName) | Where-Object { $_.level -eq $([System.Diagnostics.EventLogEntryType]::$severityLevel) }
+  }
+    
   # Return the count of the filtered events
   return $filteredEvents.Count
 }
@@ -394,21 +405,19 @@ function Start-AIEventAnalyzer {
   )
 
   if ([string]::IsNullOrEmpty($LogFolder)) {
-    $LogFolder = Join-Path -Path ([Environment]::GetFolderPath("MyDocuments")) -ChildPath "AIEventAnalyzer"
-    if (-not (Test-Path -Path $LogFolder)) {
-      New-Item -ItemType Directory -Path $LogFolder | Out-Null
+    $script:LogFolder = Join-Path -Path ([Environment]::GetFolderPath("MyDocuments")) -ChildPath "AIEventAnalyzer"
+    if (-not (Test-Path -Path $script:LogFolder)) {
+      New-Item -ItemType Directory -Path $script:LogFolder | Out-Null
     }
   }
-  Write-Host "[Info] The logs will be saved in the following folder: $LogFolder" -ForegroundColor DarkGray
+  Write-Host "[Info] The logs will be saved in the following folder: $script:LogFolder" -ForegroundColor DarkGray
   Write-Host ""
         
   # Define the prompts for the AI model
   $promptAnalyze = @'
-###Instruction###
-
-Your role as a prompt maker is to develop a series of prompts designed to guide the incident analysis process, focusing on identifying root causes, understanding their impact, and proposing practical solutions or further investigative steps. It is critical in analyzing Windows event data to uncover patterns, anomalies, and insights that shed light on system performance, stability, and security. Responses must strictly follow the JSON format, ensuring clarity and consistency in the analysis process.
-
+Your task as a prompt maker is to develop a series of prompts designed to guide the incident analysis process, focusing on identifying root causes, understanding their impact, and proposing practical solutions or further investigative steps. It is critical in analyzing Windows events data to uncover patterns, anomalies, and insights that shed light on system performance, stability, and security. Responses must strictly follow the JSON format, ensuring clarity and consistency in the analysis process.
 Example of a JSON response with two records:
+``````json
 [
   {
     "promptNumber": 1,
@@ -431,6 +440,7 @@ Example of a JSON response with two records:
     ]
   }
 ]
+``````
 '@
 
   $promptTroubleshoot = @'
@@ -746,7 +756,7 @@ Example of a JSON response with two records:
   Write-Host "Your selected action is: $chosenAction" -ForegroundColor Green
   Write-Host ""  
   # Clean the system prompt by removing non-ASCII characters
-  $prompt_one = [System.Text.RegularExpressions.Regex]::Replace($prompt_one, "[^\x00-\x7F]", " ")        
+  #$prompt_one = [System.Text.RegularExpressions.Regex]::Replace($prompt_one, "[^\x00-\x7F]", " ")        
 
   # Get a list of all Windows event logs, sort them by record count in descending order, and select the top 25 logs
   $logs = Get-WinEvent -ListLog * -ErrorAction SilentlyContinue | Sort-Object RecordCount -Descending | Select-Object LogName, RecordCount
@@ -878,31 +888,46 @@ Example of a JSON response with two records:
     "Prompt"     = (Format-ContinuousText -text $prompt_one)
   }
   foreach ($key in $data_to_file.Keys) {
-    LogData -LogFolder $LogFolder -FileName $logFileName -Data "$key : $($data_to_file[$key])" -Type "user"
+    LogData -LogFolder $script:LogFolder -FileName $logFileName -Data "$key : $($data_to_file[$key])" -Type "user"
   }
 
   $logFileNameEventData = "$chosenAction-$chosenLogName-$chosenSeverityLevel-EventData-$currentDateTime.txt"
-  $logFileNameEventData = Join-Path $LogFolder $logFileNameEventData
-  LogData -LogFolder $LogFolder -FileName $logFileName -Data "Log file with events data: $logFileNameEventData" -Type "other"
+  $logFileNameEventData = Join-Path $script:LogFolder $logFileNameEventData
+  LogData -LogFolder $script:LogFolder -FileName $logFileName -Data "Log file with events data: $logFileNameEventData" -Type "other"
 
   Write-Verbose "Log with event data: $logFileNameEventData"
 
-  Write-Host "Generating prompts for '$chosenAction' action..." -ForegroundColor Green
+  Write-Host "Generating prompts for '$chosenAction' action..." -ForegroundColor Green -NoNewline
 
   # Invoke the AI model with the prompt and the data to analyze
-  $json_data = $data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $prompt_one -LogFile $logFileNameEventData -Verbose:$false
+  $json_data = ($data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $prompt_one -LogFile $logFileNameEventData -Verbose:$false -Stream $false)
 
-  write-Verbose $json_data
+  LogData -LogFolder $script:LogFolder -FileName $logFileName -Data $json_data -Type "system"
+
+  write-Verbose ($json_data | out-string)
   
   if ([string]::IsNullOrEmpty($json_data)) {
-    Write-Host "No data to analyze. Exiting script..." -ForegroundColor Red
+    LogData -LogFolder $script:LogFolder -FileName $logFileName -Data "Empty generated prompts for '$chosenAction' action." -Type "system"
+    Write-Host "No response received. Possible reasons:
+1. Distraction by other tasks.
+2. Technical issues (e.g., network problems).
+3. System overload or slow performance.
+4. Miscommunication about the prompt's urgency.
+5. Accidental dismissal of the prompt.
+6. Interruptions (e.g., meetings, phone calls).
+7. Inattention or unawareness of the prompt.
+8. Time constraints due to busy schedule.
+9. Preference for delayed response.
+10. External factors (e.g., power outage)." -ForegroundColor Red
+
+    Write-Host "`nNo data to analyze. Exiting script...`n" -ForegroundColor Red
     return
   }
 
   # Clean the returned JSON data
   $json_data = Clear-LLMDataJSON -data $json_data
 
-  LogData -LogFolder $LogFolder -FileName $logFileName -Data ($json_data | ConvertTo-Json -Depth 100) -Type "system"
+  LogData -LogFolder $script:LogFolder -FileName $logFileName -Data ($json_data | ConvertTo-Json -Depth 100) -Type "system"
 
   # Convert the cleaned JSON data to a PowerShell object
   $object_prompt = ($json_data | ConvertFrom-Json ) 
@@ -912,7 +937,7 @@ Example of a JSON response with two records:
   while ($true) {
     # Display the prompt number and prompt
     $SubPrompts = $object_prompt
-    #LogData -LogFolder $LogFolder -FileName $logFileName -Data "All Sub-Prompts: $(Format-ContinuousText -text $($SubPrompts | Out-String))" -Type "system"
+    #LogData -LogFolder $script:LogFolder -FileName $logFileName -Data "All Sub-Prompts: $(Format-ContinuousText -text $($SubPrompts | Out-String))" -Type "system"
     #$SubPrompts | Format-List promptNumber, prompt | Out-Host -Paging
     foreach ($SubPrompt in $SubPrompts) {
       Write-Host "$($SubPrompt.promptNumber)} " -foregroundColor DarkGreen -NoNewline
@@ -945,13 +970,13 @@ Example of a JSON response with two records:
         Write-Host ""
 
         # Log the quit action
-        LogData -LogFolder $LogFolder -FileName $logFileName -Data "Quiting" -Type "user"
+        LogData -LogFolder $script:LogFolder -FileName $logFileName -Data "Quiting" -Type "user"
 
         # Get the details of the log file
-        Get-LogFileDetails -LogFolder $LogFolder -logFileName $logFileName -LogEventDataFileName $logFileNameEventData
+        Get-LogFileDetails -LogFolder $script:LogFolder -logFileName $logFileName -LogEventDataFileName $logFileNameEventData
         Write-Host ""
 
-        Get-SummarizeSession -LogFolder $LogFolder -logFileName $logFileName
+        Get-SummarizeSession -LogFolder $script:LogFolder -logFileName $logFileName
         Write-Host ""
         # Break the loop to end the script
         # break
@@ -966,7 +991,7 @@ Example of a JSON response with two records:
     Write-Host "Prompt: '$choose_prompt'" -ForegroundColor Green
     Write-Host ""
     # Log the chosen prompt
-    LogData -LogFolder $LogFolder -FileName $logFileName -Data "Chosen Sub-Prompt: $(Format-ContinuousText -text $choose_prompt)" -Type "user"
+    LogData -LogFolder $script:LogFolder -FileName $logFileName -Data "Chosen Sub-Prompt: $(Format-ContinuousText -text $choose_prompt)" -Type "user"
 
     # Update the chosen prompt using the Update-PromptData function
     $choose_prompt = Update-PromptData -inputPrompt $choose_prompt
@@ -974,12 +999,12 @@ Example of a JSON response with two records:
     Write-Host "Enriched Prompt: '$choose_prompt'" -ForegroundColor DarkGreen
     Write-Host ""
     # Log the updated prompt
-    LogData -LogFolder $LogFolder -FileName $logFileName -Data "Chosen Sub-Prompt (updated): $(Format-ContinuousText -text $choose_prompt)" -Type "user"
+    LogData -LogFolder $script:LogFolder -FileName $logFileName -Data "Chosen Sub-Prompt (updated): $(Format-ContinuousText -text $choose_prompt)" -Type "user"
     
     Write-Host "Generating response for the chosen prompt..." -ForegroundColor Cyan
     # Invoke the AI model with the chosen prompt and the data to analyze
     $dataSubpromptResponse = ($data_to_analyze | Invoke-AIEventAnalyzer -NaturalLanguageQuery $choose_prompt -LogFile $logFileNameEventData -Verbose:$false)
-    LogData -LogFolder $LogFolder -FileName $logFileName -Data "Sub-Prompt response: $(Format-ContinuousText -text $dataSubpromptResponse)" -Type "system"
+    LogData -LogFolder $script:LogFolder -FileName $logFileName -Data "Sub-Prompt response: $(Format-ContinuousText -text $dataSubpromptResponse)" -Type "system"
     Write-Host ""
     
     # Output the response data with paging
@@ -1004,7 +1029,7 @@ function Show-Banner {
        /_/    \_\_____|______\_/ \___|_| |_|\__/_/    \_\_| |_|\__,_|_|\__, /___\___|_|   
                                                                         __/ |             
                                                                        |___/              
-                                                                  powered by AZURE OpenAI
+                                                                  powered by PSAOAI Module
        
        voytas75; https://github.com/voytas75/AzureOpenAI-PowerShell
 
@@ -1035,12 +1060,57 @@ function Show-Banner {
 "@ -ForegroundColor White
 }
 
+# Function to get the latest version from the PowerShell Gallery
+function Get-LatestVersion {
+  param (
+    [string]$scriptName
+  )
+
+  try {
+    # Find the script on PowerShell Gallery
+    $scriptInfo = Find-Script -Name $scriptName -ErrorAction Stop
+
+    # Return the latest version
+    return $scriptInfo.Version
+  }
+  catch {
+    Write-Error "Failed to get the latest version of $scriptName from PowerShell Gallery. $_"
+    return $null
+  }
+}
+
+# Function to check for updates
+function Check-ForUpdate {
+  param (
+    [string]$currentVersion,
+    [string]$scriptName
+  )
+
+  # Get the latest version of the script
+  $latestVersion = Get-LatestVersion -scriptName $scriptName
+
+  if ($latestVersion) {
+    # Compare versions
+    if ([version]$currentVersion -lt [version]$latestVersion) {
+      Write-Host " A new version ($latestVersion) of $scriptName is available. You are currently using version $currentVersion. `n`n" -BackgroundColor DarkYellow -ForegroundColor Blue
+    } 
+  }
+  else {
+    Write-Error "Unable to check for the latest version."
+  }
+}
+
 Clear-Host
 Show-Banner
 
+# Check for updates as the first task
+Check-ForUpdate -currentVersion "1.1" -scriptName "Start-AIEventAnalyzer"
+
 $moduleName = "PSAOAI"
 if (Get-Module -ListAvailable -Name $moduleName) {
-    [void](Import-module -name PSAOAI)
-} else {
-    Write-Host "You need to install '$moduleName' module. USe: 'Install-Module PSAOAI'"
+  #[void](Import-module -name PSAOAI)
+  import-module d:\dane\voytas\Dokumenty\visual_studio_code\github\AzureOpenAI-PowerShell\PSAOAI\PSAOAI.psd1 -Force
+}
+else {
+  Write-Host "You need to install '$moduleName' module. USe: 'Install-Module PSAOAI'"
 }
