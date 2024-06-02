@@ -143,8 +143,6 @@ Invoke-AICopilot -InputObject $InputObject -NaturalLanguageQuery "Show only proc
     # Convert the array of input objects into a single string
     $inputString = $inputObjects | Out-String
 
-    LogData -LogFolder $script:LogFolder -FileName $logFileName -Data $inputString -Type "system"
-
     # Call the Invoke-AzureOpenAIChatCompletion function to interpret the input using a language model and the user's query
     $response = Invoke-PSAOAIChatCompletion -SystemPrompt $NaturalLanguageQuery -usermessage $inputString -OneTimeUserPrompt -Mode Precise -simpleresponse -LogFile $LogFile -Stream $Stream
 
