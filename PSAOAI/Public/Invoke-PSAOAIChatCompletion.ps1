@@ -632,6 +632,7 @@ function Invoke-PSAOAIChatCompletion {
         Format-Error -ErrorVar $_
         Show-Error -ErrorVar $_
         Write-LogMessage "An error occurred: $_" "ERROR" -LogFile $logfile
+        return
     }
 }
 

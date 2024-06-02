@@ -142,7 +142,7 @@ Invoke-AICopilot -InputObject $InputObject -NaturalLanguageQuery "Show only proc
     # This block runs once after all input has been processed
     # Convert the array of input objects into a single string
     $inputString = $inputObjects | Out-String
-
+    
     # Call the Invoke-AzureOpenAIChatCompletion function to interpret the input using a language model and the user's query
     $response = Invoke-PSAOAIChatCompletion -SystemPrompt $NaturalLanguageQuery -usermessage $inputString -OneTimeUserPrompt -Mode Precise -simpleresponse -LogFile $LogFile -Stream $Stream
 
@@ -942,7 +942,7 @@ Example of a JSON response with two records:
   do {
     $data_to_analyze = [System.Text.RegularExpressions.Regex]::Replace($data_to_analyze, "[^\x00-\x7F]", " ")        
     Write-Host "Generating prompts for '$chosenAction' action..." -ForegroundColor Green -NoNewline
-    $json_data = $data_to_analyze | out-string | Invoke-AIEventAnalyzer -NaturalLanguageQuery $prompt_one -LogFile $logFileNameEventData -Verbose:$true -Stream $false
+    $json_data = $data_to_analyze | ConvertTo-Json | out-string | Invoke-AIEventAnalyzer -NaturalLanguageQuery $prompt_one -LogFile $logFileNameEventData -Verbose:$true -Stream $false
     if (-not [string]::IsNullOrEmpty($json_data)) {
       break
     }
@@ -1156,7 +1156,8 @@ Check-ForUpdate -currentVersion "1.1" -scriptName "Start-AIEventAnalyzer"
 
 $moduleName = "PSAOAI"
 if (Get-Module -ListAvailable -Name $moduleName) {
-  [void](Import-module -name PSAOAI -Force)
+  #[void](Import-module -name PSAOAI -Force)
+  import-module d:\dane\voytas\Dokumenty\visual_studio_code\github\AzureOpenAI-PowerShell\PSAOAI\PSAOAI.psd1 -Force
 }
 else {
   Write-Host "You need to install '$moduleName' module. USe: 'Install-Module PSAOAI'"
