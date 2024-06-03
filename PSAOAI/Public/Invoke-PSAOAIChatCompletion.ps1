@@ -1,43 +1,43 @@
 function Invoke-PSAOAIChatCompletion {
     <#
     .SYNOPSIS
-    This function facilitates interaction with an Azure OpenAI chatbot by sending an API request and retrieving the chatbot's response.
+    This function enables communication with an Azure OpenAI chatbot by sending an API request and retrieving the chatbot's response.
 
     .DESCRIPTION
-    Invoke-AzureOpenAIChatCompletion is a function that establishes communication with an Azure OpenAI chatbot by sending an API request and receiving the chatbot's response. It provides users with the ability to customize their messages and tweak parameters such as temperature, frequency penalty, and others to shape the chatbot's responses.
+    Invoke-PSAOAIChatCompletion is a function that establishes a connection with an Azure OpenAI chatbot by sending an API request and receiving the chatbot's response. It allows users to customize their messages and adjust parameters such as temperature, frequency penalty, and others to influence the chatbot's responses.
 
     .PARAMETER APIVersion
-    Defines the version of the Azure OpenAI API to be utilized.
+    Specifies the version of the Azure OpenAI API to be used.
 
     .PARAMETER Endpoint
-    Specifies the endpoint URL for the Azure OpenAI API.
+    Defines the endpoint URL for the Azure OpenAI API.
 
     .PARAMETER Deployment
-    Denotes the name of the OpenAI deployment to be utilized.
+    Specifies the name of the OpenAI deployment to be used.
 
     .PARAMETER User
     Identifies the user initiating the API request.
 
     .PARAMETER Temperature
-    Adjusts the temperature parameter for the API request, influencing the unpredictability of the chatbot's responses.
+    Modifies the temperature parameter for the API request, influencing the randomness of the chatbot's responses.
 
     .PARAMETER N
     Sets the number of messages to be generated for the API request.
 
     .PARAMETER FrequencyPenalty
-    Adjusts the frequency penalty parameter for the API request, influencing the chatbot's preference for less frequently used words.
+    Modifies the frequency penalty parameter for the API request, influencing the chatbot's preference for less frequently used words.
 
     .PARAMETER PresencePenalty
-    Adjusts the presence penalty parameter for the API request, influencing the chatbot's preference for contextually relevant words.
+    Modifies the presence penalty parameter for the API request, influencing the chatbot's preference for contextually relevant words.
 
     .PARAMETER TopP
-    Adjusts the top-p parameter for the API request, influencing the diversity of the chatbot's responses.
+    Modifies the top-p parameter for the API request, influencing the diversity of the chatbot's responses.
 
     .PARAMETER Stop
-    Sets the stop parameter for the API request, indicating when the chatbot should cease generating a response.
+    Sets the stop parameter for the API request, indicating when the chatbot should stop generating a response.
 
     .PARAMETER Stream
-    Adjusts the stream parameter for the API request, determining whether the chatbot should stream its responses.
+    Modifies the stream parameter for the API request, determining whether the chatbot should stream its responses.
 
     .PARAMETER SystemPromptFilePath
     Specifies the path of the file containing the system prompt.
@@ -69,7 +69,7 @@ function Invoke-PSAOAIChatCompletion {
     .EXAMPLE
     PS C:\> Invoke-PSAOAIChatCompletion -APIVersion "2023-06-01-preview" -Endpoint "https://example.openai.azure.com" -Deployment "example_model_gpt35_!" -User "BobbyK" -Temperature 0.6 -N 1 -FrequencyPenalty 0 -PresencePenalty 0 -TopP 0 -Stop $null -Stream $false
 
-    This example illustrates how to send an API request to an Azure OpenAI chatbot and receive the response message.
+    This example demonstrates how to send an API request to an Azure OpenAI chatbot and receive the response message.
 
     .NOTES
     Author: Wojciech Napierala
