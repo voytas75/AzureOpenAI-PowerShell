@@ -64,13 +64,19 @@ The script does not take any parameters. Instead, it prompts the user for the fo
 - **Severity Level**: The severity level of the events to analyze. Options include "Critical", "Error", "Warning", "Information", "Verbose", "All".
 - **Number of Events**: The number of most recent events to analyze.
 
-## Example
+## Examples
+
+```powershell
+PS C:\>. .\Start-AIEventAnalyzer.ps1; Start-AIEventAnalyzer -LogName "Microsoft-Windows-AAD/Operational" -Serverity All -Action Optimize -Events 50
+```
+
+The script will generate a menu for deeper analysis of the optimization.
 
 ```powershell
 PS C:\>. .\Start-AIEventAnalyzer.ps1; Start-AIEventAnalyzer
 ```
 
-The script will then prompt the user for the required inputs, including the API Azure OPENAI variable values described in the Environment Variables section above.
+The script will prompt the user for the required inputs (`action`, `logname`, `serverity`, `events`), including the API Azure OPENAI variable values described in the Environment Variables section above.
 
 ## Output
 

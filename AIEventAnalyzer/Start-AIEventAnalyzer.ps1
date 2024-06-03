@@ -593,7 +593,7 @@ Example of a JSON response with two records:
     $userInput = Read-Host
   } while ($userInput -eq 'Y' -or $userInput -eq 'y')
 
-  write-Verbose ($json_data | out-string) -verbose
+  write-Verbose ($json_data | out-string)
   
   if ([string]::IsNullOrEmpty($json_data)) {
     LogData -LogFolder $script:LogFolder -FileName $logFileName -Data "Empty response for '$chosenAction' action." -Type "system"
@@ -1048,20 +1048,20 @@ function Get-SummarizeSession {
   
   if ($Stream) {
     Write-Host "AI Summary:" -ForegroundColor Green
+    # Summarize the session log data using AI
+    $summary = $logData | Invoke-AIEventAnalyzer -NaturalLanguageQuery "Summarize the log data in a single paragraph to show the user what was done. Use a cheerful style. Finally, add something nice for the user."
+    Write-Host ""
+    # Print the summary
   }
-  Write-Host "AI Summary:" -ForegroundColor Green
-  # Summarize the session log data using AI
-  $summary = $logData | Invoke-AIEventAnalyzer -NaturalLanguageQuery "Summarize the log data in a single paragraph to show the user what was done. Use a cheerful style. Finally, add something nice for the user."
-  Write-Host ""
-  # Print the summary
-} else {
-  Write-Host "Wait for more..." -ForegroundColor Magenta -NoNewline
-  # Summarize the session log data using AI
-  $summary = $logData | Invoke-AIEventAnalyzer -NaturalLanguageQuery "Summarize the log data in a single paragraph to show the user what was done. Use a cheerful style. Finally, add something nice for the user."
-  Write-Host ""
-  # Print the summary
-  Write-Host "AI Summary:" -ForegroundColor Green
-  Write-Host $summary -ForegroundColor White
+  else {
+    Write-Host "Wait for more..." -ForegroundColor Magenta -NoNewline
+    # Summarize the session log data using AI
+    $summary = $logData | Invoke-AIEventAnalyzer -NaturalLanguageQuery "Summarize the log data in a single paragraph to show the user what was done. Use a cheerful style. Finally, add something nice for the user."
+    Write-Host ""
+    # Print the summary
+    Write-Host "AI Summary:" -ForegroundColor Green
+    Write-Host $summary -ForegroundColor White
+  }
 }
 
 function Show-Banner {
