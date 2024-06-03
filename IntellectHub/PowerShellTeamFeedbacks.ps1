@@ -335,8 +335,8 @@ $domainExpert = [ProjectTeam]::new(
     1. Ensuring compatibility with the domain-specific environment.
     2. Providing best practices for performance, security, and optimization.
     3. Recommending specific configurations and settings.
-    4. Testing the script within the domain to identify and resolve any issues.
-    5. Documenting any domain-specific requirements or dependencies.",
+    4. Documenting any domain-specific requirements or dependencies.
+    ",
     0.65,
     0.9,
     [scriptblock]::Create({
@@ -360,9 +360,7 @@ $systemArchitect = [ProjectTeam]::new(
     6. Selecting appropriate technologies and tools for the project.
     7. Providing guidelines for coding standards and best practices.
     8. Documenting security considerations and ensuring the architecture adheres to best security practices.
-    9. Creating a roadmap for development phases and milestones.
-    10. Collaborating with stakeholders to refine and validate the architectural design.
-    11. Reviewing and updating the architecture based on feedback and testing results.",
+    ",
     0.7,
     0.85,
     [scriptblock]::Create({
@@ -377,9 +375,7 @@ $powerShellDeveloper = [ProjectTeam]::new(
     "PowerShell Developer",
     @"
 You act as PowerShell Developer. You are tasked with developing the PowerShell program based on the provided requirements and implementation strategy. Your goal is to write clean, efficient, and functional code that meets the specified objectives.
-
 Background Information: PowerShell scripts can interact with a wide range of systems and applications, making it a versatile tool for system administrators and developers. Ensure your code adheres to Powershell best practices for readability, maintainability, and performance.
-
 Instructions:
 - Develop the PowerShell program according to the provided requirements and strategy.
 - Ensure the code is modular and well-documented with help block.
@@ -400,10 +396,8 @@ $qaEngineer = [ProjectTeam]::new(
     "QA Engineer",
     "QA Engineer",
     @"
-    You act as QA Engineer. You are tasked with testing and verifying the functionality of the developed PowerShell program. Your goal is to ensure the program works as intended, is free of bugs, and meets the specified requirements.
-
+You act as QA Engineer. You are tasked with testing and verifying the functionality of the developed PowerShell program. Your goal is to ensure the program works as intended, is free of bugs, and meets the specified requirements.
 Background Information: PowerShell scripts can perform a wide range of tasks, so thorough testing is essential to ensure reliability and performance. Testing should cover all aspects of the program, including edge cases and potential failure points.
-
 Instructions:
 - Test the PowerShell program for functionality and performance.
 - Verify that the program meets all specified requirements and objectives.
@@ -424,16 +418,16 @@ $documentationSpecialist = [ProjectTeam]::new(
     "Documentation Specialist",
     "Documentation Specialist",
     "You act as Documentation Specialist. Create comprehensive documentation for the PowerShell project. This includes:
-    1. Writing a detailed user guide that explains how to install, configure, and use the script.
+    1. Writing a detailed user guide that explains how to install, configure, and use the program.
     2. Creating developer notes that outline the code structure, key functions, and logic.
     3. Providing step-by-step installation instructions.
     4. Documenting any dependencies and prerequisites.
     5. Writing examples of use cases and expected outputs.
     6. Including troubleshooting tips and common issues.
-    7. Creating a changelog to document updates and changes.
-    8. Preparing a FAQ section to address common questions.
-    9. Ensuring all documentation is clear, concise, and easy to follow.
-    10. Reviewing and editing the documentation for accuracy and completeness.",
+    7. Preparing a FAQ section to address common questions.
+    8. Ensuring all documentation is clear, concise, and easy to follow.
+    9. Reviewing and editing the documentation for accuracy and completeness.
+    ",
     0.6,
     0.8,
     [scriptblock]::Create({
@@ -455,7 +449,8 @@ $projectManager = [ProjectTeam]::new(
     6. Compiling these summaries into a final project report.
     7. Identifying key achievements, challenges faced, and lessons learned throughout the project.
     8. Ensuring that all aspects of the project are covered and documented comprehensively.
-    9. Providing a clear and concise summary that reflects the overall progress and status of the project.",
+    9. Providing a clear and concise summary that reflects the overall progress and status of the project.
+    ",
     0.7,
     0.85,
     [scriptblock]::Create({
