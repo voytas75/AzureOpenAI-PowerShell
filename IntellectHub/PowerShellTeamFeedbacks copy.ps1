@@ -205,7 +205,7 @@ class ProjectTeam {
             Write-Host "---------------------------------------------------------------------------------------"
     
             # Send feedback request and collect feedback
-            $feedback = SendFeedbackRequest -TeamMember $member.Role -Response $response -Prompt $this.Prompt -Temperature $this.Temperature -TopP $this.TopP -ResponseFunction $this.ResponseFunction
+            $feedback = SendFeedbackRequest -TeamMember $member -Response $response -Prompt $this.Prompt -Temperature $this.Temperature -TopP $this.TopP -ResponseFunction $this.ResponseFunction
         
             if ($null -ne $feedback) {
                 $feedbacks += $feedback
@@ -240,32 +240,22 @@ function SendFeedbackRequest {
     )
 
     # Define the feedback request prompt
-    $Systemprompt = @"
-You act as $TeamMember, your task is to review the following response and provide your feedback.
+    $prompt = @"
+$TeamMember, you have a new feedback request. Please review the following response and provide your feedback.
+
+Response:
+---------
+$Response
+
+Please provide your feedback, including comments or suggestions.
 
 "@
 
     # Send the feedback request to the LLM model
-    $feedback = & $ResponseFunction -SystemPrompt $SystemPrompt -UserPrompt $Response -Temperature $Temperature -TopP $TopP
+    $feedback = & $ResponseFunction -SystemPrompt $Prompt -UserPrompt $prompt -Temperature $Temperature -TopP $TopP
 
     # Return the feedback
     return $feedback
-}
-
-
-function GetLastMemoryFromTeamMembers {
-    param (
-        [array] $TeamMembers
-    )
-
-    $lastMemories = @()
-
-    foreach ($member in $TeamMembers) {
-        $lastMemory = $member.GetLastMemory().Response
-        $lastMemories += $lastMemory
-    }
-
-    return ($lastMemories -join "`n")
 }
 
 
@@ -310,8 +300,10 @@ $requirementsAnalyst = [ProjectTeam]::new(
     "Requirements Analyst",
     "Requirements Analyst",
     @"
-You act as Requirements Analyst. You are tasked with analyzing the feasibility and requirements of a PowerShell program. The goal is to clearly define the program's objectives, identify the necessary components, and outline the implementation strategy.
+You are tasked with analyzing the feasibility and requirements of a PowerShell program. The goal is to clearly define the program's objectives, identify the necessary components, and outline the implementation strategy.
+
 Background Information: PowerShell is a task automation and configuration management framework from Microsoft, consisting of a command-line shell and scripting language. It is widely used for managing and automating tasks across various Microsoft and non-Microsoft environments.
+
 Instructions: 
 - Evaluate the feasibility of creating the described PowerShell program.
 - Define the program's objectives and key features.
@@ -331,7 +323,7 @@ Instructions:
 $domainExpert = [ProjectTeam]::new(
     "Domain Expert",
     "Domain Expert",
-    "You act as Domain Expert. Provide specialized insights and recommendations based on the specific domain requirements of the project. This includes:
+    "Provide specialized insights and recommendations based on the specific domain requirements of the project. This includes:
     1. Ensuring compatibility with the domain-specific environment.
     2. Providing best practices for performance, security, and optimization.
     3. Recommending specific configurations and settings.
@@ -351,7 +343,7 @@ $domainExpert = [ProjectTeam]::new(
 $systemArchitect = [ProjectTeam]::new(
     "System Architect",
     "System Architect",
-    "You act as System Architect. Design the architecture for a PowerShell project. This includes:
+    "Design the architecture for a PowerShell project. This includes:
     1. Outlining the overall structure of the program.
     2. Identifying and defining necessary modules and functions.
     3. Creating a detailed architectural design document.
@@ -376,7 +368,7 @@ $powerShellDeveloper = [ProjectTeam]::new(
     "PowerShell Developer",
     "PowerShell Developer",
     @"
-    You act as PowerShell Developer. You are tasked with developing the PowerShell program based on the provided requirements and implementation strategy. Your goal is to write clean, efficient, and functional code that meets the specified objectives.
+You are tasked with developing the PowerShell program based on the provided requirements and implementation strategy. Your goal is to write clean, efficient, and functional code that meets the specified objectives.
 
 Background Information: PowerShell scripts can interact with a wide range of systems and applications, making it a versatile tool for system administrators and developers. Ensure your code adheres to best practices for readability, maintainability, and performance.
 
@@ -400,7 +392,7 @@ $qaEngineer = [ProjectTeam]::new(
     "QA Engineer",
     "QA Engineer",
     @"
-    You act as QA Engineer. You are tasked with testing and verifying the functionality of the developed PowerShell program. Your goal is to ensure the program works as intended, is free of bugs, and meets the specified requirements.
+You are tasked with testing and verifying the functionality of the developed PowerShell program. Your goal is to ensure the program works as intended, is free of bugs, and meets the specified requirements.
 
 Background Information: PowerShell scripts can perform a wide range of tasks, so thorough testing is essential to ensure reliability and performance. Testing should cover all aspects of the program, including edge cases and potential failure points.
 
@@ -423,7 +415,7 @@ Instructions:
 $documentationSpecialist = [ProjectTeam]::new(
     "Documentation Specialist",
     "Documentation Specialist",
-    "You act as Documentation Specialist. Create comprehensive documentation for the PowerShell project. This includes:
+    "Create comprehensive documentation for the PowerShell project. This includes:
     1. Writing a detailed user guide that explains how to install, configure, and use the script.
     2. Creating developer notes that outline the code structure, key functions, and logic.
     3. Providing step-by-step installation instructions.
@@ -446,7 +438,7 @@ $documentationSpecialist = [ProjectTeam]::new(
 $projectManager = [ProjectTeam]::new(
     "Project Manager",
     "Project Manager",
-    "You act as Project Manager. Provide a comprehensive summary of the PowerShell project based on the completed tasks of each expert. This includes:
+    "Provide a comprehensive summary of the PowerShell project based on the completed tasks of each expert. This includes:
     1. Reviewing the documented requirements from the Requirements Analyst.
     2. Summarizing the architectural design created by the System Architect.
     3. Detailing the script development work done by the PowerShell Developer.
@@ -469,42 +461,57 @@ $TeamMembers = @()
 $TeamMembers += $requirementsAnalyst
 $TeamMembers += $systemArchitect
 $TeamMembers += $domainExpert
+$TeamMembers += $powerShellDeveloper
+$TeamMembers += $qaEngineer
+$TeamMembers += $projectManager
 $powerShellDeveloper.TeamMembers = $TeamMembers
 
-$GlobalResponse = @()
+# Link the expert objects to form a team workflow
+$requirementsAnalyst.SetNextExpert($systemArchitect)
+$systemArchitect.SetNextExpert($domainExpert)
+$domainExpert.SetNextExpert($powerShellDeveloper)
+$powerShellDeveloper.SetNextExpert($qaEngineer)
 
 # Example of starting the process
-$requirementsAnalystresponse = $requirementsAnalyst.ProcessInput($userInput)
-$GlobalResponse += $requirementsAnalystresponse
-$systemArchitectResponse = $systemArchitect.ProcessInput($GlobalResponse -join ", ")
-$GlobalResponse += $systemArchitectResponse
-$domainExpertResponse = $domainExpert.ProcessInput($GlobalResponse -join ", ")
-$GlobalResponse += $domainExpertResponse
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($GlobalResponse -join ", ")
-$GlobalResponse += $powerShellDeveloperResponce
-$PSDevTeamMembersMemory = GetLastMemoryFromTeamMembers -TeamMembers $TeamMembers
-$powerShellDeveloper.TeamMembers = $null
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($PSDevTeamMembersMemory)
-$qaEngineerResponse = $qaEngineer.ProcessInput($GlobalResponse -join ", ")
-$GlobalResponse += $qaEngineerResponse
+$response = $requirementsAnalyst.ProcessInput($userInput)
 
 # Example of re-routing: QA Engineer's response goes to PowerShell Developer and then Documentation Specialist
 $devandqamemory = $(($qaEngineer.GetLastMemory().Response, $powerShellDeveloper.GetLastMemory().Response) -join "`n") + "`nImprove and optimize the code based on the QA Engineer's feedback"
 
-$powerShellDeveloperresponse = $powerShellDeveloper.ProcessInput($devandqamemory)
-$GlobalResponse += $powerShellDeveloperresponse
-
-$documentationSpecialistResponce = $documentationSpecialist.ProcessInput($GlobalResponse -join ", ")
-$GlobalResponse += $documentationSpecialistResponce
+$powerShellDeveloper.SetNextExpert($documentationSpecialist)
+#$devResponse = $powerShellDeveloper.ProcessInput($qaResponse)
+#$finalResponse = $documentationSpecialist.ProcessInput($devResponse)
+$response = $powerShellDeveloper.ProcessInput($devandqamemory)
 
 # Log final response to file
-$documentationSpecialistResponce | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "Documentation.log")
+$response | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "Documentation.log")
+
+# Gather memory from all experts
+$allExpertsMemory = ($requirementsAnalyst.GetLastMemory().Response, $systemArchitect.GetLastMemory().Response, $powerShellDeveloper.GetLastMemory().Response, $domainExpert.GetLastMemory().Response, $qaEngineer.GetLastMemory().Response, $documentationSpecialist.GetLastMemory()).Response -join "`n"
 
 # Example of summarizing all steps
-$projectSummary = $projectManager.ProcessInput($GlobalResponse -join ", ")
+$projectSummary = $projectManager.ProcessInput($allExpertsMemory)
+
+# Display the project summary
+#Write-Host "Project Summary: $projectSummary"
 
 # Log final response to file
 $projectSummary | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "ProjectSummary.log")
 
 # Log Developer last memory
 ($powerShellDeveloper.GetLastMemory().Response) | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "TheCode.log")
+
+
+
+# Display the final response
+#Write-Host "Final Response: $response"
+
+# Display the memory of each expert
+<#
+$requirementsAnalyst.DisplayInfo()
+$systemArchitect.DisplayInfo()
+$powerShellDeveloper.DisplayInfo()
+$qaEngineer.DisplayInfo()
+$documentationSpecialist.DisplayInfo()
+$projectManager.DisplayInfo()
+#>
