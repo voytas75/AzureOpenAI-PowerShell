@@ -489,7 +489,7 @@ $devandqamemory = $(($qaEngineer.GetLastMemory().Response, $powerShellDeveloper.
 $powerShellDeveloperresponse = $powerShellDeveloper.ProcessInput($devandqamemory)
 $GlobalResponse += $powerShellDeveloperresponse
 
-$documentationSpecialistResponce = $documentationSpecialist.ProcessInput($GlobalResponse -join ", ")
+$documentationSpecialistResponce = $documentationSpecialist.ProcessInput($powerShellDeveloperresponse)
 $GlobalResponse += $documentationSpecialistResponce
 
 # Log final response to file
