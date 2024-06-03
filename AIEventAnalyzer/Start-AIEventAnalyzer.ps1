@@ -25,7 +25,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
-  1.1 - add check update (#15), Stream response as default, fix filtering events by serveritylevel.
+  1.1 - add check update (#15), Stream response as default (not-Stream in generating prompts only), fix filtering events by serveritylevel.
   1.0 - initializing
 
 .PRIVATEDATA
@@ -42,375 +42,18 @@ using namespace System.Diagnostics
  
 Param()
 
-function LogData {
-  <#
-.SYNOPSIS
-This function logs the data into a specified file in a specified folder.
-
-.DESCRIPTION
-The LogData function takes a log folder, filename, data, and type as parameters. 
-It logs these parameters to a file in the specified folder. Each logged line includes the date, time, and type.
-
-.PARAMETER LogFolder
-This parameter accepts the folder where the log file will be stored.
-
-.PARAMETER FileName
-This parameter accepts the name of the file where the data will be logged.
-
-.PARAMETER Data
-This parameter accepts the data that needs to be logged.
-
-.PARAMETER Type
-This parameter accepts the type of the data that needs to be logged. The type can be "user", "system", or "other".
-
-.EXAMPLE
-LogData -LogFolder "C:\Logs" -FileName "log.txt" -Data "Some data to log" -Type "user"
-#>
-  [CmdletBinding()]
-  param (
-    [Parameter(Mandatory = $true)]
-    [string]$LogFolder,
-
-    [Parameter(Mandatory = $true)]
-    [string]$FileName,
-
-    [Parameter(Mandatory = $true)]
-    [string]$Data,
-
-    [Parameter(Mandatory = $true)]
-    [ValidateSet("user", "system", "other")]
-    [string]$Type
-  )
-
-  # Create the log folder if it doesn't exist
-  if (!(Test-Path $LogFolder)) {
-    New-Item -ItemType Directory -Force -Path $LogFolder
-  }
-
-  # Log the data, date, time, and type to the specified file in the specified folder
-  $logFilePath = Join-Path -Path $LogFolder -ChildPath $FileName
-  $logEntry = "{0}; {1}; {2}; {3}; {4}; {5}" -f (Get-Date), $Type, $Data, $null, $null, $null
-  Add-Content -Path $logFilePath -Value $logEntry
-}
-
-function Invoke-AIEventAnalyzer {
-  <#
-.SYNOPSIS
-This function uses Azure OpenAI to interpret the input using a language model and the user's query.
-
-.DESCRIPTION
-The Invoke-AICopilot function takes an input object and a natural language query as parameters. 
-It converts the input object to a string and calls the Invoke-AzureOpenAIChatCompletion function to interpret the input using a language model and the user's query.
-
-.PARAMETER InputObject
-This parameter accepts the input object that needs to be interpreted.
-
-.PARAMETER NaturalLanguageQuery
-This parameter accepts the natural language query to interpret the input object.
-
-.EXAMPLE
-Invoke-AICopilot -InputObject $InputObject -NaturalLanguageQuery "Show only processes using more than 500MB of memory"
-#>
-  [CmdletBinding()]
-  param (
-    [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-    [object]$InputObject,
-
-    [Parameter(Mandatory = $true, Position = 0)]
-    [string]$NaturalLanguageQuery,
-
-    [Parameter(Mandatory = $false)]
-    [string]$LogFile,
-
-    [bool]$stream = $true
-  )
-
-  begin {
-
-    # This block runs once before any input is processed
-    # Initialize an array to store the input objects
-    $inputObjects = @()
-  }
-
-  process {
-    # This block runs once for each item of input
-    # Add the current input object to the array
-    $inputObjects += $InputObject
-  }
-
-  end {
-    # This block runs once after all input has been processed
-    # Convert the array of input objects into a single string
-    $inputString = $inputObjects | Out-String
-    
-    # Call the Invoke-AzureOpenAIChatCompletion function to interpret the input using a language model and the user's query
-    $response = Invoke-PSAOAIChatCompletion -SystemPrompt $NaturalLanguageQuery -usermessage $inputString -OneTimeUserPrompt -Mode Precise -simpleresponse -LogFile $LogFile -Stream $Stream
-
-    # Return the response from the Azure OpenAI Chat Completion function
-    return $response 
-  }
-}
-
-# This function is used to clear the LLMDataJSON
-function Clear-LLMDataJSON {
-  <#
-.SYNOPSIS
-This function clears the LLMDataJSON.
-
-.DESCRIPTION
-The Clear-LLMDataJSON function takes a string of data as input, finds the first instance of '[' and the last instance of ']', and returns the substring between these two characters. This effectively removes any characters before the first '[' and after the last ']'.
-
-.PARAMETER data
-A string of data that needs to be cleared.
-
-.EXAMPLE
-$data = "{extra characters}[actual data]{extra characters}"
-Clear-LLMDataJSON -data $data
-#>
-  param (
-    # The data parameter is mandatory and should be a string
-    [Parameter(Mandatory = $true)]
-    [string]$data
-  )
-  # Find the first occurrence of '[' and remove everything before it
-  $data = $data.Substring($data.IndexOf('['))
-  # Find the last occurrence of ']' and remove everything after it
-  $data = $data.Substring(0, $data.LastIndexOf(']') + 1)
-  # Return the cleaned data
-  return $data
-}
-
-function Get-EventSeverity {
-  # Define the parameters for the function
-  param (
-    # The Severity parameter is mandatory and should be an integer or a string
-    [Parameter(Mandatory = $true)]
-    [ValidateScript({
-        if (($_ -is [int] -and 1..5 -contains $_) -or ($_ -is [string] -and $_ -in "Critical", "Error", "Warning", "Information", "Verbose")) {
-          $true
-        }
-        else {
-          throw "Invalid input. Please enter an integer between 1 and 5 or a valid severity name."
-        }
-      })]
-    $Severity
-  )
-
-  # Define the hash table for severity levels and their corresponding names
-  $EventLevels = @{
-    1 = "Critical"
-    2 = "Error"
-    3 = "Warning"
-    4 = "Information"
-    5 = "Verbose"
-  }
-
-  # Define the reverse hash table for severity names and their corresponding levels
-  $EventLevelsReverse = $EventLevels.GetEnumerator() | Group-Object -Property Value -AsHashTable -AsString
-
-  # Check if the input is an integer or a string and return the corresponding value
-  if ($Severity -is [int]) {
-    return $EventLevels[$Severity]
-  }
-  else {
-    return ($EventLevelsReverse[$Severity]).Name
-  }
-}
-
-function Get-EventLogInfo {
-  <#
-.SYNOPSIS
-   This function retrieves the count of events from a specified Windows Event Log based on the severity level.
-
-.DESCRIPTION
-   The Get-EventLogInfo function creates an object of the specified Windows Event Log and filters the entries based on the provided severity level. 
-   It then returns the count of the filtered events.
-
-.PARAMETER logName
-   The name of the Windows Event Log from which the events are to be retrieved.
-
-.PARAMETER severityLevel
-   The severity level of the events to be retrieved. The valid values are "Critical", "Error", "Warning", "Information", "Verbose", "SuccessAudit", "FailureAudit".
-
-.EXAMPLE
-   Get-EventLogInfo -logName "System" -severityLevel "Information"
-   This command retrieves the count of "Information" level events from the "System" Windows Event Log.
-#>
-  param (
-    [Parameter(Mandatory = $true)]
-    [string]$logName,
-
-    [Parameter(Mandatory = $true)]
-    [ValidateSet("Critical", "Error", "Warning", "Information", "Verbose", "SuccessAudit", "FailureAudit")]
-    [string]$severityLevel
-  )
-
-  # Create an object of the specified Windows Event Log
-  $eventLog = new-object System.Diagnostics.EventLog($logName)
-
-  try {
-    # Filter the entries of the Event Log based on the provided severity level
-    $filteredEvents = $eventLog.Entries | Where-Object { $_.EntryType -eq $([System.Diagnostics.EventLogEntryType]::$severityLevel) }
-    
-  }
-  catch {
-    $filteredEvents = (Get-WinEvent -LogName $logName) | Where-Object { $_.level -eq $([System.Diagnostics.EventLogEntryType]::$severityLevel) }
-  }
-    
-  # Return the count of the filtered events
-  return $filteredEvents.Count
-}
-
-function Get-LogFileDetails {
-  param (
-    [Parameter(Mandatory = $true)]
-    [string]$LogFolder,
-    [Parameter(Mandatory = $true)]
-    [string]$logFileName,
-    [Parameter(Mandatory = $true)]
-    [string]$LogEventDataFileName
-    
-  )
-  $logFile = Join-Path -Path $LogFolder -ChildPath $logFileName
-  if (Test-Path -Path $logFile) {
-    $logFileDetails = Get-Item -Path $logFile
-    Write-Host "Log File Details:"
-    Write-Host "-----------------"
-    Write-Host "Full Path: $($logFileDetails.FullName)"
-    Write-Host "Size: $($logFileDetails.Length) bytes"
-    Write-Host "Last Modified: $($logFileDetails.LastWriteTime)"
-  }
-  else {
-    Write-Host "Log file does not exist."
-  }
-  Write-Host ""
-  if (Test-Path -Path $LogEventDataFileName) {
-    $logFileEventDetails = Get-Item -Path $LogEventDataFileName
-    Write-Host "Log File Event Details:"
-    Write-Host "-----------------"
-    Write-Host "Full Path: $($logFileEventDetails.FullName)"
-    Write-Host "Size: $($logFileEventDetails.Length) bytes"
-    Write-Host "Last Modified: $($logFileEventDetails.LastWriteTime)"
-  }
-  else {
-    Write-Host "Log file does not exist."
-  }
-
-
-}
-
-function Format-ContinuousText {
-  # Define the parameters for the function
-  param (
-    # The text parameter is mandatory and should be a string
-    [Parameter(Mandatory = $true)]
-    [string]$text
-  )
-
-  # This function is designed to transform any text into a continuous string by replacing newline characters with a space.
-  # It accepts a string as input and returns a string where all newline characters (`r`n) and (`n`) are replaced with a space (" ").
-
-  # The `-replace` operator is used to replace all newline characters with a space.
-  # The result is returned as the output of the function.
-
-  if (![string]::IsNullOrEmpty($text)) {
-    $text = $text -replace "`r`n", " " # Replace carriage return and newline characters
-    return $text -replace "`n", " " # Replace newline characters
-  }
-  else {
-    return ""
-  }
-}
-function Update-PromptData {
-  <#
-.SYNOPSIS
-This function updates a given prompt with additional instructions for both experienced and less experienced professionals.
-
-.DESCRIPTION
-The Update-PromptData function takes an input prompt and appends additional instructions to it. These instructions are tailored for both experienced and less experienced professionals. The function returns the updated prompt.
-
-.PARAMETER inputPrompt
-The input prompt that needs to be updated. This parameter is mandatory.
-
-.EXAMPLE
-$promptAnalyze = Update-PromptData -inputPrompt $promptAnalyze
-This example updates the $promptAnalyze variable.
-
-.EXAMPLE
-$promptTroubleshoot = Update-PromptData -inputPrompt $promptTroubleshoot
-This example updates the $promptTroubleshoot variable.
-#>
-  param (
-    [Parameter(Mandatory = $true)]
-    [string]$inputPrompt
-  )
-
-  # Text for experienced professionals
-  $experiencedProfessionalsText = "Ensure that the response is comprehensive and detailed, providing in-depth insights."
-  
-  # Text for less experienced professionals
-  $lessExperiencedProfessionalsText = "Make sure the analysis is easy to understand, with clear explanations and step-by-step instructions."
-
-  # Combine the input prompt with the additional instructions
-  $updatedPrompt = $inputPrompt + " " + $experiencedProfessionalsText
-
-  # Return the updated prompt
-  return $updatedPrompt
-}
-
-function Get-SummarizeSession {
-  param (
-    [Parameter(Mandatory = $true)]
-    [string]$LogFolder,
-    [Parameter(Mandatory = $true)]
-    [string]$logFileName
-  )
-
-  Write-Host "Wait for summary..." -ForegroundColor Magenta
-  Write-Host "it isn't logged" -ForegroundColor DarkGray
-  Write-Host ""
-
-  # Read the log file
-  $logData = Get-Content -Path (Join-Path -Path $LogFolder -ChildPath $logFileName)
-
-  # Initialize counters
-  $userActionsCount = 0
-  $systemResponsesCount = 0
-
-  # Count the occurrences of ";user" and ";system" in the log file
-  $userActionsCount = ($logData -match "; user;").Count
-  $systemResponsesCount = ($logData -match "; system;").Count
-  
-
-  # Print the summary
-  Write-Host "Session Summary:"
-  Write-Host "Total User Actions: $userActionsCount"
-  Write-Host "Total System Responses: $systemResponsesCount"
-  Write-Host ""
-
-  Write-Host "Wait for more..." -ForegroundColor Magenta
-  Write-Host ""
-
-  # Summarize the session log data using AI
-  $summary = $logData | Invoke-AIEventAnalyzer -NaturalLanguageQuery "Summarize the log data in a single paragraph to show the user what was done. Use a cheerful style. Finally, add something nice for the user."
-  Write-Host ""
-  # Print the summary
-  Write-Host "AI Summary:" -ForegroundColor Green
-  Write-Host $summary -ForegroundColor White
-}
-
 function Start-AIEventAnalyzer {
   [CmdletBinding(DefaultParameterSetName = "Default")]
   param (
     [Parameter(Mandatory = $true, ParameterSetName = "LogName")]
     [string]$LogName,
-    [Parameter(Mandatory = $true, ParameterSetName = "LogName")]
+    [Parameter(Mandatory = $false, ParameterSetName = "LogName")]
     [ValidateSet("Critical", "Error", "Warning", "Information", "Verbose", "All")]
     [string]$Serverity,
-    [Parameter(Mandatory = $true, ParameterSetName = "LogName")]
+    [Parameter(Mandatory = $false, ParameterSetName = "LogName")]
     [ValidateSet("Analyze", "Troubleshoot", "Correlate", "Predict", "Optimize", "Audit", "Automate", "Educate", "Documentation", "Summarize")]
     [string]$Action,
-    [Parameter(Mandatory = $true, ParameterSetName = "LogName")]
+    [Parameter(Mandatory = $false, ParameterSetName = "LogName")]
     [int]$Events,
     [Parameter(Mandatory = $false)]
     [string]$LogFolder
@@ -954,17 +597,7 @@ Example of a JSON response with two records:
   
   if ([string]::IsNullOrEmpty($json_data)) {
     LogData -LogFolder $script:LogFolder -FileName $logFileName -Data "Empty response for '$chosenAction' action." -Type "system"
-    Write-Host "No response received. Possible reasons:
-1. Distraction by other tasks.
-2. Technical issues (e.g., network problems).
-3. System overload or slow performance.
-4. Miscommunication about the prompt's urgency.
-5. Accidental dismissal of the prompt.
-6. Interruptions (e.g., meetings, phone calls).
-7. Inattention or unawareness of the prompt.
-8. Time constraints due to busy schedule.
-9. Preference for delayed response.
-10. External factors (e.g., power outage)." -ForegroundColor Red
+    Write-Host "No response received. Possible reasons: Distraction by other tasks, Technical issues (e.g., network problems), System overload or slow performance, Miscommunication about the prompt's urgency, Accidental dismissal of the prompt, Interruptions (e.g., meetings, phone calls), Inattention or unawareness of the prompt, Time constraints due to busy schedule, Preference for delayed response, External factors (e.g., power outage)." -ForegroundColor Red
 
     Write-Host "`nNo data to analyze. Exiting script...`n" -ForegroundColor Red
     return
@@ -1024,7 +657,7 @@ Example of a JSON response with two records:
         Get-LogFileDetails -LogFolder $script:LogFolder -logFileName $logFileName -LogEventDataFileName $logFileNameEventData
         Write-Host ""
 
-        Get-SummarizeSession -LogFolder $script:LogFolder -logFileName $logFileName
+        Get-SummarizeSession -LogFolder $script:LogFolder -logFileName $logFileName -Stream $true
         Write-Host ""
         # Break the loop to end the script
         # break
@@ -1063,6 +696,372 @@ Example of a JSON response with two records:
     $null = [Console]::ReadKey($true)
     Write-Host ""
   }
+}
+
+
+function LogData {
+  <#
+.SYNOPSIS
+This function logs the data into a specified file in a specified folder.
+
+.DESCRIPTION
+The LogData function takes a log folder, filename, data, and type as parameters. 
+It logs these parameters to a file in the specified folder. Each logged line includes the date, time, and type.
+
+.PARAMETER LogFolder
+This parameter accepts the folder where the log file will be stored.
+
+.PARAMETER FileName
+This parameter accepts the name of the file where the data will be logged.
+
+.PARAMETER Data
+This parameter accepts the data that needs to be logged.
+
+.PARAMETER Type
+This parameter accepts the type of the data that needs to be logged. The type can be "user", "system", or "other".
+
+.EXAMPLE
+LogData -LogFolder "C:\Logs" -FileName "log.txt" -Data "Some data to log" -Type "user"
+#>
+  [CmdletBinding()]
+  param (
+    [Parameter(Mandatory = $true)]
+    [string]$LogFolder,
+
+    [Parameter(Mandatory = $true)]
+    [string]$FileName,
+
+    [Parameter(Mandatory = $true)]
+    [string]$Data,
+
+    [Parameter(Mandatory = $true)]
+    [ValidateSet("user", "system", "other")]
+    [string]$Type
+  )
+
+  # Create the log folder if it doesn't exist
+  if (!(Test-Path $LogFolder)) {
+    New-Item -ItemType Directory -Force -Path $LogFolder
+  }
+
+  # Log the data, date, time, and type to the specified file in the specified folder
+  $logFilePath = Join-Path -Path $LogFolder -ChildPath $FileName
+  $logEntry = "{0}; {1}; {2}; {3}; {4}; {5}" -f (Get-Date), $Type, $Data, $null, $null, $null
+  Add-Content -Path $logFilePath -Value $logEntry
+}
+
+function Invoke-AIEventAnalyzer {
+  <#
+.SYNOPSIS
+This function uses Azure OpenAI to interpret the input using a language model and the user's query.
+
+.DESCRIPTION
+The Invoke-AICopilot function takes an input object and a natural language query as parameters. 
+It converts the input object to a string and calls the Invoke-AzureOpenAIChatCompletion function to interpret the input using a language model and the user's query.
+
+.PARAMETER InputObject
+This parameter accepts the input object that needs to be interpreted.
+
+.PARAMETER NaturalLanguageQuery
+This parameter accepts the natural language query to interpret the input object.
+
+.EXAMPLE
+Invoke-AICopilot -InputObject $InputObject -NaturalLanguageQuery "Show only processes using more than 500MB of memory"
+#>
+  [CmdletBinding()]
+  param (
+    [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+    [object]$InputObject,
+
+    [Parameter(Mandatory = $true, Position = 0)]
+    [string]$NaturalLanguageQuery,
+
+    [Parameter(Mandatory = $false)]
+    [string]$LogFile,
+
+    [bool]$stream = $true
+  )
+
+  begin {
+
+    # This block runs once before any input is processed
+    # Initialize an array to store the input objects
+    $inputObjects = @()
+  }
+
+  process {
+    # This block runs once for each item of input
+    # Add the current input object to the array
+    $inputObjects += $InputObject
+  }
+
+  end {
+    # This block runs once after all input has been processed
+    # Convert the array of input objects into a single string
+    $inputString = $inputObjects | Out-String
+    
+    # Call the Invoke-AzureOpenAIChatCompletion function to interpret the input using a language model and the user's query
+    $response = Invoke-PSAOAIChatCompletion -SystemPrompt $NaturalLanguageQuery -usermessage $inputString -OneTimeUserPrompt -Mode Precise -simpleresponse -LogFile $LogFile -Stream $Stream
+
+    # Return the response from the Azure OpenAI Chat Completion function
+    return $response 
+  }
+}
+
+# This function is used to clear the LLMDataJSON
+function Clear-LLMDataJSON {
+  <#
+.SYNOPSIS
+This function clears the LLMDataJSON.
+
+.DESCRIPTION
+The Clear-LLMDataJSON function takes a string of data as input, finds the first instance of '[' and the last instance of ']', and returns the substring between these two characters. This effectively removes any characters before the first '[' and after the last ']'.
+
+.PARAMETER data
+A string of data that needs to be cleared.
+
+.EXAMPLE
+$data = "{extra characters}[actual data]{extra characters}"
+Clear-LLMDataJSON -data $data
+#>
+  param (
+    # The data parameter is mandatory and should be a string
+    [Parameter(Mandatory = $true)]
+    [string]$data
+  )
+  # Find the first occurrence of '[' and remove everything before it
+  $data = $data.Substring($data.IndexOf('['))
+  # Find the last occurrence of ']' and remove everything after it
+  $data = $data.Substring(0, $data.LastIndexOf(']') + 1)
+  # Return the cleaned data
+  return $data
+}
+
+function Get-EventSeverity {
+  # Define the parameters for the function
+  param (
+    # The Severity parameter is mandatory and should be an integer or a string
+    [Parameter(Mandatory = $true)]
+    [ValidateScript({
+        if (($_ -is [int] -and 1..5 -contains $_) -or ($_ -is [string] -and $_ -in "Critical", "Error", "Warning", "Information", "Verbose")) {
+          $true
+        }
+        else {
+          throw "Invalid input. Please enter an integer between 1 and 5 or a valid severity name."
+        }
+      })]
+    $Severity
+  )
+
+  # Define the hash table for severity levels and their corresponding names
+  $EventLevels = @{
+    1 = "Critical"
+    2 = "Error"
+    3 = "Warning"
+    4 = "Information"
+    5 = "Verbose"
+  }
+
+  # Define the reverse hash table for severity names and their corresponding levels
+  $EventLevelsReverse = $EventLevels.GetEnumerator() | Group-Object -Property Value -AsHashTable -AsString
+
+  # Check if the input is an integer or a string and return the corresponding value
+  if ($Severity -is [int]) {
+    return $EventLevels[$Severity]
+  }
+  else {
+    return ($EventLevelsReverse[$Severity]).Name
+  }
+}
+
+function Get-EventLogInfo {
+  <#
+.SYNOPSIS
+   This function retrieves the count of events from a specified Windows Event Log based on the severity level.
+
+.DESCRIPTION
+   The Get-EventLogInfo function creates an object of the specified Windows Event Log and filters the entries based on the provided severity level. 
+   It then returns the count of the filtered events.
+
+.PARAMETER logName
+   The name of the Windows Event Log from which the events are to be retrieved.
+
+.PARAMETER severityLevel
+   The severity level of the events to be retrieved. The valid values are "Critical", "Error", "Warning", "Information", "Verbose", "SuccessAudit", "FailureAudit".
+
+.EXAMPLE
+   Get-EventLogInfo -logName "System" -severityLevel "Information"
+   This command retrieves the count of "Information" level events from the "System" Windows Event Log.
+#>
+  param (
+    [Parameter(Mandatory = $true)]
+    [string]$logName,
+
+    [Parameter(Mandatory = $true)]
+    [ValidateSet("Critical", "Error", "Warning", "Information", "Verbose", "SuccessAudit", "FailureAudit")]
+    [string]$severityLevel
+  )
+
+  # Create an object of the specified Windows Event Log
+  $eventLog = new-object System.Diagnostics.EventLog($logName)
+
+  try {
+    # Filter the entries of the Event Log based on the provided severity level
+    $filteredEvents = $eventLog.Entries | Where-Object { $_.EntryType -eq $([System.Diagnostics.EventLogEntryType]::$severityLevel) }
+    
+  }
+  catch {
+    $filteredEvents = (Get-WinEvent -LogName $logName) | Where-Object { $_.level -eq $([System.Diagnostics.EventLogEntryType]::$severityLevel) }
+  }
+    
+  # Return the count of the filtered events
+  return $filteredEvents.Count
+}
+
+function Get-LogFileDetails {
+  param (
+    [Parameter(Mandatory = $true)]
+    [string]$LogFolder,
+    [Parameter(Mandatory = $true)]
+    [string]$logFileName,
+    [Parameter(Mandatory = $true)]
+    [string]$LogEventDataFileName
+    
+  )
+  $logFile = Join-Path -Path $LogFolder -ChildPath $logFileName
+  if (Test-Path -Path $logFile) {
+    $logFileDetails = Get-Item -Path $logFile
+    Write-Host "Log File Details:"
+    Write-Host "-----------------"
+    Write-Host "Full Path: $($logFileDetails.FullName)"
+    Write-Host "Size: $($logFileDetails.Length) bytes"
+    Write-Host "Last Modified: $($logFileDetails.LastWriteTime)"
+  }
+  else {
+    Write-Host "Log file does not exist."
+  }
+  Write-Host ""
+  if (Test-Path -Path $LogEventDataFileName) {
+    $logFileEventDetails = Get-Item -Path $LogEventDataFileName
+    Write-Host "Log File Event Details:"
+    Write-Host "-----------------"
+    Write-Host "Full Path: $($logFileEventDetails.FullName)"
+    Write-Host "Size: $($logFileEventDetails.Length) bytes"
+    Write-Host "Last Modified: $($logFileEventDetails.LastWriteTime)"
+  }
+  else {
+    Write-Host "Log file does not exist."
+  }
+
+
+}
+
+function Format-ContinuousText {
+  # Define the parameters for the function
+  param (
+    # The text parameter is mandatory and should be a string
+    [Parameter(Mandatory = $true)]
+    [string]$text
+  )
+
+  # This function is designed to transform any text into a continuous string by replacing newline characters with a space.
+  # It accepts a string as input and returns a string where all newline characters (`r`n) and (`n`) are replaced with a space (" ").
+
+  # The `-replace` operator is used to replace all newline characters with a space.
+  # The result is returned as the output of the function.
+
+  if (![string]::IsNullOrEmpty($text)) {
+    $text = $text -replace "`r`n", " " # Replace carriage return and newline characters
+    return $text -replace "`n", " " # Replace newline characters
+  }
+  else {
+    return ""
+  }
+}
+function Update-PromptData {
+  <#
+.SYNOPSIS
+This function updates a given prompt with additional instructions for both experienced and less experienced professionals.
+
+.DESCRIPTION
+The Update-PromptData function takes an input prompt and appends additional instructions to it. These instructions are tailored for both experienced and less experienced professionals. The function returns the updated prompt.
+
+.PARAMETER inputPrompt
+The input prompt that needs to be updated. This parameter is mandatory.
+
+.EXAMPLE
+$promptAnalyze = Update-PromptData -inputPrompt $promptAnalyze
+This example updates the $promptAnalyze variable.
+
+.EXAMPLE
+$promptTroubleshoot = Update-PromptData -inputPrompt $promptTroubleshoot
+This example updates the $promptTroubleshoot variable.
+#>
+  param (
+    [Parameter(Mandatory = $true)]
+    [string]$inputPrompt
+  )
+
+  # Text for experienced professionals
+  $experiencedProfessionalsText = "Ensure that the response is comprehensive and detailed, providing in-depth insights."
+  
+  # Text for less experienced professionals
+  $lessExperiencedProfessionalsText = "Make sure the analysis is easy to understand, with clear explanations and step-by-step instructions."
+
+  # Combine the input prompt with the additional instructions
+  $updatedPrompt = $inputPrompt + " " + $experiencedProfessionalsText
+
+  # Return the updated prompt
+  return $updatedPrompt
+}
+
+function Get-SummarizeSession {
+  param (
+    [Parameter(Mandatory = $true)]
+    [string]$LogFolder,
+    [Parameter(Mandatory = $true)]
+    [string]$logFileName,
+    [bool] $Stream
+  )
+
+  Write-Host "Wait for summary..." -ForegroundColor Magenta
+  Write-Host "it isn't logged" -ForegroundColor DarkGray
+  Write-Host ""
+
+  # Read the log file
+  $logData = Get-Content -Path (Join-Path -Path $LogFolder -ChildPath $logFileName)
+
+  # Initialize counters
+  $userActionsCount = 0
+  $systemResponsesCount = 0
+
+  # Count the occurrences of ";user" and ";system" in the log file
+  $userActionsCount = ($logData -match "; user;").Count
+  $systemResponsesCount = ($logData -match "; system;").Count
+  
+
+  # Print the summary
+  Write-Host "Session Summary:"
+  Write-Host "Total User Actions: $userActionsCount"
+  Write-Host "Total System Responses: $systemResponsesCount"
+  Write-Host ""
+  
+  if ($Stream) {
+    Write-Host "AI Summary:" -ForegroundColor Green
+  }
+  Write-Host "AI Summary:" -ForegroundColor Green
+  # Summarize the session log data using AI
+  $summary = $logData | Invoke-AIEventAnalyzer -NaturalLanguageQuery "Summarize the log data in a single paragraph to show the user what was done. Use a cheerful style. Finally, add something nice for the user."
+  Write-Host ""
+  # Print the summary
+} else {
+  Write-Host "Wait for more..." -ForegroundColor Magenta -NoNewline
+  # Summarize the session log data using AI
+  $summary = $logData | Invoke-AIEventAnalyzer -NaturalLanguageQuery "Summarize the log data in a single paragraph to show the user what was done. Use a cheerful style. Finally, add something nice for the user."
+  Write-Host ""
+  # Print the summary
+  Write-Host "AI Summary:" -ForegroundColor Green
+  Write-Host $summary -ForegroundColor White
 }
 
 function Show-Banner {
@@ -1156,8 +1155,7 @@ Check-ForUpdate -currentVersion "1.1" -scriptName "Start-AIEventAnalyzer"
 
 $moduleName = "PSAOAI"
 if (Get-Module -ListAvailable -Name $moduleName) {
-  #[void](Import-module -name PSAOAI -Force)
-  import-module d:\dane\voytas\Dokumenty\visual_studio_code\github\AzureOpenAI-PowerShell\PSAOAI\PSAOAI.psd1 -Force
+  [void](Import-module -name PSAOAI -Force)
 }
 else {
   Write-Host "You need to install '$moduleName' module. USe: 'Install-Module PSAOAI'"

@@ -12,11 +12,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Fix
 
-- Chat: error returned as response (`Show-Error`, `Format-Error`)
+- 
 
 ### Changed
 
-- Set default stream to TRUE
+- 
+
+## [0.2.1] - 2024.06.03
+
+### Fix
+
+- Chat: error returned as response,
+- Chat: response.
+
+### Changed
+
+- Set default stream to TRUE,
+- Chat: verification of response when not stream.
 
 ## [0.2.0] - 2024.05.30
 

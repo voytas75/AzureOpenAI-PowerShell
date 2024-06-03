@@ -94,10 +94,14 @@ class ProjectTeam {
         $this.AddLogEntry("Processing input: $input")
         # Update status
         $this.Status = "In Progress"
-
+        #write-Host $script:Stream
         try {
             # Use the user-provided function to get the response
             $response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $input -Temperature $this.Temperature -TopP $this.TopP
+            if (-not $script:Stream) {
+                #write-host ($response | convertto-json -Depth 100)
+                Write-Host $response
+            }
             # Log the response
             $this.AddLogEntry("Generated response: $response")
             # Store the response in memory with timestamp
@@ -105,7 +109,7 @@ class ProjectTeam {
                     Response  = $response
                     Timestamp = Get-Date
                 })
-                $feedbackSummary=""
+            $feedbackSummary = ""
             if ($this.TeamMembers.count -gt 0) {
                 # Request feedback for the response
                 $feedbackSummary = $this.RequestFeedback($response)
@@ -256,7 +260,7 @@ Please provide your feedback, including comments or suggestions.
 
 
 #region Importing Modules and Setting Up Discussion
-# Import modules and scripts
+# Disabe PSAOAI importing banner
 [System.Environment]::SetEnvironmentVariable("PSAOAI_BANNER", "0", "User")
 #Import-Module -Name PSaoAI
 Import-module "D:\dane\voytas\Dokumenty\visual_studio_code\github\AzureOpenAI-PowerShell\PSAOAI\PSAOAI.psd1" -Force 
@@ -311,7 +315,7 @@ Instructions:
     0.9,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $true -LogFolder $script:TeamDiscussionDataFolder
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
             return $response
         })
 )
@@ -329,7 +333,7 @@ $domainExpert = [ProjectTeam]::new(
     0.9,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4turbo" -simpleresponse -OneTimeUserPrompt -Stream $true
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4turbo" -simpleresponse -OneTimeUserPrompt -Stream $script:Stream
             return $response
         })
 )
@@ -355,7 +359,7 @@ $systemArchitect = [ProjectTeam]::new(
     0.85,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $true -LogFolder $script:TeamDiscussionDataFolder
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
             return $response
         })
 )
@@ -379,7 +383,7 @@ Instructions:
     0.8,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4turbo" -simpleresponse -OneTimeUserPrompt -Stream $true -LogFolder $script:TeamDiscussionDataFolder
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4turbo" -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
             return $response
         })
 )
@@ -403,7 +407,7 @@ Instructions:
     0.9,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $true -LogFolder $script:TeamDiscussionDataFolder
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
             return $response
         })
 )
@@ -426,7 +430,7 @@ $documentationSpecialist = [ProjectTeam]::new(
     0.8,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $true -LogFolder $script:TeamDiscussionDataFolder
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
             return $response
         })
 )
@@ -448,7 +452,7 @@ $projectManager = [ProjectTeam]::new(
     0.85,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $true -LogFolder $script:TeamDiscussionDataFolder
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
             return $response
         })
 )
@@ -467,7 +471,6 @@ $requirementsAnalyst.SetNextExpert($systemArchitect)
 $systemArchitect.SetNextExpert($domainExpert)
 $domainExpert.SetNextExpert($powerShellDeveloper)
 $powerShellDeveloper.SetNextExpert($qaEngineer)
-
 
 # Example of starting the process
 $response = $requirementsAnalyst.ProcessInput($userInput)

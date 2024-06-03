@@ -189,6 +189,8 @@ function Invoke-PSAOAIApiRequestStream {
     }
     catch {
         Write-LogMessage "An error occurred: $_" "ERROR" -LogFile $logfile
+        Write-Error $_
+        return
     }
 }
 

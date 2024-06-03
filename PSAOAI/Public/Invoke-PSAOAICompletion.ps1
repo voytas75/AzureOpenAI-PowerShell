@@ -374,7 +374,12 @@ function Invoke-PSAOAICompletion {
             if ($LogFolder) {
                 Write-Host "{Logfolder:'${LogFolder}'} " -ForegroundColor Magenta
             }
-            Write-Host "{MaxTokens:'$MaxTokens', temp:'$Temperature', top_p:'$TopP', fp:'$FrequencyPenalty', pp:'$PresencePenalty', user:'$User', n:'$N', stop:'$Stop', stream:'$Stream'} " -ForegroundColor Magenta
+            if ($Stream) {
+                Write-Host "{MaxTokens:'$MaxTokens', temp:'$Temperature', top_p:'$TopP', fp:'$FrequencyPenalty', pp:'$PresencePenalty', user:'$User', n:'$N', stop:'$Stop', stream:'$Stream'} " -ForegroundColor Magenta
+            }
+            else {
+                Write-Host "{MaxTokens:'$MaxTokens', temp:'$Temperature', top_p:'$TopP', fp:'$FrequencyPenalty', pp:'$PresencePenalty', user:'$User', n:'$N', stop:'$Stop', stream:'$Stream'} " -ForegroundColor Magenta -NoNewline            
+            }
         }
         #write-host $bodyJSON -BackgroundColor Blue
         if ($Stream) {
@@ -391,6 +396,7 @@ function Invoke-PSAOAICompletion {
         }
         else {
             $response = Invoke-PSAOAIApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240
+            #Write-Host ($response | ConvertTo-Json -Depth 100)
             if (-not $($response.choices[0].text)) {
                 Write-Warning "Response is empty"
                 return

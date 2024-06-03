@@ -174,7 +174,6 @@ function Invoke-PSAOAIChatCompletion {
             }
         )
     }
-
     
     # Function to output the response message
     function Show-ResponseMessage {
@@ -547,25 +546,26 @@ function Invoke-PSAOAIChatCompletion {
                 $response = Invoke-PSAOAIApiRequestStream -url $urlChat -headers $headers -bodyJSON $bodyJSON -Chat -timeout 240 -logfile $logfile | out-string
                 if ([string]::IsNullOrEmpty($response)) {
                     Write-Warning "Response is empty"
-                    Write-LogMessage -Message "Response is empty"  "WARNING" -LogFile $logfile
+                    Write-LogMessage -Message "Response is empty" "WARNING" -LogFile $logfile
                     return
                 }
                 $assistant_response = $response
             }
             else {
                 $response = Invoke-PSAOAIApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240
-                if ([string]::IsNullOrEmpty($($response.choices[0].text))) {
+                #write-Host ($response | ConvertTo-Json -Depth 100)
+                #if ([string]::IsNullOrEmpty($($response.choices[0].text))) {
+                if ([string]::IsNullOrEmpty($($response.choices[0].message.content))) {
                     Write-Warning "Response is empty"
                     Write-LogMessage -Message "Response is empty"  "WARNING" -LogFile $logfile
                     return
                 }
                 # Write the received job to verbose output
-                Write-Verbose ("Receive job:`n$($response | ConvertTo-Json)" | Out-String)
+                Write-Verbose ("Received job output:`n$($response | ConvertTo-Json)" | Out-String)
                 # Get the assistant response
                 $assistant_response = $response.choices[0].message.content
-                # Add the assistant response to the messages
-                
             }
+            # Add the assistant response to the messages
             $messages += @{"role" = "assistant"; "content" = $assistant_response }
 
             # If there is a one-time user prompt, process it
@@ -595,7 +595,8 @@ function Invoke-PSAOAIChatCompletion {
                 # Return the response text
                 if (-not $Stream) {
                     return $responseText
-                } else {
+                }
+                else {
                     return $responseText
                 }           
             }
@@ -629,9 +630,10 @@ function Invoke-PSAOAIChatCompletion {
         } while ($true)
     }
     catch {
-        Format-Error -ErrorVar $_
-        Show-Error -ErrorVar $_
+        #Format-Error -ErrorVar $_
+        #Show-Error -ErrorVar $_
         Write-LogMessage "An error occurred: $_" "ERROR" -LogFile $logfile
+        Write-Error $_
         return
     }
 }
@@ -652,3 +654,4 @@ $Deployment = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_DEPLOYMENT
 # Get the API key from the environment variable
 $ApiKey = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key"
 #>
+

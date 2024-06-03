@@ -31,7 +31,7 @@ if ($FoundErrors.Count -gt 0) {
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 
 # Determine the installed version of the module
-$ModuleVersion = [version]"0.2.0"
+$ModuleVersion = [version]"0.2.1"
 
 # Query the PSGallery repository for the most recent version of the module
 $LatestModule = Find-Module -Name $script:ModuleName -Repository PSGallery -ErrorAction SilentlyContinue
