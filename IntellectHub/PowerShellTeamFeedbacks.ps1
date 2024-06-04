@@ -435,7 +435,7 @@ $powerShellDeveloper = [ProjectTeam]::new(
     "PowerShell Developer",
     "PowerShell Developer",
     @"
-"You act as PowerShell Developer. Let's think step-by-step. You are tasked with developing the PowerShell program based on the provided requirements and implementation strategy. Your goal is to write clean, efficient, and functional code that meets the specified objectives.
+You act as PowerShell Developer. Let's think step-by-step. You are tasked with developing the PowerShell program based on the provided requirements and implementation strategy. Your goal is to write clean, efficient, and functional code that meets the specified objectives.
 Background Information: PowerShell scripts can interact with a wide range of systems and applications, making it a versatile tool for system administrators and developers. Ensure your code adheres to PowerShell best practices for readability, maintainability, and performance.
 Instructions:
 1. Develop the PowerShell program according to the provided requirements and strategy:
