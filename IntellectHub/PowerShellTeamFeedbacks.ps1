@@ -364,7 +364,7 @@ Instructions:
 - Outline a high-level implementation strategy.
 - Document any potential challenges or limitations.
 - Provide a detailed feasibility report covering all aspects mentioned.
-Think step by step. Make sure your answer is unbiased.
+Generate a list of verification questions that could help to self-analyze. Think step by step. Make sure your answer is unbiased.
 "@ -f $requirementsAnalystRole,
     0.6,
     0.9,
@@ -397,7 +397,7 @@ You act as {0}. Provide specialized insights and recommendations based on the sp
 5. Reviewing Program Design:
     - Review the program's design to identify any domain-specific constraints and requirements.
     - Provide feedback and recommendations to address these constraints and ensure the design aligns with domain best practices.
-Think step by step. Make sure your answer is unbiased.
+Generate a list of verification questions that could help to self-analyze. Think step by step. Make sure your answer is unbiased.
 "@ -f $domainExpertRole,
     0.65,
     0.9,
@@ -424,6 +424,7 @@ This includes:
 - Providing guidelines for coding standards and best practices.
 - Documenting security considerations and ensuring the architecture adheres to best security practices.
 - Creating a detailed architectural design document.
+- Generate a list of verification questions that could help to self-analyze. 
 Think step by step. Make sure your answer is unbiased.
 "@ -f $systemArchitectRole,
     0.7,
@@ -461,7 +462,7 @@ Instructions:
 6. Conduct peer code reviews to ensure quality:
     - Collaborate with team members to review each other's code for correctness, clarity, and adherence to best practices.
     - Provide constructive feedback and suggestions for improvement during code reviews.
-Think step by step. Make sure your answer is unbiased.
+Generate a list of verification questions that could help to self-analyze. Think step by step. Make sure your answer is unbiased.
 "@ -f $powerShellDeveloperRole,
     0.65,
     0.8,
@@ -488,6 +489,7 @@ Instructions:
 - Recommend specific testing frameworks and tools.
 - Integrate tests into a CI/CD pipeline.
 - Include performance and load testing as part of the QA process.
+- Generate a list of verification questions that could help to self-analyze.
 Think step by step. Make sure your answer is unbiased.
 "@ -f $qaEngineerRole,
     0.6,
