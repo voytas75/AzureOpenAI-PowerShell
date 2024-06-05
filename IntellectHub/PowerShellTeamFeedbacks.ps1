@@ -606,7 +606,7 @@ $GlobalResponse += $HelperExpertResponse
 $userInputOryginal = $userInput
 $userInput = $HelperExpertResponse
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($userInput.trim() + "`n`nShow the first version of the code.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($userInput.trim() + "`n`nShow the version 1.0 of the code.")
 
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 $GlobalResponse += $powerShellDeveloperResponce
