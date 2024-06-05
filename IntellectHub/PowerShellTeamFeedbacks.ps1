@@ -340,7 +340,7 @@ if (Get-Module -ListAvailable -Name PSAOAI) {
     [void](Import-module -name PSAOAI -Force)
 }
 else {
-    Write-Host "You need to install 'PSAOAI' module. Use: 'Install-Module PSAOAI'"
+    Write-Host "You need to install PSAOAI module. Use: 'Install-Module PSAOAI'"
     return
 }
   
