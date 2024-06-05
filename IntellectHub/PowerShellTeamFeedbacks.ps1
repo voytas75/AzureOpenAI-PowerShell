@@ -278,7 +278,7 @@ function SendFeedbackRequest {
 Review the following response and provide your suggestions for improvement as feedback. Generate a list of verification questions that could help to self-analyze. Think step by step. Make sure your answer is unbiased.
 
 ````````text
-$Response
+$($Response.trim())
 ````````
 "@
 
