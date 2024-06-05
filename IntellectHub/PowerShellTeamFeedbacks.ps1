@@ -341,6 +341,7 @@ if (Get-Module -ListAvailable -Name PSAOAI) {
 }
 else {
     Write-Host "You need to install 'PSAOAI' module. Use: 'Install-Module PSAOAI'"
+    return
 }
   
 #region Importing Helper Functions
