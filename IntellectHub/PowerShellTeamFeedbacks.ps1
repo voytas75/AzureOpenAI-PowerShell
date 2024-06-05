@@ -276,7 +276,8 @@ function SendFeedbackRequest {
     # Define the feedback request prompt
     $Systemprompt = $prompt 
     $Response = @"
-Review the following response and provide your suggestions for improvement as feedback. Generate a list of verification questions that could help to self-analyze. 
+Review the following response and provide your suggestions for improvement as feedback to $($this.name). Generate a list of verification questions that could help to self-analyze. 
+I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
 $script:userInput
 
 ````````text
@@ -623,8 +624,9 @@ if ($FeedbackSummary) {
 }
 else {
     $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on expert feedback, apply the proposed improvements and optimizations, and show the latest version of the code. Think step by step. Make sure your answer is unbiased.`n`n" + $PSDevTeamMembersMemory)
-    $GlobalPSDevResponse += $powerShellDeveloperResponce
+    
 }
+$GlobalPSDevResponse += $powerShellDeveloperResponce
 
 $GlobalResponse += $powerShellDeveloperResponce
 
