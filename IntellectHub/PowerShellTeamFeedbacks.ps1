@@ -600,13 +600,13 @@ foreach ($TeamMember in $Team) {
 Start-Transcript -Path (join-path $script:TeamDiscussionDataFolder "TRANSCRIPT.log")
 
 
-$HelperExpertResponse = $HelperExpert.ProcessInput("Based on user input create short and concise project description and objective. You will receive a tip of `$100 for including all the elements provided by the user.`n`n" + $userInput + "`n`nShow the first version of the code.")
+$HelperExpertResponse = $HelperExpert.ProcessInput("Based on user input create short and concise project description and objective. You will receive a tip of `$100 for including all the elements provided by the user.`n`n" + $userInput)
 $GlobalResponse += $HelperExpertResponse
 
 $userInputOryginal = $userInput
 $userInput = $HelperExpertResponse
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($userInput)
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($userInput.trim() + "`n`nShow the first version of the code.")
 
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 $GlobalResponse += $powerShellDeveloperResponce
