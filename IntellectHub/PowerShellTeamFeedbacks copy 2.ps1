@@ -323,7 +323,7 @@ $requirementsAnalyst = [ProjectTeam]::new(
     "Requirements Analyst",
     "Requirements Analyst",
     @"
-You act as Requirements Analyst. You are tasked with analyzing the feasibility and requirements of a PowerShell program. The goal is to clearly define the program's objectives, identify the necessary components, and outline the implementation strategy for Powershell Developer.
+You act as Requirements Analyst. Let's think step-by-step. You are tasked with analyzing the feasibility and requirements of a PowerShell program. The goal is to clearly define the program's objectives, identify the necessary components, and outline the implementation strategy.
 Background Information: PowerShell is a task automation and configuration management framework from Microsoft, consisting of a command-line shell and scripting language. It is widely used for managing and automating tasks across various Microsoft and non-Microsoft environments.
 Instructions:
 - Evaluate the feasibility of creating the described PowerShell program, including technical, operational, and financial aspects.
@@ -332,7 +332,6 @@ Instructions:
 - Outline a high-level implementation strategy.
 - Document any potential challenges or limitations.
 - Provide a detailed feasibility report covering all aspects mentioned.
-Let think step-by-step. 
 "@,
     0.6,
     0.9,
@@ -379,7 +378,7 @@ $domainExpert = [ProjectTeam]::new(
     "Domain Expert",
     "Domain Expert",
     @"
-You act as Domain Expert. Provide specialized insights and recommendations based on the specific domain requirements of the project for Powershell Developer. This includes:
+You act as Domain Expert. Let's think step-by-step. Provide specialized insights and recommendations based on the specific domain requirements of the project. This includes:
 1. Ensuring Compatibility:
     - Ensure the program is compatible with various domain-specific environments (e.g., cloud, on-premises, hybrid).
     - Validate the requirements against industry standards and best practices to ensure broad compatibility.
@@ -396,7 +395,6 @@ You act as Domain Expert. Provide specialized insights and recommendations based
 5. Reviewing Program Design:
     - Review the program's design to identify any domain-specific constraints and requirements.
     - Provide feedback and recommendations to address these constraints and ensure the design aligns with domain best practices.
-Let's think step-by-step. 
 "@,
     0.65,
     0.9,
@@ -558,7 +556,6 @@ $powerShellDeveloper.TeamMembers = $TeamMembers
 
 $HelperExpert.Prompt = "Based on user input create project description and objective."
 $HelperExpertResponse = $HelperExpert.ProcessInput($userInput)
-$GlobalResponse += $HelperExpertResponse
 
 $userInputoryginal = $userInput
 $userInput = @"
@@ -566,14 +563,7 @@ User input: $userinput
 $HelperExpertResponse
 "@
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($userInput)
-$GlobalResponse += $powerShellDeveloperResponce
-$PSDevTeamMembersMemory = GetLastMemoryFromTeamMembers -TeamMembers $TeamMembers
-$powerShellDeveloper.TeamMembers = $null
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($PSDevTeamMembersMemory)
-
-return
-
+# Example of starting the process
 $requirementsAnalystresponse = $requirementsAnalyst.ProcessInput($userInput)
 $GlobalResponse += $requirementsAnalystresponse
 $systemArchitectResponse = $systemArchitect.ProcessInput($GlobalResponse -join ", ")
