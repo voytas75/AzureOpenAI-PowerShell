@@ -275,11 +275,14 @@ function SendFeedbackRequest {
     # Define the feedback request prompt
     $Systemprompt = $prompt 
     $Response = @"
-Review the following response and provide your suggestions for improvement as feedback. Generate a list of verification questions that could help to self-analyze. Think step by step. Make sure your answer is unbiased.
+Review the following response and provide your suggestions for improvement as feedback. Generate a list of verification questions that could help to self-analyze. 
+$script:userInput
 
 ````````text
 $($Response.trim())
 ````````
+
+Think step by step. Make sure your answer is unbiased.
 "@
 
     # Send the feedback request to the LLM model
@@ -603,9 +606,9 @@ $HelperExpertResponse = $HelperExpert.ProcessInput("Based on user input create s
 $GlobalResponse += $HelperExpertResponse
 
 $userInputOryginal = $userInput
-$userInput = $HelperExpertResponse
+$script:userInput = $HelperExpertResponse
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($userInput.trim() + "`n`nShow the version 1.0 of the code.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($script:userInput.trim() + "`n`nShow the version 1.0 of the code.")
 
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 $GlobalResponse += $powerShellDeveloperResponce
