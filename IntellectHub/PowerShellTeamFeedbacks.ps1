@@ -27,7 +27,7 @@ None. You cannot pipe objects to this script directly but must pass them as argu
 Output varies depending on how each specialist processes their part of the project; typically text-based results are expected which may include status messages or visual representations like graphs or color blocks related to system metrics such as RAM load etc., depending upon user input specification provided via 'userInput' parameter
 
 .EXAMPLE 
-PS> .\PowerShellTeam.ps1 -userInput "A PowerShell project to monitor CPU usage and display dynamic graph." -Stream $false
+PS> .\PowerShellTeamFeedbacks.ps1 -userInput "A PowerShell project to monitor CPU usage and display dynamic graph." -Stream $false
 
 This command runs the script without streaming output live (-Stream $false) while specifying custom user input about monitoring CPU usage instead of RAM and displaying it through dynamic graphing methods rather than static color blocks.
 
