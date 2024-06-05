@@ -619,7 +619,7 @@ $PSDevTeamMembersMemory = GetLastMemoryFromFeedbackTeamMembers -FeedbackTeam $PS
 $powerShellDeveloper.FeedbackTeam = $null
 
 if ($FeedbackSummary) {
-    $PSDevTeamMembersMemorySummary = $projectManager.ProcessInput("Summarize expert feedback focusing on key points of suggestions for improvement." + $PSDevTeamMembersMemory)
+    $PSDevTeamMembersMemorySummary = $projectManager.ProcessInput("Summarize expert feedback focusing on key points of suggestions for improvement.`n`n" + $PSDevTeamMembersMemory)
     $GlobalResponse += $PSDevTeamMembersMemorySummary
     $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on expert feedback summary, apply the proposed improvements and optimizations, and show the latest version of the code. Think step by step. Make sure your answer is unbiased.`n`n" + $PSDevTeamMembersMemorySummary)
 }
