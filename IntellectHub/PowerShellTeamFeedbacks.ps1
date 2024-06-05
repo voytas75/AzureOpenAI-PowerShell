@@ -22,7 +22,7 @@ param(
     [bool] $Stream = $true
 )
 
-#region LanguageModelClass
+#region ProjectTeamClass
 <#
 .SYNOPSIS
 The ProjectTeam class represents an expert in the team.
@@ -55,7 +55,7 @@ class ProjectTeam {
     [System.Collections.ArrayList] $Log
     [scriptblock] $ResponseFunction
     [string] $LogFilePath
-    [array] $TeamMembers
+    [array] $FeedbackTeam
     
     ProjectTeam([string] $name, [string] $role, [string] $prompt, [double] $temperature, [double] $top_p, [scriptblock] $responseFunction) {
         $this.Name = $name
@@ -69,35 +69,60 @@ class ProjectTeam {
         $this.Log = @()
         $this.ResponseFunction = $responseFunction
         $this.LogFilePath = "$script:TeamDiscussionDataFolder\$name.log"
-        $this.TeamMembers = @()
+        $this.FeedbackTeam = @()
     }
 
-    [void] DisplayInfo() {
-        Write-Host "Name: $($this.Name)"
-        Write-Host "Role: $($this.Role)"
-        Write-Host "Prompt: $($this.Prompt)"
-        Write-Host "Temperature: $($this.Temperature)"
-        Write-Host "TopP: $($this.TopP)"
-        Write-Host "Status: $($this.Status)"
-        Write-Host "Log: $($this.Log -join ', ')"
-        Write-Host "Responses:"
-        foreach ($memory in $this.ResponseMemory) {
-            Write-Host "[$($memory.Timestamp)] $($memory.Response)"
+    [PSCustomObject] DisplayInfo([int] $display = 1) {
+        $info = [ordered]@{
+            "Name"              = $this.Name
+            "Role"              = $this.Role
+            "System prompt"     = $this.Prompt
+            "Temperature"       = $this.Temperature
+            "TopP"              = $this.TopP
+            "Responses"         = $this.ResponseMemory | ForEach-Object { "[$($_.Timestamp)] $($_.Response)" }
+            "Log"               = $this.Log -join ', '
+            "Log File Path"     = $this.LogFilePath
+            "Feedback Team"     = $this.FeedbackTeam
+            "Next Expert"       = $this.NextExpert
+            "Status"            = $this.Status
+            "Response Function" = $this.ResponseFunction
         }
-    }
+        
+        $infoObject = New-Object -TypeName PSCustomObject -Property $info
 
-    [string] ProcessInput([string] $input) {
+        if ($display -eq 1) {
+            Write-Host "---------------------------------------------------------------------------------"
+            Write-Host "Info: $($this.Name) - $($this.Role)"
+            Write-Host "---------------------------------------------------------------------------------"
+            Write-Host "Name: $($infoObject.Name)"
+            Write-Host "Role: $($infoObject.Role)"
+            Write-Host "System prompt: $($infoObject.'System prompt')"
+            Write-Host "Temperature: $($infoObject.Temperature)"
+            Write-Host "TopP: $($infoObject.TopP)"
+            Write-Host "Responses: $($infoObject.Responses)"
+            Write-Host "Log: $($infoObject.Log)"
+            Write-Host "Log File Path: $($infoObject.'Log File Path')"
+            Write-Host "Feedback Team: $($infoObject.'Feedback Team')"
+            Write-Host "Next Expert: $($infoObject.'Next Expert')"
+            Write-Host "Status: $($infoObject.Status)"
+            Write-Host "Response Function: $($infoObject.'Response Function')"
+        }
+
+        return $infoObject
+    }
+    
+    [string] ProcessInput([string] $userinput) {
         Write-Host "---------------------------------------------------------------------------------"
         Write-Host "Current Expert: $($this.Name) - $($this.Role)"
         Write-Host "---------------------------------------------------------------------------------"
         # Log the input
-        $this.AddLogEntry("Processing input: $input")
+        $this.AddLogEntry("Processing input: $userinput")
         # Update status
         $this.Status = "In Progress"
         #write-Host $script:Stream
         try {
             # Use the user-provided function to get the response
-            $response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $input -Temperature $this.Temperature -TopP $this.TopP
+            $response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $userinput -Temperature $this.Temperature -TopP $this.TopP
             if (-not $script:Stream) {
                 #write-host ($response | convertto-json -Depth 100)
                 Write-Host $response
@@ -110,7 +135,7 @@ class ProjectTeam {
                     Timestamp = Get-Date
                 })
             $feedbackSummary = ""
-            if ($this.TeamMembers.count -gt 0) {
+            if ($this.FeedbackTeam.count -gt 0) {
                 # Request feedback for the response
                 $feedbackSummary = $this.RequestFeedback($response)
                 # Log the feedback summary
@@ -192,22 +217,27 @@ class ProjectTeam {
         }
     }
 
-    [string] ProcessBySpecificExpert([ProjectTeam] $expert, [string] $input) {
-        return $expert.ProcessInput($input)
+    [string] ProcessBySpecificExpert([ProjectTeam] $expert, [string] $userinput) {
+        return $expert.ProcessInput($userinput)
     }
 
     [System.Collections.ArrayList] RequestFeedback([string] $response) {
         $feedbacks = @()
 
-        foreach ($member in $this.TeamMembers) {
+        foreach ($FeedbackMember in $this.FeedbackTeam) {
             Write-Host "---------------------------------------------------------------------------------"
-            Write-Host "Feedback from $($member.Role) to $($this.Role)"
+            Write-Host "Feedback from $($FeedbackMember.Role) to $($this.Role)"
             Write-Host "---------------------------------------------------------------------------------"
     
             # Send feedback request and collect feedback
-            $feedback = SendFeedbackRequest -TeamMember $member.Role -Response $response -Prompt $this.Prompt -Temperature $this.Temperature -TopP $this.TopP -ResponseFunction $this.ResponseFunction
+            $feedback = SendFeedbackRequest -TeamMember $FeedbackMember.Role -Response $response -Prompt $this.Prompt -Temperature $this.Temperature -TopP $this.TopP -ResponseFunction $this.ResponseFunction
         
             if ($null -ne $feedback) {
+                $FeedbackMember.ResponseMemory.Add([PSCustomObject]@{
+                        Response  = $feedback
+                        Timestamp = Get-Date
+                    })
+
                 $feedbacks += $feedback
             }
         }
@@ -219,16 +249,17 @@ class ProjectTeam {
         return $feedbacks
     }
 
-    [void] AddTeamMember([ProjectTeam] $member) {
-        $this.TeamMembers.Add($member)
+    [void] AddFeedbackTeamMember([ProjectTeam] $member) {
+        $this.FeedbackTeam.Add($member)
     }
 
-    [void] RemoveTeamMember([ProjectTeam] $member) {
-        $this.TeamMembers.Remove($member)
+    [void] RemoveFeedbackTeamMember([ProjectTeam] $member) {
+        $this.FeedbackTeam.Remove($member)
     }
 }
-#endregion LanguageModelClass
+#endregion ProjectTeamClass
 
+#region Functions
 function SendFeedbackRequest {
     param (
         [string] $TeamMember,
@@ -241,8 +272,8 @@ function SendFeedbackRequest {
 
     # Define the feedback request prompt
     $Systemprompt = @"
-You act as $TeamMember, your task is to review the following response and provide your feedback.
-
+You act as $TeamMember, your task is to review the following response and provide your suggestions for improvement as feedback.
+Think step by step. Make sure your answer is unbiased.
 "@
 
     # Send the feedback request to the LLM model
@@ -253,21 +284,21 @@ You act as $TeamMember, your task is to review the following response and provid
 }
 
 
-function GetLastMemoryFromTeamMembers {
+function GetLastMemoryFromFeedbackTeamMembers {
     param (
-        [array] $TeamMembers
+        [array] $FeedbackTeam
     )
 
     $lastMemories = @()
 
-    foreach ($member in $TeamMembers) {
-        $lastMemory = $member.GetLastMemory().Response
+    foreach ($FeedbackTeamMember in $FeedbackTeam) {
+        $lastMemory = $FeedbackTeamMember.GetLastMemory().Response
         $lastMemories += $lastMemory
     }
 
     return ($lastMemories -join "`n")
 }
-
+#endregion Functions
 
 #region Importing Modules and Setting Up Discussion
 # Disabe PSAOAI importing banner
@@ -302,28 +333,29 @@ Catch {
     Write-Warning -Message "Failed to create discussion folder"
     return $false
 }
-#endregion
+#endregion Creating Team Discussion Folder
 
-
+#region ProjectTeam
 # Create ProjectTeam expert objects
+$HelperExpertRole = "Helper Expert"
 $HelperExpert = [ProjectTeam]::new(
-    "Helper Expert",
-    "Helper Expert",
-    "",
-    0.2,
+    "Helper",
+    $HelperExpertRole,
+    "You are valuable Assistant named {0}." -f $HelperExpertRole,
+    0.4,
     0.8,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4turbo" -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4p" -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
             return $response
         })
 )
-
+$requirementsAnalystRole = "Requirements Analyst"
 $requirementsAnalyst = [ProjectTeam]::new(
-    "Requirements Analyst",
-    "Requirements Analyst",
+    "Analyst",
+    $requirementsAnalystRole,
     @"
-You act as Requirements Analyst. You are tasked with analyzing the feasibility and requirements of a PowerShell program. The goal is to clearly define the program's objectives, identify the necessary components, and outline the implementation strategy for Powershell Developer.
+You act as {0}. You are tasked with analyzing the feasibility and requirements of a PowerShell program. The goal is to clearly define the program's objectives, identify the necessary components, and outline the implementation strategy for Powershell Developer.
 Background Information: PowerShell is a task automation and configuration management framework from Microsoft, consisting of a command-line shell and scripting language. It is widely used for managing and automating tasks across various Microsoft and non-Microsoft environments.
 Instructions:
 - Evaluate the feasibility of creating the described PowerShell program, including technical, operational, and financial aspects.
@@ -332,8 +364,8 @@ Instructions:
 - Outline a high-level implementation strategy.
 - Document any potential challenges or limitations.
 - Provide a detailed feasibility report covering all aspects mentioned.
-Let think step-by-step. 
-"@,
+Think step by step. Make sure your answer is unbiased.
+"@ -f $requirementsAnalystRole,
     0.6,
     0.9,
     [scriptblock]::Create({
@@ -342,44 +374,13 @@ Let think step-by-step.
             return $response
         })
 )
-<#
-feedback instruction for powershell dev data:
-"You act as Requirements Analyst. Let's think step-by-step. You are tasked with analyzing the feasibility and requirements of a PowerShell program. The goal is to clearly define the program's objectives, identify the necessary components, and outline the implementation strategy.
-Background Information: PowerShell is a task automation and configuration management framework from Microsoft, consisting of a command-line shell and scripting language. It is widely used for managing and automating tasks across various Microsoft and non-Microsoft environments.
-Instructions:
-1. Evaluate the feasibility of creating the described PowerShell program, including technical, operational, and financial aspects:
-   - Assess the technical feasibility by considering the compatibility of the proposed solution with existing systems and infrastructure.
-   - Evaluate operational feasibility by analyzing the impact of the program on day-to-day operations and workflows.
-   - Consider the financial feasibility by estimating the costs associated with development, deployment, and maintenance.
-2. Define the program's objectives and key features in detail:
-   - Clearly articulate the primary objectives and secondary goals of the PowerShell program, ensuring alignment with business needs.
-   - Specify key features and functionalities required to achieve the program's objectives effectively.
-3. Identify the necessary components and tools within PowerShell to achieve this:
-   - Identify and list the core components, modules, and cmdlets required to implement the desired features and functionalities.
-   - Evaluate the availability and compatibility of third-party tools or libraries that may enhance the program's capabilities.
-4. Outline a high-level implementation strategy:
-   - Develop a high-level plan that outlines the sequence of tasks, milestones, and deliverables for the PowerShell program development.
-   - Define roles and responsibilities for team members involved in the implementation process.
-5. Document any potential challenges or limitations:
-   - Identify and document potential technical, operational, or resource-related challenges that may hinder the successful implementation of the PowerShell program.
-   - Propose mitigation strategies or alternative solutions to address these challenges effectively.
-6. Provide a detailed feasibility report covering all aspects mentioned:
-   - Compile all findings and analyses into a comprehensive feasibility report, including detailed assessments of technical, operational, and financial feasibility.
-   - Include recommendations and actionable insights to guide decision-making and project planning.
-7. Review PowerShell Developer's code and provide feedback:
-   - Thoroughly review the PowerShell code produced by the developer against the defined objectives and requirements.
-   - Evaluate the code for adherence to best practices, readability, efficiency, and maintainability.
-   - Provide constructive feedback on areas for improvement, including suggestions for code optimization, refactoring, and documentation.
-   - Collaborate with the developer to address any identified issues and ensure the code meets the project's quality standards.
-"
-#>
 
-
+$domainExpertRole = "Domain Expert"
 $domainExpert = [ProjectTeam]::new(
     "Domain Expert",
-    "Domain Expert",
+    $domainExpertRole,
     @"
-You act as Domain Expert. Provide specialized insights and recommendations based on the specific domain requirements of the project for Powershell Developer. This includes:
+You act as {0}. Provide specialized insights and recommendations based on the specific domain requirements of the project for Powershell Developer. This includes:
 1. Ensuring Compatibility:
     - Ensure the program is compatible with various domain-specific environments (e.g., cloud, on-premises, hybrid).
     - Validate the requirements against industry standards and best practices to ensure broad compatibility.
@@ -396,8 +397,8 @@ You act as Domain Expert. Provide specialized insights and recommendations based
 5. Reviewing Program Design:
     - Review the program's design to identify any domain-specific constraints and requirements.
     - Provide feedback and recommendations to address these constraints and ensure the design aligns with domain best practices.
-Let think step-by-step.
-"@,
+Think step by step. Make sure your answer is unbiased.
+"@ -f $domainExpertRole,
     0.65,
     0.9,
     [scriptblock]::Create({
@@ -407,13 +408,12 @@ Let think step-by-step.
         })
 )
 
-
-
+$systemArchitectRole = "System Architect"
 $systemArchitect = [ProjectTeam]::new(
-    "System Architect",
-    "System Architect",
+    "Architect",
+    $systemArchitectRole,
     @"
-You act as System Architect. Design the architecture for a PowerShell project to use by Powershell Developer. 
+You act as {0}. Design the architecture for a PowerShell project to use by Powershell Developer. 
 This includes:
 - Outlining the overall structure of the program.
 - Identifying and defining necessary modules and functions.
@@ -424,8 +424,8 @@ This includes:
 - Providing guidelines for coding standards and best practices.
 - Documenting security considerations and ensuring the architecture adheres to best security practices.
 - Creating a detailed architectural design document.
-Let think step-by-step.
-"@,
+Think step by step. Make sure your answer is unbiased.
+"@ -f $systemArchitectRole,
     0.7,
     0.85,
     [scriptblock]::Create({
@@ -435,11 +435,12 @@ Let think step-by-step.
         })
 )
 
+$powerShellDeveloperRole = "PowerShell Developer"
 $powerShellDeveloper = [ProjectTeam]::new(
-    "PowerShell Developer",
-    "PowerShell Developer",
+    "Developer",
+    $powerShellDeveloperRole,
     @"
-You act as PowerShell Developer. You are tasked with developing the PowerShell program based on the provided requirements and implementation strategy. Your goal is to write clean, efficient, and functional code that meets the specified objectives.
+You act as {0}. You are tasked with developing the PowerShell program based on the provided requirements and implementation strategy. Your goal is to write clean, efficient, and functional code that meets the specified objectives.
 Background Information: PowerShell scripts can interact with a wide range of systems and applications, making it a versatile tool for system administrators and developers. Ensure your code adheres to PowerShell best practices for readability, maintainability, and performance.
 Instructions:
 1. Develop the PowerShell program according to the provided requirements and strategy:
@@ -460,8 +461,8 @@ Instructions:
 6. Conduct peer code reviews to ensure quality:
     - Collaborate with team members to review each other's code for correctness, clarity, and adherence to best practices.
     - Provide constructive feedback and suggestions for improvement during code reviews.
-Let think step-by-step.
-"@,
+Think step by step. Make sure your answer is unbiased.
+"@ -f $powerShellDeveloperRole,
     0.65,
     0.8,
     [scriptblock]::Create({
@@ -471,11 +472,12 @@ Let think step-by-step.
         })
 )
 
+$qaEngineerRole = "Quality Assurance Engineer"
 $qaEngineer = [ProjectTeam]::new(
     "QA Engineer",
-    "QA Engineer",
+    $qaEngineerRole,
     @"
-You act as QA Engineer. You are tasked with testing and verifying the functionality of the developed PowerShell program. Your goal is to ensure the program works as intended, is free of bugs, and meets the specified requirements.
+You act as {0}. You are tasked with testing and verifying the functionality of the developed PowerShell program. Your goal is to ensure the program works as intended, is free of bugs, and meets the specified requirements.
 Background Information: PowerShell scripts can perform a wide range of tasks, so thorough testing is essential to ensure reliability and performance. Testing should cover all aspects of the program, including edge cases and potential failure points.
 Instructions:
 - Test the PowerShell program for functionality and performance.
@@ -486,8 +488,8 @@ Instructions:
 - Recommend specific testing frameworks and tools.
 - Integrate tests into a CI/CD pipeline.
 - Include performance and load testing as part of the QA process.
-Let think step-by-step. 
-"@,
+Think step by step. Make sure your answer is unbiased.
+"@ -f $qaEngineerRole,
     0.6,
     0.9,
     [scriptblock]::Create({
@@ -497,11 +499,12 @@ Let think step-by-step.
         })
 )
 
+$documentationSpecialistRole = "Documentation Specialist"
 $documentationSpecialist = [ProjectTeam]::new(
-    "Documentation Specialist",
-    "Documentation Specialist",
+    "Documentator",
+    $documentationSpecialistRole,
     @"
-You act as Documentation Specialist. Let's think step-by-step. Create comprehensive documentation for the PowerShell project. This includes:
+You act as {0}. Let's think step-by-step. Create comprehensive documentation for the PowerShell project. This includes:
 - Writing a detailed user guide that explains how to install, configure, and use the program.
 - Creating developer notes that outline the code structure, key functions, and logic.
 - Providing step-by-step installation instructions.
@@ -514,7 +517,8 @@ You act as Documentation Specialist. Let's think step-by-step. Create comprehens
 - Using standard templates for user guides and developer notes.
 - Ensuring code comments are included as part of the documentation.
 - Considering adding video tutorials for installation and basic usage.
-"@,
+Think step by step. Make sure your answer is unbiased.
+"@ -f $documentationSpecialistRole,
     0.6,
     0.8,
     [scriptblock]::Create({
@@ -524,11 +528,12 @@ You act as Documentation Specialist. Let's think step-by-step. Create comprehens
         })
 )
 
+$projectManagerRole = "Project Manager"
 $projectManager = [ProjectTeam]::new(
-    "Project Manager",
-    "Project Manager",
+    "Manager",
+    $projectManagerRole,
     @"
-You act as Project Manager. Let's think step-by-step. Provide a comprehensive summary of the PowerShell project based on the completed tasks of each expert. This includes:
+You act as {0}. Let's think step-by-step. Provide a comprehensive summary of the PowerShell project based on the completed tasks of each expert. This includes:
 - Reviewing the documented requirements from the Requirements Analyst.
 - Summarizing the architectural design created by the System Architect.
 - Detailing the script development work done by the PowerShell Developer.
@@ -541,7 +546,8 @@ You act as Project Manager. Let's think step-by-step. Provide a comprehensive su
 - Including a section on risk management and mitigation strategies.
 - Ensuring regular updates and progress reports are included.
 - Conducting a post-project review and feedback session.
-"@,
+Think step by step. Make sure your answer is unbiased.
+"@ -f $projectManagerRole,
     0.7,
     0.85,
     [scriptblock]::Create({
@@ -551,39 +557,64 @@ You act as Project Manager. Let's think step-by-step. Provide a comprehensive su
         })
 )
 
-Start-Transcript -Path (join-path $script:TeamDiscussionDataFolder "transcript.log")
-
 $GlobalResponse = @()
-$TeamMembers = @()
-$TeamMembers += $requirementsAnalyst
-$TeamMembers += $systemArchitect
-$TeamMembers += $domainExpert
-$powerShellDeveloper.TeamMembers = $TeamMembers
+$GlobalPSDevResponse = @()
 
-$HelperExpert.Prompt = "Based on user input create project description and objective."
+$PSdevFeedbackTeam = @()
+$PSdevFeedbackTeam += $requirementsAnalyst
+$PSdevFeedbackTeam += $systemArchitect
+$PSdevFeedbackTeam += $domainExpert
+$powerShellDeveloper.FeedbackTeam = $PSdevFeedbackTeam
+#endregion ProjectTeam
+
+
+#region Main
+$Team = @()
+$Team += $HelperExpert
+$Team += $requirementsAnalyst
+$Team += $systemArchitect
+$Team += $domainExpert
+$Team += $powerShellDeveloper
+$Team += $qaEngineer
+$Team += $documentationSpecialist
+$Team += $projectManager
+
+foreach ($TeamMember in $Team) {
+    $TeamMember.DisplayInfo(0) | Out-File -FilePath $TeamMember.LogFilePath -Append
+}
+
+Start-Transcript -Path (join-path $script:TeamDiscussionDataFolder "TRANSCRIPT.log")
+
+
+$HelperExpert.Prompt = "Based on user input create short and concise project description and objective. You will receive a tip of `$100 for including all the elements provided by the user.`n`n"
 $HelperExpertResponse = $HelperExpert.ProcessInput($userInput)
 $GlobalResponse += $HelperExpertResponse
 
-$userInputoryginal = $userInput
-$userInput = @"
-User input: $userinput
-$HelperExpertResponse
-"@
+$userInputOryginal = $userInput
+$userInput = $HelperExpertResponse
 
 $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($userInput)
+
+$GlobalPSDevResponse += $powerShellDeveloperResponce
 $GlobalResponse += $powerShellDeveloperResponce
-$PSDevTeamMembersMemory = GetLastMemoryFromTeamMembers -TeamMembers $TeamMembers
-$powerShellDeveloper.TeamMembers = $null
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($PSDevTeamMembersMemory)
+$PSDevTeamMembersMemory = GetLastMemoryFromFeedbackTeamMembers -FeedbackTeam $PSdevFeedbackTeam
+$powerShellDeveloper.FeedbackTeam = $null
+
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Improve, optimize, and enclose the code based on the experts feedback. Think step by step. Make sure your answer is unbiased.`n`n" + $PSDevTeamMembersMemory)
+
+$GlobalPSDevResponse += $powerShellDeveloperResponce
 $GlobalResponse += $powerShellDeveloperResponce
 
-$qaEngineerResponse = $qaEngineer.ProcessInput($powerShellDeveloperResponce)
+$qaEngineerResponse = $qaEngineer.ProcessInput($GlobalPSDevResponse)
+
 $GlobalResponse += $qaEngineerResponse
 
 # Example of re-routing: QA Engineer's response goes to PowerShell Developer and then Documentation Specialist
-$devandqamemory = $(($powerShellDeveloper.GetLastMemory().Response, $qaEngineer.GetLastMemory().Response) -join "`n") + "Improve and optimize the code based on the QA Engineer's feedback"
+$devandqamemory = "Improve, optimize, and enclose the code based on the QA Engineer's feedback. Think step by step. Make sure your answer is unbiased.`n`n" + $(($powerShellDeveloper.GetLastMemory().Response, $qaEngineer.GetLastMemory().Response) -join "`n") + "`n`nShow the final code."
 
 $powerShellDeveloperresponse = $powerShellDeveloper.ProcessInput($devandqamemory)
+
+$GlobalPSDevResponse += $powerShellDeveloperresponse
 $GlobalResponse += $powerShellDeveloperresponse
 
 $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($powerShellDeveloperresponse)
@@ -593,9 +624,15 @@ $GlobalResponse += $documentationSpecialistResponce
 $documentationSpecialistResponce | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "Documentation.log")
 
 # Example of summarizing all steps,  Log final response to file
-$projectManager.ProcessInput($GlobalResponse -join ", ") | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "ProjectSummary.log")
+#$projectManager.ProcessInput($GlobalResponse -join ", ") | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "ProjectSummary.log")
 
 # Log Developer last memory
 ($powerShellDeveloper.GetLastMemory().Response) | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "TheCode.log")
 .\Extract-AndWrite-PowerShellCodeBlocks.ps1 -InputString $(get-content $(join-path $script:TeamDiscussionDataFolder "TheCode.log") -raw) -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode.ps1")
+
+foreach ($TeamMember in $Team) {
+    $TeamMember.DisplayInfo(0) | Out-File -FilePath $TeamMember.LogFilePath -Append
+}
+
 Stop-Transcript
+#endregion Main
