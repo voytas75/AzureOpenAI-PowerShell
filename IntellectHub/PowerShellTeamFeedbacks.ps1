@@ -630,7 +630,7 @@ $GlobalPSDevResponse += $powerShellDeveloperresponse
 $GlobalResponse += $powerShellDeveloperresponse
 
 if (-not $NODocumentator) {
-    $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($powerShellDeveloperresponse) Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "Documentation.log")
+    $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($powerShellDeveloperresponse) | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "Documentation.log")
     $GlobalResponse += $documentationSpecialistResponce
 }
 
