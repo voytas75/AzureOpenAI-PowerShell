@@ -278,7 +278,8 @@ function SendFeedbackRequest {
     $Response = @"
 Review the following response and provide your suggestions for improvement as feedback to $($this.name). Generate a list of verification questions that could help to self-analyze. 
 I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
-$script:userInput
+
+($script:userInput.trim())
 
 ````````text
 $($Response.trim())
