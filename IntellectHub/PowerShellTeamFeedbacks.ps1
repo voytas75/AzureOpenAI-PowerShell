@@ -575,20 +575,8 @@ $GlobalResponse += $powerShellDeveloperResponce
 $PSDevTeamMembersMemory = GetLastMemoryFromTeamMembers -TeamMembers $TeamMembers
 $powerShellDeveloper.TeamMembers = $null
 $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($PSDevTeamMembersMemory)
-
-return
-
-$requirementsAnalystresponse = $requirementsAnalyst.ProcessInput($userInput)
-$GlobalResponse += $requirementsAnalystresponse
-$systemArchitectResponse = $systemArchitect.ProcessInput($GlobalResponse -join ", ")
-$GlobalResponse += $systemArchitectResponse
-$domainExpertResponse = $domainExpert.ProcessInput($GlobalResponse -join ", ")
-$GlobalResponse += $domainExpertResponse
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($GlobalResponse -join ", ")
 $GlobalResponse += $powerShellDeveloperResponce
-$PSDevTeamMembersMemory = GetLastMemoryFromTeamMembers -TeamMembers $TeamMembers
-$powerShellDeveloper.TeamMembers = $null
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($PSDevTeamMembersMemory)
+
 $qaEngineerResponse = $qaEngineer.ProcessInput($powerShellDeveloperResponce)
 $GlobalResponse += $qaEngineerResponse
 
