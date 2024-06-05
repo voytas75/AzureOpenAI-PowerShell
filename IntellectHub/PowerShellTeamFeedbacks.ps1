@@ -613,7 +613,7 @@ $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($script:userInp
 
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 $GlobalResponse += $powerShellDeveloperResponce
-$PSDevTeamMembersMemory = GetLastMemoryFromFeedbackTeamMembers -FeedbackTeam $PSdevFeedbackTeam
+$PSDevTeamMembersMemory = GetLastMemoryFromFeedbackTeamMembers -FeedbackTeam $powerShellDeveloper.FeedbackTeam
 $powerShellDeveloper.RemoveFeedbackTeamMember($requirementsAnalyst)
 $powerShellDeveloper.RemoveFeedbackTeamMember($systemArchitect)
 $powerShellDeveloper.RemoveFeedbackTeamMember($domainExpert)
