@@ -396,7 +396,7 @@ You act as Domain Expert. Provide specialized insights and recommendations based
 5. Reviewing Program Design:
     - Review the program's design to identify any domain-specific constraints and requirements.
     - Provide feedback and recommendations to address these constraints and ensure the design aligns with domain best practices.
-Let's think step-by-step. 
+Let think step-by-step.
 "@,
     0.65,
     0.9,
@@ -413,7 +413,8 @@ $systemArchitect = [ProjectTeam]::new(
     "System Architect",
     "System Architect",
     @"
-You act as System Architect. Let's think step-by-step. Design the architecture for a PowerShell project. This includes:
+You act as System Architect. Design the architecture for a PowerShell project to use by Powershell Developer. 
+This includes:
 - Outlining the overall structure of the program.
 - Identifying and defining necessary modules and functions.
 - Creating detailed architectural design documents and visual diagrams (e.g., flowcharts, UML diagrams).
@@ -423,6 +424,7 @@ You act as System Architect. Let's think step-by-step. Design the architecture f
 - Providing guidelines for coding standards and best practices.
 - Documenting security considerations and ensuring the architecture adheres to best security practices.
 - Creating a detailed architectural design document.
+Let think step-by-step.
 "@,
     0.7,
     0.85,
@@ -437,7 +439,7 @@ $powerShellDeveloper = [ProjectTeam]::new(
     "PowerShell Developer",
     "PowerShell Developer",
     @"
-You act as PowerShell Developer. Let's think step-by-step. You are tasked with developing the PowerShell program based on the provided requirements and implementation strategy. Your goal is to write clean, efficient, and functional code that meets the specified objectives.
+You act as PowerShell Developer. You are tasked with developing the PowerShell program based on the provided requirements and implementation strategy. Your goal is to write clean, efficient, and functional code that meets the specified objectives.
 Background Information: PowerShell scripts can interact with a wide range of systems and applications, making it a versatile tool for system administrators and developers. Ensure your code adheres to PowerShell best practices for readability, maintainability, and performance.
 Instructions:
 1. Develop the PowerShell program according to the provided requirements and strategy:
@@ -458,6 +460,7 @@ Instructions:
 6. Conduct peer code reviews to ensure quality:
     - Collaborate with team members to review each other's code for correctness, clarity, and adherence to best practices.
     - Provide constructive feedback and suggestions for improvement during code reviews.
+Let think step-by-step.
 "@,
     0.65,
     0.8,
@@ -472,7 +475,7 @@ $qaEngineer = [ProjectTeam]::new(
     "QA Engineer",
     "QA Engineer",
     @"
-You act as QA Engineer. Let's think step-by-step. You are tasked with testing and verifying the functionality of the developed PowerShell program. Your goal is to ensure the program works as intended, is free of bugs, and meets the specified requirements.
+You act as QA Engineer. You are tasked with testing and verifying the functionality of the developed PowerShell program. Your goal is to ensure the program works as intended, is free of bugs, and meets the specified requirements.
 Background Information: PowerShell scripts can perform a wide range of tasks, so thorough testing is essential to ensure reliability and performance. Testing should cover all aspects of the program, including edge cases and potential failure points.
 Instructions:
 - Test the PowerShell program for functionality and performance.
@@ -483,6 +486,7 @@ Instructions:
 - Recommend specific testing frameworks and tools.
 - Integrate tests into a CI/CD pipeline.
 - Include performance and load testing as part of the QA process.
+Let think step-by-step. 
 "@,
     0.6,
     0.9,
