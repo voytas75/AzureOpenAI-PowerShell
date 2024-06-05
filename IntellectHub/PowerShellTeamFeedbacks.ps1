@@ -335,9 +335,14 @@ function GetLastMemoryFromFeedbackTeamMembers {
 #region Importing Modules and Setting Up Discussion
 # Disabe PSAOAI importing banner
 [System.Environment]::SetEnvironmentVariable("PSAOAI_BANNER", "0", "User")
-#Import-Module -Name PSaoAI
-Import-module "D:\dane\voytas\Dokumenty\visual_studio_code\github\AzureOpenAI-PowerShell\PSAOAI\PSAOAI.psd1" -Force 
 
+if (Get-Module -ListAvailable -Name PSAOAI) {
+    [void](Import-module -name PSAOAI -Force)
+}
+else {
+    Write-Host "You need to install 'PSAOAI' module. Use: 'Install-Module PSAOAI'"
+}
+  
 #region Importing Helper Functions
 $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $helperFunctionsPath = Join-Path -Path $scriptPath -ChildPath "helper_functions.ps1"
