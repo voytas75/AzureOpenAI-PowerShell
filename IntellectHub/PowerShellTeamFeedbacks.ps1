@@ -275,8 +275,7 @@ function SendFeedbackRequest {
     # Define the feedback request prompt
     $Systemprompt = $prompt 
     $Response = @"
-Review the following response and provide your suggestions for improvement as feedback.
-Generate a list of verification questions that could help to self-analyze. Think step by step. Make sure your answer is unbiased.
+Review the following response and provide your suggestions for improvement as feedback. Generate a list of verification questions that could help to self-analyze. Think step by step. Make sure your answer is unbiased.
 
 ````````text
 $Response
