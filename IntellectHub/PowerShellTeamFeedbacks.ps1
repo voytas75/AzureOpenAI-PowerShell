@@ -612,7 +612,7 @@ $GlobalResponse += $powerShellDeveloperResponce
 $PSDevTeamMembersMemory = GetLastMemoryFromFeedbackTeamMembers -FeedbackTeam $PSdevFeedbackTeam
 $powerShellDeveloper.FeedbackTeam = $null
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on experts feedback show improved, and optimized code. Think step by step. Make sure your answer is unbiased.`n`n" + $PSDevTeamMembersMemory)
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on expert feedback, apply the proposed improvements and optimizations, and show the latest version of the code. Think step by step. Make sure your answer is unbiased.`n`n" + $PSDevTeamMembersMemory)
 
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 $GlobalResponse += $powerShellDeveloperResponce
@@ -622,7 +622,7 @@ $qaEngineerResponse = $qaEngineer.ProcessInput($GlobalPSDevResponse)
 $GlobalResponse += $qaEngineerResponse
 
 # Example of re-routing: QA Engineer's response goes to PowerShell Developer and then Documentation Specialist
-$devandqamemory = "Based on the QA Engineer's feedback improve, and optimize the program. Think step by step. Make sure your answer is unbiased.`n`n" + $(($powerShellDeveloper.GetLastMemory().Response, $qaEngineer.GetLastMemory().Response) -join "`n") + "`n`nShow the final code."
+$devandqamemory = "Based on the feedback from the QA Engineer, perform the recommended improvements and optimizations for the program. Think step by step. Make sure your answer is unbiased.`n`n" + $(($powerShellDeveloper.GetLastMemory().Response, $qaEngineer.GetLastMemory().Response) -join "`n") + "`n`nShow the final version of the code."
 
 $powerShellDeveloperresponse = $powerShellDeveloper.ProcessInput($devandqamemory)
 
