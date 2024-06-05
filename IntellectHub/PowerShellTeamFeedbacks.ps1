@@ -257,7 +257,7 @@ class ProjectTeam {
     }
 
     [void] RemoveFeedbackTeamMember([ProjectTeam] $member) {
-        $this.FeedbackTeam.Remove($member)
+        $this.FeedbackTeam = $this.FeedbackTeam | Where-Object { $_ -ne $member }
     }
 }
 #endregion ProjectTeamClass
