@@ -1,21 +1,41 @@
-<#
-.SYNOPSIS
-This script emulates a team of specialists working on a PowerShell project.
+<# 
+.SYNOPSIS 
+Emulates a team of specialists working collaboratively on a PowerShell project.
 
-.DESCRIPTION
-The script forms a team of specialists, each having a unique role in the project. Each specialist processes the input, executes their role, and forwards the result to the next specialist. This process is repeated until all specialists have finished their tasks.
+.DESCRIPTION 
+This script simulates forming a team of specialists where each member has a unique role in executing a project. The input is processed by one specialist who then executes their designated task and passes the result onto the next specialist. This chain continues until all tasks are completed.
 
-.PARAMETER userInput
-A string that outlines the project. The default value is "A PowerShell project to monitor RAM load and display a single color block based on the load."
+.PARAMETER userInput 
+Specifies the outline of the project as a string. The default value describes monitoring RAM load and displaying color based on load levels.
 
-.PARAMETER Stream
-A boolean value that determines whether to stream the output. The default value is $true.
+.PARAMETER Stream 
+Determines whether output should be streamed live. By setting this parameter to $true (default), output will be streamed. If set to $false, streaming will be disabled.
 
-.EXAMPLE
-.\PowerShellTeam.ps1 -userInput "A PowerShell project to monitor CPU load and display a graph based on the load." -Stream $false
+.PARAMETER NOPM 
+An optional switch that disables Project Manager functions when present.
 
-.LINK
-https://chatgpt.com/share/92f8cea1-88a6-497e-b894-6146e3c2a81c
+.PARAMETER NODocumentator 
+An optional switch that disables Documentator functions when present.
+
+.PARAMETER FeedbackSummary 
+An optional switch that provides summary feedback at end if enabled.
+
+.INPUTS 
+None. You cannot pipe objects to this script directly but must pass them as arguments using parameters defined above.
+
+.OUTPUTS 
+Output varies depending on how each specialist processes their part of the project; typically text-based results are expected which may include status messages or visual representations like graphs or color blocks related to system metrics such as RAM load etc., depending upon user input specification provided via 'userInput' parameter
+
+.EXAMPLE 
+PS> .\PowerShellTeam.ps1 -userInput "A PowerShell project to monitor CPU usage and display dynamic graph." -Stream $false
+
+This command runs the script without streaming output live (-Stream $false) while specifying custom user input about monitoring CPU usage instead of RAM and displaying it through dynamic graphing methods rather than static color blocks.
+
+.NOTES 
+Version: 1.0.0
+Author: voytas75
+Creation Date: 06.2024
+Purpose/Change: Initial release for emulating teamwork within PowerShell scripting context
 #>
 param(
     [string] $userInput = "A PowerShell project to monitor RAM load and display a single color block based on the load.",
