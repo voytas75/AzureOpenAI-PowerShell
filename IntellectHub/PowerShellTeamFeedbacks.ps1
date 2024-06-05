@@ -1,15 +1,15 @@
 <#
 .SYNOPSIS
-This script simulates a team of experts working on a PowerShell project.
+This script emulates a team of specialists working on a PowerShell project.
 
 .DESCRIPTION
-The script creates a team of experts, each with a specific role in the project. Each expert processes the input, performs their role, and passes the result to the next expert. The process continues until all experts have completed their tasks.
+The script forms a team of specialists, each having a unique role in the project. Each specialist processes the input, executes their role, and forwards the result to the next specialist. This process is repeated until all specialists have finished their tasks.
 
 .PARAMETER userInput
-A string that describes the project. The default value is "A PowerShell project to monitor RAM load and display a single color block based on the load."
+A string that outlines the project. The default value is "A PowerShell project to monitor RAM load and display a single color block based on the load."
 
 .PARAMETER Stream
-A boolean value that indicates whether to stream the output. The default value is $true.
+A boolean value that determines whether to stream the output. The default value is $true.
 
 .EXAMPLE
 .\PowerShellTeam.ps1 -userInput "A PowerShell project to monitor CPU load and display a graph based on the load." -Stream $false
@@ -19,7 +19,9 @@ https://chatgpt.com/share/92f8cea1-88a6-497e-b894-6146e3c2a81c
 #>
 param(
     [string] $userInput = "A PowerShell project to monitor RAM load and display a single color block based on the load.",
-    [bool] $Stream = $true
+    [bool] $Stream = $true,
+    [switch] $NOPM,
+    [switch] $NODocumentator
 )
 
 #region ProjectTeamClass
@@ -230,7 +232,7 @@ class ProjectTeam {
             Write-Host "---------------------------------------------------------------------------------"
     
             # Send feedback request and collect feedback
-            $feedback = SendFeedbackRequest -TeamMember $FeedbackMember.Role -Response $response -Prompt $this.Prompt -Temperature $this.Temperature -TopP $this.TopP -ResponseFunction $this.ResponseFunction
+            $feedback = SendFeedbackRequest -TeamMember $FeedbackMember.Role -Response $response -Prompt $FeedbackMember.Prompt -Temperature $this.Temperature -TopP $this.TopP -ResponseFunction $this.ResponseFunction
         
             if ($null -ne $feedback) {
                 $FeedbackMember.ResponseMemory.Add([PSCustomObject]@{
@@ -271,9 +273,13 @@ function SendFeedbackRequest {
     )
 
     # Define the feedback request prompt
-    $Systemprompt = @"
-You act as $TeamMember, your task is to review the following response and provide your suggestions for improvement as feedback.
-Think step by step. Make sure your answer is unbiased.
+    $Systemprompt = $prompt 
+    $Response = @"
+Review the following response and provide your suggestions for improvement as feedback.
+Generate a list of verification questions that could help to self-analyze. Think step by step. Make sure your answer is unbiased.
+
+###Response###
+$Response
 "@
 
     # Send the feedback request to the LLM model
@@ -578,8 +584,12 @@ $Team += $systemArchitect
 $Team += $domainExpert
 $Team += $powerShellDeveloper
 $Team += $qaEngineer
-$Team += $documentationSpecialist
-$Team += $projectManager
+if (-not $NODocumentator) {
+    $Team += $documentationSpecialist
+}
+if (-not $NODocumentator) {
+    $Team += $projectManager
+}
 
 foreach ($TeamMember in $Team) {
     $TeamMember.DisplayInfo(0) | Out-File -FilePath $TeamMember.LogFilePath -Append
@@ -602,7 +612,7 @@ $GlobalResponse += $powerShellDeveloperResponce
 $PSDevTeamMembersMemory = GetLastMemoryFromFeedbackTeamMembers -FeedbackTeam $PSdevFeedbackTeam
 $powerShellDeveloper.FeedbackTeam = $null
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Improve, optimize, and enclose the code based on the experts feedback. Think step by step. Make sure your answer is unbiased.`n`n" + $PSDevTeamMembersMemory)
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on experts feedback show improved, and optimized code. Think step by step. Make sure your answer is unbiased.`n`n" + $PSDevTeamMembersMemory)
 
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 $GlobalResponse += $powerShellDeveloperResponce
@@ -622,11 +632,15 @@ $GlobalResponse += $powerShellDeveloperresponse
 $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($powerShellDeveloperresponse)
 $GlobalResponse += $documentationSpecialistResponce
 
-# Log final response to file
-$documentationSpecialistResponce | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "Documentation.log")
+if (-not $NODocumentator) {
+    # Log final response to file
+    $documentationSpecialistResponce | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "Documentation.log")
+}
 
-# Example of summarizing all steps,  Log final response to file
-#$projectManager.ProcessInput($GlobalResponse -join ", ") | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "ProjectSummary.log")
+if (-not $NOPM) {
+    # Example of summarizing all steps,  Log final response to file
+    $projectManager.ProcessInput($GlobalResponse -join ", ") | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "ProjectSummary.log")
+}
 
 # Log Developer last memory
 ($powerShellDeveloper.GetLastMemory().Response) | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "TheCode.log")
