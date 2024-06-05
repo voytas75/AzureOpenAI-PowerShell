@@ -622,24 +622,22 @@ $qaEngineerResponse = $qaEngineer.ProcessInput($GlobalPSDevResponse)
 $GlobalResponse += $qaEngineerResponse
 
 # Example of re-routing: QA Engineer's response goes to PowerShell Developer and then Documentation Specialist
-$devandqamemory = "Improve, optimize, and enclose the code based on the QA Engineer's feedback. Think step by step. Make sure your answer is unbiased.`n`n" + $(($powerShellDeveloper.GetLastMemory().Response, $qaEngineer.GetLastMemory().Response) -join "`n") + "`n`nShow the final code."
+$devandqamemory = "Based on the QA Engineer's feedback improve, and optimize the program. Think step by step. Make sure your answer is unbiased.`n`n" + $(($powerShellDeveloper.GetLastMemory().Response, $qaEngineer.GetLastMemory().Response) -join "`n") + "`n`nShow the final code."
 
 $powerShellDeveloperresponse = $powerShellDeveloper.ProcessInput($devandqamemory)
 
 $GlobalPSDevResponse += $powerShellDeveloperresponse
 $GlobalResponse += $powerShellDeveloperresponse
 
-$documentationSpecialistResponce = $documentationSpecialist.ProcessInput($powerShellDeveloperresponse)
-$GlobalResponse += $documentationSpecialistResponce
-
 if (-not $NODocumentator) {
-    # Log final response to file
-    $documentationSpecialistResponce | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "Documentation.log")
+    $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($powerShellDeveloperresponse) Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "Documentation.log")
+    $GlobalResponse += $documentationSpecialistResponce
 }
 
 if (-not $NOPM) {
     # Example of summarizing all steps,  Log final response to file
-    $projectManager.ProcessInput($GlobalResponse -join ", ") | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "ProjectSummary.log")
+    $projectManagerResponse = $projectManager.ProcessInput($GlobalResponse -join ", ") | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "ProjectSummary.log")
+    $GlobalResponse += $projectManagerResponse
 }
 
 # Log Developer last memory
