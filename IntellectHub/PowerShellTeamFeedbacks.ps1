@@ -599,7 +599,7 @@ Start-Transcript -Path (join-path $script:TeamDiscussionDataFolder "TRANSCRIPT.l
 
 
 $HelperExpert.Prompt = "Based on user input create short and concise project description and objective. You will receive a tip of `$100 for including all the elements provided by the user.`n`n"
-$HelperExpertResponse = $HelperExpert.ProcessInput($userInput)
+$HelperExpertResponse = $HelperExpert.ProcessInput($userInput + "`n`nShow the first version of the code.")
 $GlobalResponse += $HelperExpertResponse
 
 $userInputOryginal = $userInput
