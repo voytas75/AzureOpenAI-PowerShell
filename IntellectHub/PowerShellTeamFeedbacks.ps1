@@ -282,7 +282,7 @@ I will tip you `$100 when your suggestions are consistent with the project descr
 ($script:userInput.trim())
 
 ````````text
-$($Response.trim())
+$Response
 ````````
 
 Think step by step. Make sure your answer is unbiased.
