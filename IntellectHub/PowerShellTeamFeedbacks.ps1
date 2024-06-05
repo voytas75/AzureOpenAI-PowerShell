@@ -572,18 +572,16 @@ Think step by step. Make sure your answer is unbiased.
         })
 )
 
-$GlobalResponse = @()
-$GlobalPSDevResponse = @()
-
-$PSdevFeedbackTeam = @()
-$PSdevFeedbackTeam += $requirementsAnalyst
-$PSdevFeedbackTeam += $systemArchitect
-$PSdevFeedbackTeam += $domainExpert
-$powerShellDeveloper.FeedbackTeam = $PSdevFeedbackTeam
+$powerShellDeveloper.AddFeedbackTeamMember($requirementsAnalyst)
+$powerShellDeveloper.AddFeedbackTeamMember($systemArchitect)
+$powerShellDeveloper.AddFeedbackTeamMember($domainExpert)
 #endregion ProjectTeam
 
 
 #region Main
+$GlobalResponse = @()
+$GlobalPSDevResponse = @()
+
 $Team = @()
 $Team += $HelperExpert
 $Team += $requirementsAnalyst
