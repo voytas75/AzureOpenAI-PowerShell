@@ -253,7 +253,7 @@ class ProjectTeam {
     }
 
     [void] AddFeedbackTeamMember([ProjectTeam] $member) {
-        $this.FeedbackTeam.Add($member)
+        $this.FeedbackTeam += $member
     }
 
     [void] RemoveFeedbackTeamMember([ProjectTeam] $member) {
@@ -614,7 +614,10 @@ $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($script:userInp
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 $GlobalResponse += $powerShellDeveloperResponce
 $PSDevTeamMembersMemory = GetLastMemoryFromFeedbackTeamMembers -FeedbackTeam $PSdevFeedbackTeam
-$powerShellDeveloper.FeedbackTeam = $null
+$powerShellDeveloper.RemoveFeedbackTeamMember($requirementsAnalyst)
+$powerShellDeveloper.RemoveFeedbackTeamMember($systemArchitect)
+$powerShellDeveloper.RemoveFeedbackTeamMember($domainExpert)
+
 
 if ($FeedbackSummary) {
     $PSDevTeamMembersMemorySummary = $projectManager.ProcessInput("Summarize expert feedback focusing on key points of suggestions for improvement.`n`n" + $PSDevTeamMembersMemory)
