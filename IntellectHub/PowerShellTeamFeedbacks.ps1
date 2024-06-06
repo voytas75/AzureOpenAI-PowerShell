@@ -502,7 +502,7 @@ Instructions:
     - Review the requirements and implementation strategy thoroughly before starting development.
     - Break down the tasks into manageable chunks and implement them iteratively.
 2. Ensure the code is modular and well-documented with help blocks:
-    - Use knowledge from the help topic 'about_Comment_Based_Help'.
+    - Use knowledge from the help topic 'about_Comment_Based_Help'. You must add '.NOTES' with additional information 'Version' and 'Updates'.
     - Organize the code into logical modules and functions, following the principle of modularity.
     - Document each module and function with clear and concise help blocks, including usage examples where applicable.
 3. Include error handling and logging where appropriate:
