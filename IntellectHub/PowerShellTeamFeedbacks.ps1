@@ -669,7 +669,7 @@ $powerShellDeveloper.RemoveFeedbackTeamMember($domainExpert)
 if ($FeedbackSummary) {
     $PSDevTeamMembersMemorySummary = $projectManager.ProcessInput("Summarize expert feedback focusing on key points of suggestions for improvement.`n`n" + $PSDevTeamMembersMemory)
     AddToGlobalResponses $PSDevTeamMembersMemorySummary
-    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on expert feedback summary, apply the proposed improvements and optimizations, and show the latest version of the code. Think step by step. Make sure your answer is unbiased.`n`n" + $PSDevTeamMembersMemorySummary)
+    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on expert feedback summary, apply the proposed improvements and optimizations, and show the latest version of the code.`n`n" + $PSDevTeamMembersMemorySummary + "Here is Version 1.0 of the code:`n`n````````text`n"+$($powerShellDeveloper.GetLastMemory().response) + "`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$200 for the code.")
 }
 else {
     $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on expert feedback, modify the code applying the proposed improvements and optimizations, and you must show the latest version of the code. Version 1.0 was provided below after feedbacks.`n`n" + $PSDevTeamMembersMemory + "`n`nHere is Version 1.0 of the code:`n`n````````text`n"+$($powerShellDeveloper.GetLastMemory().response) + "`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$200 for the code.")
