@@ -42,7 +42,8 @@ param(
     [bool] $Stream = $true,
     [switch] $NOPM,
     [switch] $NODocumentator,
-    [switch] $FeedbackSummary
+    [switch] $FeedbackSummary,
+    [string] $LogFolder
 )
 
 #region ProjectTeamClass
@@ -330,6 +331,11 @@ function GetLastMemoryFromFeedbackTeamMembers {
 
     return ($lastMemories -join "`n")
 }
+
+function AddToGlobalResponses {
+    param($response)
+    $script:GlobalResponse += $response
+}
 #endregion Functions
 
 #region Importing Modules and Setting Up Discussion
@@ -361,8 +367,14 @@ Catch {
 Try {
     # Get the current date and time
     $currentDateTime = Get-Date -Format "yyyyMMdd_HHmmss"
-    # Create a folder with the current date and time as the name in the example path
-    $script:TeamDiscussionDataFolder = Create-FolderInGivenPath -FolderPath $(Create-FolderInUserDocuments -FolderName "OpenDomainDiscussion") -FolderName $currentDateTime
+    if ($LogFolder) {
+        # Create a folder with the current date and time as the name in the example path
+        $script:TeamDiscussionDataFolder = Create-FolderInGivenPath -FolderPath $LogFolder -FolderName $currentDateTime
+    }
+    else {
+        # Create a folder with the current date and time as the name in the example path
+        $script:TeamDiscussionDataFolder = Create-FolderInGivenPath -FolderPath $(Create-FolderInUserDocuments -FolderName "OpenDomainDiscussion") -FolderName $currentDateTime
+    }
     if ($script:TeamDiscussionDataFolder) {
         Write-Host "Team discussion folder was created '$script:TeamDiscussionDataFolder'" -ForegroundColor Blue -BackGroundColor Cyan 
     }
@@ -630,7 +642,7 @@ Start-Transcript -Path (join-path $script:TeamDiscussionDataFolder "TRANSCRIPT.l
 
 
 $HelperExpertResponse = $HelperExpert.ProcessInput("Based on user input create short and concise project description and objective. You will receive a tip of `$100 for including all the elements provided by the user.`n`n" + $userInput)
-$GlobalResponse += $HelperExpertResponse
+AddToGlobalResponses $HelperExpertResponse
 
 $userInputOryginal = $userInput
 $script:userInput = $HelperExpertResponse
@@ -638,7 +650,7 @@ $script:userInput = $HelperExpertResponse
 $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($script:userInput.trim() + "`n`nShow the version 1.0 of the code.")
 
 $GlobalPSDevResponse += $powerShellDeveloperResponce
-$GlobalResponse += $powerShellDeveloperResponce
+AddToGlobalResponses $powerShellDeveloperResponce
 $PSDevTeamMembersMemory = GetLastMemoryFromFeedbackTeamMembers -FeedbackTeam $powerShellDeveloper.FeedbackTeam
 $powerShellDeveloper.RemoveFeedbackTeamMember($requirementsAnalyst)
 $powerShellDeveloper.RemoveFeedbackTeamMember($systemArchitect)
@@ -647,7 +659,7 @@ $powerShellDeveloper.RemoveFeedbackTeamMember($domainExpert)
 
 if ($FeedbackSummary) {
     $PSDevTeamMembersMemorySummary = $projectManager.ProcessInput("Summarize expert feedback focusing on key points of suggestions for improvement.`n`n" + $PSDevTeamMembersMemory)
-    $GlobalResponse += $PSDevTeamMembersMemorySummary
+    AddToGlobalResponses $PSDevTeamMembersMemorySummary
     $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on expert feedback summary, apply the proposed improvements and optimizations, and show the latest version of the code. Think step by step. Make sure your answer is unbiased.`n`n" + $PSDevTeamMembersMemorySummary)
 }
 else {
@@ -656,11 +668,11 @@ else {
 }
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 
-$GlobalResponse += $powerShellDeveloperResponce
+AddToGlobalResponses $powerShellDeveloperResponce
 
 $qaEngineerResponse = $qaEngineer.ProcessInput($GlobalPSDevResponse)
 
-$GlobalResponse += $qaEngineerResponse
+AddToGlobalResponses $qaEngineerResponse
 
 # Example of re-routing: QA Engineer's response goes to PowerShell Developer and then Documentation Specialist
 $devandqamemory = "Based on the feedback from the QA Engineer, perform the recommended improvements and optimizations for the program. Think step by step. Make sure your answer is unbiased.`n`n" + $(($powerShellDeveloper.GetLastMemory().Response, $qaEngineer.GetLastMemory().Response) -join "`n") + "`n`nShow the final version of the code."
@@ -668,17 +680,17 @@ $devandqamemory = "Based on the feedback from the QA Engineer, perform the recom
 $powerShellDeveloperresponse = $powerShellDeveloper.ProcessInput($devandqamemory)
 
 $GlobalPSDevResponse += $powerShellDeveloperresponse
-$GlobalResponse += $powerShellDeveloperresponse
+AddToGlobalResponses $powerShellDeveloperresponse
 
 if (-not $NODocumentator) {
     $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($powerShellDeveloperresponse) | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "Documentation.log")
-    $GlobalResponse += $documentationSpecialistResponce
+    AddToGlobalResponses $documentationSpecialistResponce
 }
 
 if (-not $NOPM) {
     # Example of summarizing all steps,  Log final response to file
-    $projectManagerResponse = $projectManager.ProcessInput($GlobalResponse -join ", ") | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "ProjectSummary.log")
-    $GlobalResponse += $projectManagerResponse
+    $projectManagerResponse = $projectManager.ProcessInput($script:GlobalResponse -join ", ") | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "ProjectSummary.log")
+    AddToGlobalResponses $projectManagerResponse
 }
 
 # Log Developer last memory
