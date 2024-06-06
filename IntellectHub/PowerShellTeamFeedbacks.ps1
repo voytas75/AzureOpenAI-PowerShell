@@ -42,6 +42,7 @@ param(
     [bool] $Stream = $true,
     [switch] $NOPM,
     [switch] $NODocumentator,
+    [switch] $NOLog,
     [switch] $FeedbackSummary,
     [string] $LogFolder
 )
@@ -200,8 +201,10 @@ class ProjectTeam {
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         $logEntry = "[$timestamp] $entry"
         $this.Log.Add($logEntry)
-        # Write the log entry to the file
-        Add-Content -Path $this.LogFilePath -Value $logEntry
+        if (-not [string]::IsNullOrEmpty($this.LogFilePath)) {
+            # Write the log entry to the file
+            Add-Content -Path $this.LogFilePath -Value $logEntry
+        }
     }
 
     [void] Notify([string] $message) {
@@ -406,16 +409,16 @@ $requirementsAnalyst = [ProjectTeam]::new(
     "Analyst",
     $requirementsAnalystRole,
     @"
-You act as {0}. You are tasked with analyzing the feasibility and requirements of a PowerShell program. The goal is to clearly define the program's objectives, identify the necessary components, and outline the implementation strategy for Powershell Developer.
-Background Information: PowerShell is a task automation and configuration management framework from Microsoft, consisting of a command-line shell and scripting language. It is widely used for managing and automating tasks across various Microsoft and non-Microsoft environments.
-Instructions:
-- Evaluate the feasibility of creating the described PowerShell program, including technical, operational, and financial aspects.
-- Define the program's objectives and key features in detail.
-- Identify the necessary components and tools within PowerShell to achieve this.
-- Outline a high-level implementation strategy.
-- Document any potential challenges or limitations.
-- Provide a detailed feasibility report covering all aspects mentioned.
-Generate a list of verification questions that could help to self-analyze. Think step by step. Make sure your answer is unbiased.
+You are running as {0}. Your task is to analyze the PowerShell requirements. The goal is to clearly define the program goals, necessary components and outline the implementation strategy that the Powershell Developer will execute.
+Provide a detailed feasibility report covering all the following aspects:
+- Briefly and concisely evaluate the feasibility of creating the PowerShell program described, taking into account technical, operational and financial aspects.
+- Define the program goals and its most important features in detail.
+- Identify the necessary components and tools in PowerShell to achieve this.
+- Point out potential challenges and limitations.
+
+Additional information: PowerShell is a task automation and configuration management platform from Microsoft, consisting of a command-line shell and a scripting language. It is widely used to manage and automate tasks in various Microsoft and third-party environments.
+
+Think step by step. Generate a list of self-assessment questions that can help with self-analysis. Make sure your answer is unbiased.
 "@ -f $requirementsAnalystRole,
     0.6,
     0.9,
@@ -634,14 +637,20 @@ if (-not $NODocumentator) {
     $Team += $projectManager
 }
 
-foreach ($TeamMember in $Team) {
-    $TeamMember.DisplayInfo(0) | Out-File -FilePath $TeamMember.LogFilePath -Append
+if ($NOLog) {
+    foreach ($TeamMember_ in $Team) {
+        $TeamMember_.LogFilePath = ""
+    }
 }
 
-Start-Transcript -Path (join-path $script:TeamDiscussionDataFolder "TRANSCRIPT.log")
+if (-not $NOLog) {
+    foreach ($TeamMember in $Team) {
+        $TeamMember.DisplayInfo(0) | Out-File -FilePath $TeamMember.LogFilePath -Append
+    }
+    Start-Transcript -Path (join-path $script:TeamDiscussionDataFolder "TRANSCRIPT.log")
+}
 
-
-$HelperExpertResponse = $HelperExpert.ProcessInput("Based on user input create short and concise project description and objective. I will tip you `$100 for including all the elements provided by the user.`n`n" + $userInput)
+$HelperExpertResponse = $HelperExpert.ProcessInput("Based on user input create detailed and concise project name, description, objectives, deliverables, additional considerations, and success criteria. I will tip you `$100 for including all the elements provided by the user. `n`n" + $userInput)
 AddToGlobalResponses $HelperExpertResponse
 
 $userInputOryginal = $userInput
@@ -663,7 +672,7 @@ if ($FeedbackSummary) {
     $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on expert feedback summary, apply the proposed improvements and optimizations, and show the latest version of the code. Think step by step. Make sure your answer is unbiased.`n`n" + $PSDevTeamMembersMemorySummary)
 }
 else {
-    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on expert feedback, apply the proposed improvements and optimizations, and show the latest version of the code. Think step by step. Make sure your answer is unbiased.`n`n" + $PSDevTeamMembersMemory)
+    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on expert feedback, modify the code applying the proposed improvements and optimizations, and you must show the latest version of the code. Version 1.0 was provided below after feedbacks.`n`n" + $PSDevTeamMembersMemory + "`n`nHere is Version 1.0 of the code:`n`n````````text`n"+$($powerShellDeveloper.GetLastMemory().response) + "`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$200 for the code.")
     
 }
 $GlobalPSDevResponse += $powerShellDeveloperResponce
@@ -675,7 +684,7 @@ $qaEngineerResponse = $qaEngineer.ProcessInput($GlobalPSDevResponse)
 AddToGlobalResponses $qaEngineerResponse
 
 # Example of re-routing: QA Engineer's response goes to PowerShell Developer and then Documentation Specialist
-$devandqamemory = "Based on the feedback from the QA Engineer, perform the recommended improvements and optimizations for the program. Think step by step. Make sure your answer is unbiased.`n`n" + $(($powerShellDeveloper.GetLastMemory().Response, $qaEngineer.GetLastMemory().Response) -join "`n") + "`n`nShow the final version of the code."
+$devandqamemory = "Based on the feedback from the QA Engineer, perform the recommended improvements and optimizations for the program. Think step by step. Make sure your answer is unbiased.`n`n" + $(($powerShellDeveloper.GetLastMemory().Response, $qaEngineer.GetLastMemory().Response) -join "`n") + "`n`nI will tip you `$200 for the code. Show the final version of the code."
 
 $powerShellDeveloperresponse = $powerShellDeveloper.ProcessInput($devandqamemory)
 
@@ -683,23 +692,34 @@ $GlobalPSDevResponse += $powerShellDeveloperresponse
 AddToGlobalResponses $powerShellDeveloperresponse
 
 if (-not $NODocumentator) {
-    $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($powerShellDeveloperresponse) | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "Documentation.log")
+    if (-not $NOLog) {
+        $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($powerShellDeveloperresponse) | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "Documentation.log")
+    }
+    else {
+        $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($powerShellDeveloperresponse)
+    }
     AddToGlobalResponses $documentationSpecialistResponce
 }
 
 if (-not $NOPM) {
     # Example of summarizing all steps,  Log final response to file
-    $projectManagerResponse = $projectManager.ProcessInput($script:GlobalResponse -join ", ") | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "ProjectSummary.log")
+    if (-not $NOLog) {
+        $projectManagerResponse = $projectManager.ProcessInput($script:GlobalResponse -join ", ") | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "ProjectSummary.log")
+    }
+    else {
+        $projectManagerResponse = $projectManager.ProcessInput($script:GlobalResponse -join ", ")
+    }
     AddToGlobalResponses $projectManagerResponse
 }
 
-# Log Developer last memory
-($powerShellDeveloper.GetLastMemory().Response) | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "TheCode.log")
-.\Extract-AndWrite-PowerShellCodeBlocks.ps1 -InputString $(get-content $(join-path $script:TeamDiscussionDataFolder "TheCode.log") -raw) -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode.ps1")
+if (-not $NOLog) {
+    # Log Developer last memory
+    ($powerShellDeveloper.GetLastMemory().Response) | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "TheCode.log")
+    .\Extract-AndWrite-PowerShellCodeBlocks.ps1 -InputString $(get-content $(join-path $script:TeamDiscussionDataFolder "TheCode.log") -raw) -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode.ps1")
 
-foreach ($TeamMember in $Team) {
-    $TeamMember.DisplayInfo(0) | Out-File -FilePath $TeamMember.LogFilePath -Append
+    foreach ($TeamMember in $Team) {
+        $TeamMember.DisplayInfo(0) | Out-File -FilePath $TeamMember.LogFilePath -Append
+    }
+    Stop-Transcript
 }
-
-Stop-Transcript
 #endregion Main
