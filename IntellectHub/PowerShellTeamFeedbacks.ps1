@@ -641,7 +641,7 @@ foreach ($TeamMember in $Team) {
 Start-Transcript -Path (join-path $script:TeamDiscussionDataFolder "TRANSCRIPT.log")
 
 
-$HelperExpertResponse = $HelperExpert.ProcessInput("Based on user input create short and concise project description and objective. You will receive a tip of `$100 for including all the elements provided by the user.`n`n" + $userInput)
+$HelperExpertResponse = $HelperExpert.ProcessInput("Based on user input create short and concise project description and objective. I will tip you `$100 for including all the elements provided by the user.`n`n" + $userInput)
 AddToGlobalResponses $HelperExpertResponse
 
 $userInputOryginal = $userInput
