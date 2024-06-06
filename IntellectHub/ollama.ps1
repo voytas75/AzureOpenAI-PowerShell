@@ -1,6 +1,6 @@
 param (
     [Parameter(Mandatory = $true)] 
-    [ValidateSet("Mistral", "mixtral", "Phi3","gemma","codegemma","llama3","codestral","codellama","dolphin-mixtral")] 
+    [ValidateSet("Mistral", "Phi3","gemma","codegemma","llama3","phi3:medium")] 
     [string] $model,
     [ValidateSet("Completion", "Chat")] 
     [string] $mode = "chat",
