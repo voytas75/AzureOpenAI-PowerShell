@@ -1,6 +1,6 @@
 param (
     [Parameter(Mandatory = $true)] 
-    [ValidateSet("Mistral", "Phi3","gemma","codegemma","llama3")] 
+    [ValidateSet("Mistral", "Phi3","gemma","codegemma","llama3","codestral")] 
     [string] $model,
     [ValidateSet("Completion", "Chat")] 
     [string] $mode = "chat",
@@ -35,7 +35,6 @@ switch ($mode) {
                 temperature       = 0.3
             }
         } | ConvertTo-Json
-        $requestBody
     }
     Default {}
 }
