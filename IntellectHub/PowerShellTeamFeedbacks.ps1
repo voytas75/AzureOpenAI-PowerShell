@@ -684,7 +684,7 @@ $qaEngineerResponse = $qaEngineer.ProcessInput($GlobalPSDevResponse)
 AddToGlobalResponses $qaEngineerResponse
 
 # Example of re-routing: QA Engineer's response goes to PowerShell Developer and then Documentation Specialist
-$devandqamemory = "Based on the feedback from the QA Engineer, modify the code applying the recommended improvements and optimizations for the program.`n`n" + $(($powerShellDeveloper.GetLastMemory().Response, $qaEngineer.GetLastMemory().Response) -join "`n") + "`n`nI will tip you `$200 for the code of the final version. Think step by step. Make sure your answer is unbiased."
+$devandqamemory = "Based on the feedback from the QA Engineer, modify the code applying the recommended improvements and optimizations for the program, and you must show the latest, final version of the code. `n`n" + $(($powerShellDeveloper.GetLastMemory().Response, $qaEngineer.GetLastMemory().Response) -join "`n") + "`n`nI will tip you `$200 for writeing the code. Think step by step. Make sure your answer is unbiased."
 
 $powerShellDeveloperresponse = $powerShellDeveloper.ProcessInput($devandqamemory)
 
