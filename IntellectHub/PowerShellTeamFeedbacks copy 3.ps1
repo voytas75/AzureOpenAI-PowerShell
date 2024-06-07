@@ -633,7 +633,7 @@ $Team += $qaEngineer
 if (-not $NODocumentator) {
     $Team += $documentationSpecialist
 }
-if (-not $NODocumentator) {
+if (-not $NOPM) {
     $Team += $projectManager
 }
 

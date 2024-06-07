@@ -652,6 +652,15 @@ Think step by step. Make sure your answer is unbiased.
 $GlobalResponse = @()
 $GlobalPSDevResponse = @()
 
+$Team = @()
+$Team += $requirementsAnalyst
+$Team += $systemArchitect
+$Team += $domainExpert
+$Team += $powerShellDeveloper
+$Team += $qaEngineer
+$Team += $documentationSpecialist
+$Team += $projectManager
+
 if ($NOLog) {
     foreach ($TeamMember_ in $Team) {
         $TeamMember_.LogFilePath = ""

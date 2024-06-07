@@ -42,7 +42,7 @@ param(
     [switch] $NOLog,
     [string] $LogFolder,
     [ValidateSet("Mistral", "Phi3", "gemma", "codegemma", "llama3", "phi3:medium")] 
-    [string] $model = "Phi3:medium"
+    [string] $script:model = "Phi3:medium"
 
 )
 
@@ -188,17 +188,17 @@ class ProjectTeam {
         }
     }
 
-    [string] Feedback([string] $input) {
+    [string] Feedback([string] $Userinput) {
         Write-Host "---------------------------------------------------------------------------------"
         Write-Host "Feedback by $($this.Name) ($($this.Role))"
         Write-Host "---------------------------------------------------------------------------------"
         # Log the input
-        $this.AddLogEntry("Processing input:`n$input")
+        $this.AddLogEntry("Processing input:`n$Userinput")
         # Update status
         $this.Status = "In Progress"
         try {
             # Use the user-provided function to get the response
-            $response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $Input
+            $response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $Userinput
             if (-not $script:Stream) {
                 Write-Host $response
             }
@@ -351,7 +351,7 @@ Think step by step. Make sure your answer is unbiased.
 "@
 
     # Send the feedback request to the LLM model
-    $feedback = & $ResponseFunction -SystemPrompt $SystemPrompt -UserPrompt $NewResponse -Temperature $Temperature -TopP $TopP
+    $feedback = & $ResponseFunction -SystemPrompt $SystemPrompt -UserPrompt $NewResponse
 
     # Return the feedback
     return $feedback
@@ -428,20 +428,6 @@ Catch {
 
 #region ProjectTeam
 # Create ProjectTeam expert objects
-$HelperExpertRole = "Helper Expert"
-$HelperExpert = [ProjectTeam]::new(
-    "Helper",
-    $HelperExpertRole,
-    "You are helpful and valuable Assistant named {0}." -f $HelperExpertRole,
-    0.4,
-    0.8,
-    [scriptblock]::Create({
-            param ($SystemPrompt, $UserPrompt, $model)
-            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model $model
-            return $response
-        })
-)
-
 $requirementsAnalystRole = "Requirements Analyst"
 $requirementsAnalyst = [ProjectTeam]::new(
     "Analyst",
@@ -461,8 +447,8 @@ Think step by step. Generate a list of self-assessment questions that can help w
     0.6,
     0.9,
     [scriptblock]::Create({
-            param ($SystemPrompt, $UserPrompt, $model)
-            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model -$model
+            param ($SystemPrompt, $UserPrompt)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model $script:model
             return $response
         })
 )
@@ -494,8 +480,8 @@ Generate a list of verification questions that could help to self-analyze. Think
     0.65,
     0.9,
     [scriptblock]::Create({
-            param ($SystemPrompt, $UserPrompt, $model)
-            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model -$model
+            param ($SystemPrompt, $UserPrompt)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model $script:model
             return $response
         })
 )
@@ -522,8 +508,8 @@ Think step by step. Make sure your answer is unbiased.
     0.7,
     0.85,
     [scriptblock]::Create({
-            param ($SystemPrompt, $UserPrompt, $model)
-            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model -$model
+            param ($SystemPrompt, $UserPrompt)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model $script:model
             return $response
         })
 )
@@ -562,8 +548,8 @@ Generate a list of verification questions that could help to self-analyze. Think
     0.65,
     0.8,
     [scriptblock]::Create({
-            param ($SystemPrompt, $UserPrompt, $model)
-            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model -$model
+            param ($SystemPrompt, $UserPrompt)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model $script:model
             return $response
         })
 )
@@ -590,8 +576,8 @@ Think step by step. Make sure your answer is unbiased.
     0.6,
     0.9,
     [scriptblock]::Create({
-            param ($SystemPrompt, $UserPrompt, $model)
-            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model -$model
+            param ($SystemPrompt, $UserPrompt)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model $script:model
             return $response
         })
 )
@@ -619,8 +605,8 @@ Think step by step. Make sure your answer is unbiased.
     0.6,
     0.8,
     [scriptblock]::Create({
-            param ($SystemPrompt, $UserPrompt, $model)
-            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model -$model
+            param ($SystemPrompt, $UserPrompt)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model $script:model
             return $response
         })
 )
@@ -648,8 +634,8 @@ Think step by step. Make sure your answer is unbiased.
     0.7,
     0.85,
     [scriptblock]::Create({
-            param ($SystemPrompt, $UserPrompt, $model)
-            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model -$model
+            param ($SystemPrompt, $UserPrompt)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model $script:model
             return $response
         })
 )
@@ -658,6 +644,15 @@ Think step by step. Make sure your answer is unbiased.
 #region Main
 $GlobalResponse = @()
 $GlobalPSDevResponse = @()
+
+$Team = @()
+$Team += $requirementsAnalyst
+$Team += $systemArchitect
+$Team += $domainExpert
+$Team += $powerShellDeveloper
+$Team += $qaEngineer
+$Team += $documentationSpecialist
+$Team += $projectManager
 
 if ($NOLog) {
     foreach ($TeamMember_ in $Team) {
