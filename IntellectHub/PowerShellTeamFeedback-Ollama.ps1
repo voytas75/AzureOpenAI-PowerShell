@@ -42,9 +42,11 @@ param(
     [switch] $NOLog,
     [string] $LogFolder,
     [ValidateSet("Mistral", "Phi3", "gemma", "codegemma", "llama3", "phi3:medium")] 
-    [string] $script:model = "Phi3:medium"
+    [string] $model = "Phi3:medium"
 
 )
+
+$script:model = $model
 
 #region ProjectTeamClass
 <#
