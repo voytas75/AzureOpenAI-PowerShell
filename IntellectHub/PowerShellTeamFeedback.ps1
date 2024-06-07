@@ -17,9 +17,6 @@ An optional switch that disables Project Manager functions when present.
 .PARAMETER NODocumentator 
 An optional switch that disables Documentator functions when present.
 
-.PARAMETER FeedbackSummary 
-An optional switch that provides summary feedback at end if enabled.
-
 .INPUTS 
 None. You cannot pipe objects to this script directly but must pass them as arguments using parameters defined above.
 
@@ -43,8 +40,6 @@ param(
     [switch] $NOPM,
     [switch] $NODocumentator,
     [switch] $NOLog,
-    [switch] $FeedbackSummary,
-    [switch] $ProcessFeedbackIndependently,
     [string] $LogFolder
 )
 
