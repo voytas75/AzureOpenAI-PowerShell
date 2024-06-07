@@ -138,6 +138,39 @@ class ProjectTeam {
             return $responseWithFeedback
         }
     }
+    [string] Feedback([string] $input) {
+        Write-Host "---------------------------------------------------------------------------------------"
+        Write-Host "Feedback by $($this.Name) - $($this.Role)"
+        Write-Host "---------------------------------------------------------------------------------------"
+        # Log the input
+        $this.AddLogEntry("Processing input: $input")
+        # Update status
+        $this.Status = "In Progress"
+        try {
+            # Use the user-provided function to get the response
+            $response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $input -Temperature $this.Temperature -TopP $this.TopP
+            if (-not $script:Stream) {
+                Write-Host $response
+            }
+            # Log the response
+            $this.AddLogEntry("Generated feedback response: $response")
+            # Store the response in memory with timestamp
+            $this.ResponseMemory.Add([PSCustomObject]@{
+                    Response  = $response
+                    Timestamp = Get-Date
+                })
+            # Update status
+            $this.Status = "Completed"
+        }
+        catch {
+            # Log the error
+            $this.AddLogEntry("Error: $_")
+            # Update status
+            $this.Status = "Error"
+            throw $_
+        }
+        return $response
+    }
 
     [void] SetNextExpert([ProjectTeam] $nextExpert) {
         $this.NextExpert = $nextExpert
