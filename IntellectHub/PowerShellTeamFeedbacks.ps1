@@ -689,7 +689,7 @@ Think step by step. Make sure your answer is unbiased.
 "@
     $systemArchitectFeedbackResponse = $systemArchitect.ProcessInput($FeedbackPrompt)
     AddToGlobalResponses $systemArchitectFeedbackResponse
-    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($systemArchitect.Name) feedback, modify the code applying the proposed improvements and optimizations, and you must show the latest version of the code. Version 1.0 was provided below after feedback block.`n`n" + $($systemArchitect.GetLastMemory().Response) + "`n`nHere is Version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$200 for the code.")
+    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($systemArchitect.Name) feedback, modify the code applying the proposed improvements and optimizations, and you must show the latest version of the code. Earlier version was provided below after feedback block.`n`n" + $($systemArchitect.GetLastMemory().Response) + "`n`nHere is version of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$200 for the code.")
     $GlobalPSDevResponse += $powerShellDeveloperResponce
     AddToGlobalResponses $powerShellDeveloperResponce
 
@@ -707,7 +707,7 @@ Think step by step. Make sure your answer is unbiased.
 "@
     $domainExpertFeedbackResponse = $domainExpert.ProcessInput($FeedbackPrompt)
     AddToGlobalResponses $domainExpertFeedbackResponse
-    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($domainExpert.Name) feedback, modify the code applying the proposed improvements and optimizations, and you must show the latest version of the code. Version 1.0 was provided below after feedback block.`n`n" + $($domainExpert.GetLastMemory().Response) + "`n`nHere is Version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$200 for the code.")
+    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($domainExpert.Name) feedback, modify the code applying the proposed improvements and optimizations, and you must show the latest version of the code. Earlier version was provided below after feedback block.`n`n" + $($domainExpert.GetLastMemory().Response) + "`n`nHere is version of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$200 for the code.")
     $GlobalPSDevResponse += $powerShellDeveloperResponce
     AddToGlobalResponses $powerShellDeveloperResponce
 
