@@ -1,7 +1,7 @@
 param (
     [Parameter(Mandatory = $false)] 
     [ValidateSet("Mistral", "Phi3","gemma","codegemma","llama3","phi3:medium")] 
-    [string] $model = "codegemma",
+    [string] $model = "mistral",
     [ValidateSet("Completion", "Chat")] 
     [string] $mode = "chat",
     [string] $SystemMessage,

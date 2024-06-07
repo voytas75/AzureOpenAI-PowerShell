@@ -36,7 +36,7 @@ Purpose/Change: Initial release for emulating teamwork within PowerShell scripti
 #>
 param(
     [string] $userInput = "A PowerShell project to monitor RAM load and display a single color block based on the load.",
-    [bool] $Stream = $true,
+    [bool] $Stream = $false,
     [switch] $NOPM,
     [switch] $NODocumentator,
     [switch] $NOLog,
@@ -137,11 +137,10 @@ class ProjectTeam {
         Write-Host "Current Expert: $($this.Name) - $($this.Role)"
         Write-Host "---------------------------------------------------------------------------------"
         # Log the input
-        $this.AddLogEntry("Processing input: $userinput")
+        $this.AddLogEntry("Processing input:`n$userinput")
         # Update status
         $this.Status = "In Progress"
         #write-Host $script:Stream
-        $this.AddLogEntry("Input:`n$userinput")
         try {
             # Use the user-provided function to get the response
             $response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $userinput
@@ -191,10 +190,9 @@ class ProjectTeam {
         Write-Host "Feedback by $($this.Name) - $($this.Role)"
         Write-Host "---------------------------------------------------------------------------------"
         # Log the input
-        $this.AddLogEntry("Processing input: $input")
+        $this.AddLogEntry("Processing input:`n$input")
         # Update status
         $this.Status = "In Progress"
-        $this.AddLogEntry("Input:`n$input")
         try {
             # Use the user-provided function to get the response
             $response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $Input
@@ -231,7 +229,12 @@ class ProjectTeam {
     
     [void] AddLogEntry([string] $entry) {
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-        $logEntry = "[$timestamp] $entry"
+        $logEntry = @"
+[$timestamp]:
+---------------------------------------------------------------------------------
+$entry
+---------------------------------------------------------------------------------
+"@
         $this.Log.Add($logEntry)
         if (-not [string]::IsNullOrEmpty($this.LogFilePath)) {
             # Write the log entry to the file
