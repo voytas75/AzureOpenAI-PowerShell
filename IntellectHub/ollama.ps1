@@ -1,7 +1,7 @@
 param (
-    [Parameter(Mandatory = $true)] 
+    [Parameter(Mandatory = $false)] 
     [ValidateSet("Mistral", "Phi3","gemma","codegemma","llama3","phi3:medium")] 
-    [string] $model,
+    [string] $model = "codegemma",
     [ValidateSet("Completion", "Chat")] 
     [string] $mode = "chat",
     [string] $SystemMessage,
@@ -45,11 +45,4 @@ $apiEndpoint = "http://localhost:11434" + $UrlPath
 
 # Send the request to the API
 $response = Invoke-RestMethod -Uri $apiEndpoint -Method Post -Body $requestBody -ContentType "application/json"
-$response.message.content
-# Output the response
-#Write-Host "Response: $($response.response)"
-
-<#
-
-
-#>
+return $response.message.content
