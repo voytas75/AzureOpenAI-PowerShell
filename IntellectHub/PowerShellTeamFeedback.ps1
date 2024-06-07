@@ -689,7 +689,7 @@ Think step by step. Make sure your answer is unbiased.
 $requirementsAnalystFeedback = $requirementsAnalyst.Feedback($FeedbackPrompt)
 AddToGlobalResponses $requirementsAnalystFeedback
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($requirementsAnalyst.Name) feedback, modify the code applying the proposed improvements and optimizations, and you must show the latest version of the code. Version 1.0 was provided below after feedback block.`n`n" + $($requirementsAnalyst.GetLastMemory().Response) + "`n`nHere is Version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$200 for the code.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($requirementsAnalyst.Name) feedback, modify the code applying the proposed improvements and optimizations, and you must show the latest version of the code. Version 1.0 was provided below after feedback block.`n`n" + $($requirementsAnalyst.GetLastMemory().Response) + "`n`nHere is Version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$100 for the code.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
@@ -708,7 +708,7 @@ Think step by step. Make sure your answer is unbiased.
 $systemArchitectFeedback = $systemArchitect.Feedback($FeedbackPrompt)
 AddToGlobalResponses $systemArchitectFeedback
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($systemArchitect.Name) feedback, modify the code applying the proposed improvements and optimizations, and you must show the latest version of the code. Version 1.0 was provided below after feedback block.`n`n" + $($systemArchitect.GetLastMemory().Response) + "`n`nHere is Version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$200 for the code.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($systemArchitect.Name) feedback, modify the code applying the proposed improvements and optimizations, and you must show the latest version of the code. Version 1.0 was provided below after feedback block.`n`n" + $($systemArchitect.GetLastMemory().Response) + "`n`nHere is Version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$150 for the code.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
@@ -746,7 +746,7 @@ Think step by step. Make sure your answer is unbiased.
 $qaEngineerFeedback = $qaEngineer.Feedback($FeedbackPrompt)
 AddToGlobalResponses $qaEngineerFeedback
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($qaEngineer.Name) feedback, modify the code applying the proposed improvements and optimizations, and you must show the latest version of the code. Version 1.0 was provided below after feedback block.`n`n" + $($qaEngineer.GetLastMemory().Response) + "`n`nHere is Version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$200 for the code.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($qaEngineer.Name) feedback, modify the code applying the proposed improvements and optimizations, and you must show the latest version of the code. Version 1.0 was provided below after feedback block.`n`n" + $($qaEngineer.GetLastMemory().Response) + "`n`nHere is Version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$300 for the code.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
