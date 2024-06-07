@@ -141,15 +141,16 @@ class ProjectTeam {
         # Update status
         $this.Status = "In Progress"
         #write-Host $script:Stream
+        $this.AddLogEntry("Input:`n$userinput")
         try {
             # Use the user-provided function to get the response
-            $response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $userinput -Temperature $this.Temperature -TopP $this.TopP
+            $response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $userinput
             if (-not $script:Stream) {
                 #write-host ($response | convertto-json -Depth 100)
                 Write-Host $response
             }
             # Log the response
-            $this.AddLogEntry("Generated response: $response")
+            $this.AddLogEntry("Generated response:`n$response")
             # Store the response in memory with timestamp
             $this.ResponseMemory.Add([PSCustomObject]@{
                     Response  = $response
@@ -160,7 +161,7 @@ class ProjectTeam {
                 # Request feedback for the response
                 $feedbackSummary = $this.RequestFeedback($response)
                 # Log the feedback summary
-                $this.AddLogEntry("Feedback summary: $feedbackSummary")
+                $this.AddLogEntry("Feedback summary:`n$feedbackSummary")
             }
             # Integrate feedback into response
             $responseWithFeedback = "$response`n`n$feedbackSummary"
@@ -170,7 +171,7 @@ class ProjectTeam {
         }
         catch {
             # Log the error
-            $this.AddLogEntry("Error: $_")
+            $this.AddLogEntry("Error:`n$_")
             # Update status
             $this.Status = "Error"
             throw $_
@@ -193,14 +194,15 @@ class ProjectTeam {
         $this.AddLogEntry("Processing input: $input")
         # Update status
         $this.Status = "In Progress"
+        $this.AddLogEntry("Input:`n$input")
         try {
             # Use the user-provided function to get the response
-            $response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $Input -Temperature $this.Temperature -TopP $this.TopP
+            $response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $Input
             if (-not $script:Stream) {
                 Write-Host $response
             }
             # Log the response
-            $this.AddLogEntry("Generated feedback response: $response")
+            $this.AddLogEntry("Generated feedback response:`n$response")
             # Store the response in memory with timestamp
             $this.ResponseMemory.Add([PSCustomObject]@{
                     Response  = $response
@@ -211,7 +213,7 @@ class ProjectTeam {
         }
         catch {
             # Log the error
-            $this.AddLogEntry("Error: $_")
+            $this.AddLogEntry("Error:`n$_")
             # Update status
             $this.Status = "Error"
             throw $_
@@ -486,10 +488,10 @@ Generate a list of verification questions that could help to self-analyze. Think
     0.65,
     0.9,
     [scriptblock]::Create({
-        param ($SystemPrompt, $UserPrompt)
-        $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt
-        return $response
-    })
+            param ($SystemPrompt, $UserPrompt)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt
+            return $response
+        })
 )
 
 $systemArchitectRole = "System Architect"
@@ -514,10 +516,10 @@ Think step by step. Make sure your answer is unbiased.
     0.7,
     0.85,
     [scriptblock]::Create({
-        param ($SystemPrompt, $UserPrompt)
-        $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt
-        return $response
-    })
+            param ($SystemPrompt, $UserPrompt)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt
+            return $response
+        })
 )
 
 $powerShellDeveloperRole = "PowerShell Developer"
@@ -554,10 +556,10 @@ Generate a list of verification questions that could help to self-analyze. Think
     0.65,
     0.8,
     [scriptblock]::Create({
-        param ($SystemPrompt, $UserPrompt)
-        $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt
-        return $response
-    })
+            param ($SystemPrompt, $UserPrompt)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt
+            return $response
+        })
 )
 
 $qaEngineerRole = "Quality Assurance Engineer"
@@ -582,10 +584,10 @@ Think step by step. Make sure your answer is unbiased.
     0.6,
     0.9,
     [scriptblock]::Create({
-        param ($SystemPrompt, $UserPrompt)
-        $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt
-        return $response
-    })
+            param ($SystemPrompt, $UserPrompt)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt
+            return $response
+        })
 )
 
 $documentationSpecialistRole = "Documentation Specialist"
@@ -611,10 +613,10 @@ Think step by step. Make sure your answer is unbiased.
     0.6,
     0.8,
     [scriptblock]::Create({
-        param ($SystemPrompt, $UserPrompt)
-        $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt
-        return $response
-    })
+            param ($SystemPrompt, $UserPrompt)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt
+            return $response
+        })
 )
 
 $projectManagerRole = "Project Manager"
@@ -640,10 +642,10 @@ Think step by step. Make sure your answer is unbiased.
     0.7,
     0.85,
     [scriptblock]::Create({
-        param ($SystemPrompt, $UserPrompt)
-        $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt
-        return $response
-    })
+            param ($SystemPrompt, $UserPrompt)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt
+            return $response
+        })
 )
 #endregion ProjectTeam
 
