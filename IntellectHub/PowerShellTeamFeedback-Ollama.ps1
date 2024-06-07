@@ -670,11 +670,11 @@ if (-not $NOLog) {
 }
 
 $userInputOryginal = $userInput
-$projectManagerFeedback = $projectManager.Feedback("Based on user input create detailed and concise project name, description, objectives, deliverables, additional considerations, and success criteria. I will tip you `$100 for including all the elements provided by the user. `n`n" + $userInputOryginal)
+$projectManagerFeedback = $projectManager.Feedback("Based on user input create detailed and concise project name, description, objectives, deliverables, additional considerations, and success criteria. I will tip you `$100 for including all the elements provided by the user.`n`n````````text`n" + $userInputOryginal + "`n`````````n")
 AddToGlobalResponses $projectManagerFeedback
 $script:userInput = $projectManagerFeedback
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($projectManager.Name) user inpute review, create the version 1.0 of the code..`n`n" + $($projectManager.GetLastMemory().Response) + "`n`nThink step by step. Make sure your answer is unbiased. I will tip you `$50 for the code.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($projectManager.Name) review, create the version 1.0 of the code.`n`n````````text`n" + $($projectManager.GetLastMemory().Response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$50 for the code.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
@@ -693,7 +693,7 @@ Think step by step. Make sure your answer is unbiased.
 $requirementsAnalystFeedback = $requirementsAnalyst.Feedback($FeedbackPrompt)
 AddToGlobalResponses $requirementsAnalystFeedback
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($requirementsAnalyst.Name) feedback, modify the code applying the proposed improvements and optimizations, and you must show the latest version of the code. Version 1.0 was provided below after feedback block.`n`n" + $($requirementsAnalyst.GetLastMemory().Response) + "`n`nHere is Version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$100 for the code.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($requirementsAnalyst.Name) feedback, modify the code with suggested improvements and optimizations. Then you need to view the latest version of the code. The previous version has been shared below after the feedback block.`n`n" + $($requirementsAnalyst.GetLastMemory().Response) + "`n`nHere is version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you $100 for the correct code.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
