@@ -40,7 +40,10 @@ param(
     [switch] $NOPM,
     [switch] $NODocumentator,
     [switch] $NOLog,
-    [string] $LogFolder
+    [string] $LogFolder,
+    [ValidateSet("Mistral", "Phi3", "gemma", "codegemma", "llama3", "phi3:medium")] 
+    [string] $model = "Phi3:medium"
+
 )
 
 #region ProjectTeamClass
@@ -113,7 +116,7 @@ class ProjectTeam {
 
         if ($display -eq 1) {
             Write-Host "---------------------------------------------------------------------------------"
-            Write-Host "Info: $($this.Name) - $($this.Role)"
+            Write-Host "Info: $($this.Name) ($($this.Role))"
             Write-Host "---------------------------------------------------------------------------------"
             Write-Host "Name: $($infoObject.Name)"
             Write-Host "Role: $($infoObject.Role)"
@@ -134,7 +137,7 @@ class ProjectTeam {
     
     [string] ProcessInput([string] $userinput) {
         Write-Host "---------------------------------------------------------------------------------"
-        Write-Host "Current Expert: $($this.Name) - $($this.Role)"
+        Write-Host "Current Expert: $($this.Name) ($($this.Role))"
         Write-Host "---------------------------------------------------------------------------------"
         # Log the input
         $this.AddLogEntry("Processing input:`n$userinput")
@@ -187,7 +190,7 @@ class ProjectTeam {
 
     [string] Feedback([string] $input) {
         Write-Host "---------------------------------------------------------------------------------"
-        Write-Host "Feedback by $($this.Name) - $($this.Role)"
+        Write-Host "Feedback by $($this.Name) ($($this.Role))"
         Write-Host "---------------------------------------------------------------------------------"
         # Log the input
         $this.AddLogEntry("Processing input:`n$input")
@@ -433,8 +436,8 @@ $HelperExpert = [ProjectTeam]::new(
     0.4,
     0.8,
     [scriptblock]::Create({
-            param ($SystemPrompt, $UserPrompt)
-            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt
+            param ($SystemPrompt, $UserPrompt, $model)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model $model
             return $response
         })
 )
@@ -458,8 +461,8 @@ Think step by step. Generate a list of self-assessment questions that can help w
     0.6,
     0.9,
     [scriptblock]::Create({
-            param ($SystemPrompt, $UserPrompt)
-            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt
+            param ($SystemPrompt, $UserPrompt, $model)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model -$model
             return $response
         })
 )
@@ -491,8 +494,8 @@ Generate a list of verification questions that could help to self-analyze. Think
     0.65,
     0.9,
     [scriptblock]::Create({
-            param ($SystemPrompt, $UserPrompt)
-            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt
+            param ($SystemPrompt, $UserPrompt, $model)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model -$model
             return $response
         })
 )
@@ -519,8 +522,8 @@ Think step by step. Make sure your answer is unbiased.
     0.7,
     0.85,
     [scriptblock]::Create({
-            param ($SystemPrompt, $UserPrompt)
-            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt
+            param ($SystemPrompt, $UserPrompt, $model)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model -$model
             return $response
         })
 )
@@ -559,8 +562,8 @@ Generate a list of verification questions that could help to self-analyze. Think
     0.65,
     0.8,
     [scriptblock]::Create({
-            param ($SystemPrompt, $UserPrompt)
-            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt
+            param ($SystemPrompt, $UserPrompt, $model)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model -$model
             return $response
         })
 )
@@ -587,8 +590,8 @@ Think step by step. Make sure your answer is unbiased.
     0.6,
     0.9,
     [scriptblock]::Create({
-            param ($SystemPrompt, $UserPrompt)
-            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt
+            param ($SystemPrompt, $UserPrompt, $model)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model -$model
             return $response
         })
 )
@@ -616,8 +619,8 @@ Think step by step. Make sure your answer is unbiased.
     0.6,
     0.8,
     [scriptblock]::Create({
-            param ($SystemPrompt, $UserPrompt)
-            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt
+            param ($SystemPrompt, $UserPrompt, $model)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model -$model
             return $response
         })
 )
@@ -645,8 +648,8 @@ Think step by step. Make sure your answer is unbiased.
     0.7,
     0.85,
     [scriptblock]::Create({
-            param ($SystemPrompt, $UserPrompt)
-            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt
+            param ($SystemPrompt, $UserPrompt, $model)
+            $response = .\ollama.ps1 -SystemMessage $SystemPrompt -UserMessage $UserPrompt -model -$model
             return $response
         })
 )
@@ -693,7 +696,7 @@ Think step by step. Make sure your answer is unbiased.
 $requirementsAnalystFeedback = $requirementsAnalyst.Feedback($FeedbackPrompt)
 AddToGlobalResponses $requirementsAnalystFeedback
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($requirementsAnalyst.Name) feedback, modify the code with suggested improvements and optimizations. Then you need to view the latest version of the code. The previous version has been shared below after the feedback block.`n`n" + $($requirementsAnalyst.GetLastMemory().Response) + "`n`nHere is version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you $100 for the correct code.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($requirementsAnalyst.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n" + $($requirementsAnalyst.GetLastMemory().Response) + "`n`nHere is version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$100 for the correct code.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
@@ -712,7 +715,7 @@ Think step by step. Make sure your answer is unbiased.
 $systemArchitectFeedback = $systemArchitect.Feedback($FeedbackPrompt)
 AddToGlobalResponses $systemArchitectFeedback
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($systemArchitect.Name) feedback, modify the code applying the proposed improvements and optimizations, and you must show the latest version of the code. Version 1.0 was provided below after feedback block.`n`n" + $($systemArchitect.GetLastMemory().Response) + "`n`nHere is Version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$150 for the code.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($systemArchitect.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n" + $($systemArchitect.GetLastMemory().Response) + "`n`nHere is version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$150 for the correct code.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
@@ -731,7 +734,7 @@ Think step by step. Make sure your answer is unbiased.
 $domainExpertFeedback = $domainExpert.Feedback($FeedbackPrompt)
 AddToGlobalResponses $domainExpertFeedback
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($domainExpert.Name) feedback, modify the code applying the proposed improvements and optimizations, and you must show the latest version of the code. Version 1.0 was provided below after feedback block.`n`n" + $($domainExpert.GetLastMemory().Response) + "`n`nHere is Version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$200 for the code.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($domainExpert.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n" + $($domainExpert.GetLastMemory().Response) + "`n`nHere is version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$200 for the correct code.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
@@ -750,7 +753,7 @@ Think step by step. Make sure your answer is unbiased.
 $qaEngineerFeedback = $qaEngineer.Feedback($FeedbackPrompt)
 AddToGlobalResponses $qaEngineerFeedback
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($qaEngineer.Name) feedback, modify the code applying the proposed improvements and optimizations, and you must show the latest version of the code. Version 1.0 was provided below after feedback block.`n`n" + $($qaEngineer.GetLastMemory().Response) + "`n`nHere is Version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$300 for the code.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($qaEngineer.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n" + $($qaEngineer.GetLastMemory().Response) + "`n`nHere is version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$300 for the correct code.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
