@@ -805,11 +805,9 @@ Please provide your changes to the code:
     ````````text
     $($powerShellDeveloperResponce.trim())
     ````````
-
-Think step by step, make sure your answer is unbiased. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.
 "@
 $userChanges = Read-Host -Prompt $userChangesPrompt
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on user's changes, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n`````````n" + $($userChanges.trim()) + "`n`````````n`nHere is version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on user's changes, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n`````````n" + $($userChanges.trim()) + "`n`````````n`nHere is previous version of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. Show the next version of the code.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
