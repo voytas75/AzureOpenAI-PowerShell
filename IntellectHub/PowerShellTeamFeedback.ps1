@@ -799,15 +799,8 @@ if (-not $NODocumentator) {
     AddToGlobalResponses $documentationSpecialistResponce
 }
 
-$userChangesPrompt = @"
-Please provide your changes to the code:
-1. Last developer response:
-    ````````text
-    $($powerShellDeveloperResponce.trim())
-    ````````
-"@
-$userChanges = Read-Host -Prompt $userChangesPrompt
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on user's changes, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n`````````n" + $($userChanges.trim()) + "`n`````````n`nHere is previous version of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. Show the next version of the code.")
+$userChanges = Read-Host -Prompt "`n`nPlease describe your changes to the code"
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on user's changes, modify the code with suggested features, improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n`````````n" + $($userChanges.trim()) + "`n`````````n`nHere is previous version of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. Show the next version of the code.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
