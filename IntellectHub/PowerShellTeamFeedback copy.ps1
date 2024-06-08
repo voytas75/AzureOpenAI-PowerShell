@@ -185,17 +185,17 @@ class ProjectTeam {
         }
     }
 
-    [string] Feedback([ProjectTeam] $AssessedExpert, [string] $Expertinput) {
+    [string] Feedback([string] $Userinput) {
         Write-Host "---------------------------------------------------------------------------------------"
-        Write-Host "Feedback by $($this.Name) ($($this.Role)) for $($AssessedExpert.name)"
+        Write-Host "Feedback by $($this.Name) ($($this.Role))"
         Write-Host "---------------------------------------------------------------------------------------"
         # Log the input
-        $this.AddLogEntry("Processing input:`n$Expertinput")
+        $this.AddLogEntry("Processing input:`n$Userinput")
         # Update status
         $this.Status = "In Progress"
         try {
             # Use the user-provided function to get the response
-            $response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $Expertinput -Temperature $this.Temperature -TopP $this.TopP
+            $response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $Userinput -Temperature $this.Temperature -TopP $this.TopP
             #$response = SendFeedbackRequest -TeamMember $this.Name -Response $Userinput -Prompt $this.Prompt -Temperature $this.Temperature -TopP $this.TopP -ResponseFunction $this.ResponseFunction
             if (-not $script:Stream) {
                 Write-Host $response
@@ -691,7 +691,7 @@ if (-not $NOLog) {
 }
 
 $userInputOryginal = $userInput
-$projectManagerFeedback = $projectManager.Feedback($powerShellDeveloper, "Based on user input create detailed and concise project name, description, objectives, deliverables, additional considerations, and success criteria. I will tip you `$100 for including all the elements provided by the user.`n`n````````text`n" + $userInputOryginal + "`n`````````n`nUse reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
+$projectManagerFeedback = $projectManager.Feedback("Based on user input create detailed and concise project name, description, objectives, deliverables, additional considerations, and success criteria. I will tip you `$100 for including all the elements provided by the user.`n`n````````text`n" + $userInputOryginal + "`n`````````n`nUse reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
 AddToGlobalResponses $projectManagerFeedback
 $script:userInput = $projectManagerFeedback
 
@@ -700,21 +700,21 @@ $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
 $FeedbackPrompt = @"
-Review the following responses:
+Review the following response and provide your suggestions for improvement as feedback to Powershell Developer. Generate a list of verification questions that could help to self-analyze. 
+I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
 
-1. Description and objectives:
-    ````````text
-    $($script:userInput.trim())
-    ````````
+Description and objectives:
+````````text
+$($script:userInput.trim())
+````````
+The code:
+````````text
+$($powerShellDeveloperResponce.trim())
+````````
 
-2. The code:
-    ````````text
-    $($powerShellDeveloperResponce.trim())
-    ````````
-
-Think step by step, make sure your answer is unbiased, show the review. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks. Provide your suggestions for improvement as feedback to Powershell Developer. Generate a list of verification questions that could help to self-analyze. I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
+Think step by step, make sure your answer is unbiased, show the review. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.
 "@
-$requirementsAnalystFeedback = $requirementsAnalyst.Feedback($powerShellDeveloper, $FeedbackPrompt)
+$requirementsAnalystFeedback = $requirementsAnalyst.Feedback($FeedbackPrompt)
 AddToGlobalResponses $requirementsAnalystFeedback
 
 $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($requirementsAnalyst.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($requirementsAnalyst.GetLastMemory().Response) + "`n`````````n`nHere is version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$100 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
@@ -722,21 +722,22 @@ $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
 $FeedbackPrompt = @"
-Review the following responses
+Review the following response and provide your suggestions for improvement as feedback to Powershell Developer. Generate a list of verification questions that could help to self-analyze. 
+I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
 
-1. Description and objectives:
-    ````````text
-    $($script:userInput.trim())
-    ````````
+Description and objectives:
+````````text
+$($script:userInput.trim())
+````````
 
-2. The code:
-    ````````text
-    $($powerShellDeveloperResponce.trim())
-    ````````
+The code:
+````````text
+$($powerShellDeveloperResponce.trim())
+````````
 
-Think step by step, make sure your answer is unbiased, show the review. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks. Provide your suggestions for improvement as feedback to Powershell Developer. Generate a list of verification questions that could help to self-analyze. I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
+Think step by step, make sure your answer is unbiased, show the review. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.
 "@
-$systemArchitectFeedback = $systemArchitect.Feedback($powerShellDeveloper, $FeedbackPrompt)
+$systemArchitectFeedback = $systemArchitect.Feedback($FeedbackPrompt)
 AddToGlobalResponses $systemArchitectFeedback
 
 $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($systemArchitect.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($systemArchitect.GetLastMemory().Response) + "`n`````````n`nHere is version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$150 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
@@ -744,21 +745,22 @@ $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
 $FeedbackPrompt = @"
-Review the following responses:
+Review the following response and provide your suggestions for improvement as feedback to Powershell Developer. Generate a list of verification questions that could help to self-analyze. 
+I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
 
-1. Description and objectives:
-    ````````text
-    $($script:userInput.trim())
-    ````````
+Description and objectives:
+````````text
+$($script:userInput.trim())
+````````
 
-2. The code:
-    ````````text
-    $($powerShellDeveloperResponce.trim())
-    ````````
+The code:
+````````text
+$($powerShellDeveloperResponce.trim())
+````````
 
-Think step by step, make sure your answer is unbiased, show the review. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks. Provide your suggestions for improvement as feedback to Powershell Developer. Generate a list of verification questions that could help to self-analyze. I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
+Think step by step, make sure your answer is unbiased, show the review. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.
 "@
-$domainExpertFeedback = $domainExpert.Feedback($powerShellDeveloper, $FeedbackPrompt)
+$domainExpertFeedback = $domainExpert.Feedback($FeedbackPrompt)
 AddToGlobalResponses $domainExpertFeedback
 
 $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($domainExpert.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($domainExpert.GetLastMemory().Response) + "`n`````````n`nHere is version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$200 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
@@ -766,21 +768,22 @@ $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
 $FeedbackPrompt = @"
-You must review the following responses:
+Review the following response and provide your suggestions for improvement as feedback to Powershell Developer. Generate a list of verification questions that could help to self-analyze. 
+I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
 
-1. Description and objectives:
-    ````````text
-    $($script:userInput.trim())
-    ````````
+Description and objectives:
+````````text
+$($script:userInput.trim())
+````````
 
-2. The code:
-    ````````text
-    $($powerShellDeveloperResponce.trim())
-    ````````
+The code:
+````````text
+$($powerShellDeveloperResponce.trim())
+````````
 
-Think step by step, make sure your answer is unbiased, show the review. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks. Provide your suggestions for improvement as feedback to Powershell Developer. Generate a list of verification questions that could help to self-analyze. I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
+Think step by step, make sure your answer is unbiased, show the review. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.
 "@
-$qaEngineerFeedback = $qaEngineer.Feedback($powerShellDeveloper, $FeedbackPrompt)
+$qaEngineerFeedback = $qaEngineer.Feedback($FeedbackPrompt)
 AddToGlobalResponses $qaEngineerFeedback
 
 $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($qaEngineer.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n`````````n" + $($qaEngineer.GetLastMemory().Response) + "`n`````````n`nHere is version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$300 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
