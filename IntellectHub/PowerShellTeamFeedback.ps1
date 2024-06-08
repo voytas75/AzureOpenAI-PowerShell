@@ -811,26 +811,26 @@ do {
         switch ($userOption) {
             '1' {
                 $userChanges = Read-Host -Prompt "Please describe your changes to the code"
-                $promptMessage = "Based on your changes, modify the code with suggested features, improvements and optimizations."
+                $promptMessage = "Based on described by user changes, modify the code with suggested features, improvements and optimizations. Show the next version of the code."
             }
             '2' {
                 $userChanges = Read-Host -Prompt "Please suggest a new feature"
-                $promptMessage = "Based on your new feature suggestion, modify the code to incorporate this feature."
+                $promptMessage = "Based on user new feature suggestion, modify the code to incorporate this feature. Show the next version of the code."
             }
             '3' {
                 $userChanges = Read-Host -Prompt "Please add your own request"
-                $promptMessage = "Based on your request, modify the code to fulfill this request."
+                $promptMessage = "Based on user request, modify the code to fulfill this request."
             }
             '4' {
                 $userChanges = Read-Host -Prompt "Please ask your question about the code"
-                $promptMessage = "Based on your question, provide an explanation or modification to the code."
+                $promptMessage = "Based on user question, provide an explanation or modification to the code. You must answer the question only. Do not show the code."
             }
             default {
                 Write-Host "Invalid option. Please try again."
                 continue
             }
         }
-        $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("$promptMessage The previous version of the code has been shared below after the feedback block.`n`n`````````n" + $($userChanges.trim()) + "`n`````````n`nHere is previous version of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. Show the next version of the code.")
+        $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("$promptMessage The previous version of the code has been shared below after the feedback block.`n`n`````````n" + $($userChanges.trim()) + "`n`````````n`nHere is previous version of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased.")
         $GlobalPSDevResponse += $powerShellDeveloperResponce
         AddToGlobalResponses $powerShellDeveloperResponce
     }
