@@ -804,6 +804,7 @@ do {
     Write-Host "1. Describe your changes to the code"
     Write-Host "2. Suggest a new feature"
     Write-Host "3. Add your own request"
+    Write-Host "4. Ask a question about the code"
     Write-Host "Q. Quit"
     $userOption = Read-Host -Prompt "Enter your choice"
     if ($userOption -ne 'Q') {
@@ -820,6 +821,10 @@ do {
                 $userChanges = Read-Host -Prompt "Please add your own request"
                 $promptMessage = "Based on your request, modify the code to fulfill this request."
             }
+            '4' {
+                $userChanges = Read-Host -Prompt "Please ask your question about the code"
+                $promptMessage = "Based on your question, provide an explanation or modification to the code."
+            }
             default {
                 Write-Host "Invalid option. Please try again."
                 continue
@@ -830,6 +835,7 @@ do {
         AddToGlobalResponses $powerShellDeveloperResponce
     }
 } while ($userOption -ne 'Q')
+
 
 if (-not $NOPM) {
     # Example of summarizing all steps,  Log final response to file
