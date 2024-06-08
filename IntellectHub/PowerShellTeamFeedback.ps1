@@ -440,20 +440,6 @@ Catch {
 
 #region ProjectTeam
 # Create ProjectTeam expert objects
-$HelperExpertRole = "Helper Expert"
-$HelperExpert = [ProjectTeam]::new(
-    "Helper",
-    $HelperExpertRole,
-    "You are helpful and valuable Assistant named {0}." -f $HelperExpertRole,
-    0.4,
-    0.8,
-    [scriptblock]::Create({
-            param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
-            return $response
-        })
-)
-
 $requirementsAnalystRole = "Requirements Analyst"
 $requirementsAnalyst = [ProjectTeam]::new(
     "Analyst",
@@ -711,7 +697,7 @@ $projectManagerFeedback = $projectManager.Feedback($powerShellDeveloper, "Based 
 AddToGlobalResponses $projectManagerFeedback
 $script:userInput = $projectManagerFeedback
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($projectManager.Name) review, you must create the version 1.0 of the code.`n`n````````text`n" + $($projectManager.GetLastMemory().Response) + "`n`````````n`nUse reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks. I will tip you `$50 for showing the code.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($projectManager.Name) review, you must create the first version of the code.`n`n````````text`n" + $($projectManager.GetLastMemory().Response) + "`n`````````n`nUse reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks. I will tip you `$50 for showing the code.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
@@ -733,7 +719,7 @@ Think step by step, make sure your answer is unbiased, show the review. Use reli
 $requirementsAnalystFeedback = $requirementsAnalyst.Feedback($powerShellDeveloper, $FeedbackPrompt)
 AddToGlobalResponses $requirementsAnalystFeedback
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($requirementsAnalyst.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($requirementsAnalyst.GetLastMemory().Response) + "`n`````````n`nHere is version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$100 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($requirementsAnalyst.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($requirementsAnalyst.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$100 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
@@ -755,7 +741,7 @@ Think step by step, make sure your answer is unbiased, show the review. Use reli
 $systemArchitectFeedback = $systemArchitect.Feedback($powerShellDeveloper, $FeedbackPrompt)
 AddToGlobalResponses $systemArchitectFeedback
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($systemArchitect.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($systemArchitect.GetLastMemory().Response) + "`n`````````n`nHere is version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$150 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($systemArchitect.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($systemArchitect.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$150 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
@@ -777,7 +763,7 @@ Think step by step, make sure your answer is unbiased, show the review. Use reli
 $domainExpertFeedback = $domainExpert.Feedback($powerShellDeveloper, $FeedbackPrompt)
 AddToGlobalResponses $domainExpertFeedback
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($domainExpert.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($domainExpert.GetLastMemory().Response) + "`n`````````n`nHere is version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$200 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($domainExpert.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($domainExpert.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$200 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
@@ -799,7 +785,7 @@ Think step by step, make sure your answer is unbiased, show the review. Use reli
 $qaEngineerFeedback = $qaEngineer.Feedback($powerShellDeveloper, $FeedbackPrompt)
 AddToGlobalResponses $qaEngineerFeedback
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($qaEngineer.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n`````````n" + $($qaEngineer.GetLastMemory().Response) + "`n`````````n`nHere is version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$300 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($qaEngineer.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n`````````n" + $($qaEngineer.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$300 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
@@ -812,6 +798,20 @@ if (-not $NODocumentator) {
     }
     AddToGlobalResponses $documentationSpecialistResponce
 }
+
+$userChangesPrompt = @"
+Please provide your changes to the code:
+1. The code:
+    ````````text
+    $($powerShellDeveloperResponce.trim())
+    ````````
+
+Think step by step, make sure your answer is unbiased. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.
+"@
+$userChanges = Read-Host -Prompt $userChangesPrompt
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on user's changes, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n`````````n" + $($userChanges.trim()) + "`n`````````n`nHere is version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
+$GlobalPSDevResponse += $powerShellDeveloperResponce
+AddToGlobalResponses $powerShellDeveloperResponce
 
 if (-not $NOPM) {
     # Example of summarizing all steps,  Log final response to file
