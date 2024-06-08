@@ -1,32 +1,38 @@
 <# 
 .SYNOPSIS 
-Emulates a team of specialists working collaboratively on a PowerShell project.
+This script emulates a team of specialists working together on a PowerShell project.
 
 .DESCRIPTION 
-This script simulates forming a team of specialists where each member has a unique role in executing a project. The input is processed by one specialist who then executes their designated task and passes the result onto the next specialist. This chain continues until all tasks are completed.
+The script simulates a team of specialists, each with a unique role in executing a project. The input is processed by one specialist who performs their task and passes the result to the next specialist. This process continues until all tasks are completed.
 
 .PARAMETER userInput 
-Specifies the outline of the project as a string. The default value describes monitoring RAM load and displaying color based on load levels.
+This parameter defines the project outline as a string. The default value is a project to monitor RAM load and display a color block based on the load levels.
 
 .PARAMETER Stream 
-Determines whether output should be streamed live. By setting this parameter to $true (default), output will be streamed. If set to $false, streaming will be disabled.
+This parameter controls whether the output should be streamed live. By default, this parameter is set to $true, enabling live streaming. If set to $false, live streaming is disabled.
 
 .PARAMETER NOPM 
-An optional switch that disables Project Manager functions when present.
+This optional switch disables the Project Manager functions when used.
 
 .PARAMETER NODocumentator 
-An optional switch that disables Documentator functions when present.
+This optional switch disables the Documentator functions when used.
+
+.PARAMETER NOLog
+This optional switch disables the logging functions when used.
+
+.PARAMETER LogFolder
+This parameter specifies the folder where logs should be stored.
 
 .INPUTS 
-None. You cannot pipe objects to this script directly but must pass them as arguments using parameters defined above.
+None. You cannot pipe objects directly to this script. Instead, you must pass them as arguments using the parameters defined above.
 
 .OUTPUTS 
-Output varies depending on how each specialist processes their part of the project; typically text-based results are expected which may include status messages or visual representations like graphs or color blocks related to system metrics such as RAM load etc., depending upon user input specification provided via 'userInput' parameter
+The output varies depending on how each specialist processes their part of the project. Typically, text-based results are expected, which may include status messages or visual representations like graphs or color blocks related to system metrics such as RAM load, depending on the user input specification provided via the 'userInput' parameter.
 
 .EXAMPLE 
 PS> .\PowerShellTeamFeedbacks.ps1 -userInput "A PowerShell project to monitor CPU usage and display dynamic graph." -Stream $false
 
-This command runs the script without streaming output live (-Stream $false) while specifying custom user input about monitoring CPU usage instead of RAM and displaying it through dynamic graphing methods rather than static color blocks.
+This command runs the script without streaming output live (-Stream $false) and specifies custom user input about monitoring CPU usage instead of RAM, displaying it through dynamic graphing methods rather than static color blocks.
 
 .NOTES 
 Version: 1.0.0
@@ -46,38 +52,41 @@ param(
 #region ProjectTeamClass
 <#
 .SYNOPSIS
-The ProjectTeam class represents an expert in the team.
+The ProjectTeam class represents a team member with a specific expertise.
 
 .DESCRIPTION
-Each expert has a name, role, prompt, and a function to process the input. The expert can also log their actions, store their responses, and pass the input to the next expert.
+Each team member has a name, role, prompt, and a function to process the input. They can also log their actions, store their responses, and pass the input to the next team member.
 
 .METHODS
-DisplayInfo: Displays the expert's information.
-DisplayHeader: Displays the expert's name and role.
+DisplayInfo: Displays the team member's information.
+DisplayHeader: Displays the team member's name and role.
 ProcessInput: Processes the input and returns the response.
-SetNextExpert: Sets the next expert in the workflow.
-GetNextExpert: Returns the next expert in the workflow.
+SetNextExpert: Sets the next team member in the workflow.
+GetNextExpert: Returns the next team member in the workflow.
 AddLogEntry: Adds an entry to the log.
 Notify: Sends a notification (currently just displays a message).
-GetMemory: Returns the expert's memory (responses).
-GetLastMemory: Returns the last response from the expert's memory.
-SummarizeMemory: Summarizes the expert's memory.
-ProcessBySpecificExpert: Processes the input by a specific expert.
+GetMemory: Returns the team member's memory (responses).
+GetLastMemory: Returns the last response from the team member's memory.
+SummarizeMemory: Summarizes the team member's memory.
+ProcessBySpecificExpert: Processes the input by a specific team member.
 #>
+# Define the ProjectTeam class
 class ProjectTeam {
-    [string] $Name
-    [string] $Role
-    [string] $Prompt
-    [ProjectTeam] $NextExpert
-    [System.Collections.ArrayList] $ResponseMemory
-    [double] $Temperature
-    [double] $TopP
-    [string] $Status
-    [System.Collections.ArrayList] $Log
-    [scriptblock] $ResponseFunction
-    [string] $LogFilePath
-    [array] $FeedbackTeam
+    # Define class properties
+    [string] $Name  # Name of the team member
+    [string] $Role  # Role of the team member
+    [string] $Prompt  # Prompt for the team member
+    [ProjectTeam] $NextExpert  # Next expert in the workflow
+    [System.Collections.ArrayList] $ResponseMemory  # Memory to store responses
+    [double] $Temperature  # Temperature parameter for the response function
+    [double] $TopP  # TopP parameter for the response function
+    [string] $Status  # Status of the team member
+    [System.Collections.ArrayList] $Log  # Log of the team member's actions
+    [scriptblock] $ResponseFunction  # Function to process the input and generate a response
+    [string] $LogFilePath  # Path to the log file
+    [array] $FeedbackTeam  # Team of experts providing feedback
     
+    # Constructor for the ProjectTeam class
     ProjectTeam([string] $name, [string] $role, [string] $prompt, [double] $temperature, [double] $top_p, [scriptblock] $responseFunction) {
         $this.Name = $name
         $this.Role = $role
@@ -93,7 +102,9 @@ class ProjectTeam {
         $this.FeedbackTeam = @()
     }
 
+    # Method to display the team member's information
     [PSCustomObject] DisplayInfo([int] $display = 1) {
+        # Create an ordered dictionary to store the information
         $info = [ordered]@{
             "Name"              = $this.Name
             "Role"              = $this.Role
@@ -109,8 +120,10 @@ class ProjectTeam {
             "Response Function" = $this.ResponseFunction
         }
         
+        # Create a custom object from the dictionary
         $infoObject = New-Object -TypeName PSCustomObject -Property $info
 
+        # If display is set to 1, print the information to the console
         if ($display -eq 1) {
             Write-Host "---------------------------------------------------------------------------------"
             Write-Host "Info: $($this.Name) ($($this.Role))"
@@ -129,9 +142,11 @@ class ProjectTeam {
             Write-Host "Response Function: $($infoObject.'Response Function')"
         }
 
+        # Return the custom object
         return $infoObject
     }
     
+    # Method to process the input and generate a response
     [string] ProcessInput([string] $userinput) {
         Write-Host "---------------------------------------------------------------------------------"
         Write-Host "Current Expert: $($this.Name) ($($this.Role))"
@@ -325,12 +340,12 @@ $entry
 #region Functions
 function SendFeedbackRequest {
     param (
-        [string] $TeamMember,
-        [string] $Response,
-        [string] $Prompt,
-        [double] $Temperature,
-        [double] $TopP,
-        [scriptblock] $ResponseFunction
+        [string] $TeamMember, # The team member to send the feedback request to
+        [string] $Response, # The response to be reviewed
+        [string] $Prompt, # The prompt for the feedback request
+        [double] $Temperature, # The temperature parameter for the LLM model
+        [double] $TopP, # The TopP parameter for the LLM model
+        [scriptblock] $ResponseFunction # The function to generate the response
     )
 
     # Define the feedback request prompt
@@ -354,7 +369,6 @@ Think step by step. Make sure your answer is unbiased.
     # Return the feedback
     return $feedback
 }
-
 
 function GetLastMemoryFromFeedbackTeamMembers {
     param (
