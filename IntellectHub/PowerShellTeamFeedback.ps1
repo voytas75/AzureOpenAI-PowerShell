@@ -113,7 +113,7 @@ class ProjectTeam {
 
         if ($display -eq 1) {
             Write-Host "---------------------------------------------------------------------------------"
-            Write-Host "Info: $($this.Name) - $($this.Role)"
+            Write-Host "Info: $($this.Name) ($($this.Role))"
             Write-Host "---------------------------------------------------------------------------------"
             Write-Host "Name: $($infoObject.Name)"
             Write-Host "Role: $($infoObject.Role)"
@@ -134,10 +134,10 @@ class ProjectTeam {
     
     [string] ProcessInput([string] $userinput) {
         Write-Host "---------------------------------------------------------------------------------"
-        Write-Host "Current Expert: $($this.Name) - $($this.Role)"
+        Write-Host "Current Expert: $($this.Name) ($($this.Role))"
         Write-Host "---------------------------------------------------------------------------------"
         # Log the input
-        $this.AddLogEntry("Processing input: $userinput")
+        $this.AddLogEntry("Processing input:`n$userinput")
         # Update status
         $this.Status = "In Progress"
         #write-Host $script:Stream
@@ -149,7 +149,7 @@ class ProjectTeam {
                 Write-Host $response
             }
             # Log the response
-            $this.AddLogEntry("Generated response: $response")
+            $this.AddLogEntry("Generated response:`n$response")
             # Store the response in memory with timestamp
             $this.ResponseMemory.Add([PSCustomObject]@{
                     Response  = $response
@@ -160,7 +160,7 @@ class ProjectTeam {
                 # Request feedback for the response
                 $feedbackSummary = $this.RequestFeedback($response)
                 # Log the feedback summary
-                $this.AddLogEntry("Feedback summary: $feedbackSummary")
+                $this.AddLogEntry("Feedback summary:`n$feedbackSummary")
             }
             # Integrate feedback into response
             $responseWithFeedback = "$response`n`n$feedbackSummary"
@@ -170,7 +170,7 @@ class ProjectTeam {
         }
         catch {
             # Log the error
-            $this.AddLogEntry("Error: $_")
+            $this.AddLogEntry("Error:`n$_")
             # Update status
             $this.Status = "Error"
             throw $_
@@ -185,23 +185,23 @@ class ProjectTeam {
         }
     }
 
-    [string] Feedback([string] $input) {
+    [string] Feedback([string] $Userinput) {
         Write-Host "---------------------------------------------------------------------------------------"
-        Write-Host "Feedback by $($this.Name) - $($this.Role)"
+        Write-Host "Feedback by $($this.Name) ($($this.Role))"
         Write-Host "---------------------------------------------------------------------------------------"
         # Log the input
-        $this.AddLogEntry("Processing input: $input")
+        $this.AddLogEntry("Processing input:`n$Userinput")
         # Update status
         $this.Status = "In Progress"
         try {
             # Use the user-provided function to get the response
-            $response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $Input -Temperature $this.Temperature -TopP $this.TopP
-            #$response = SendFeedbackRequest -TeamMember $this.Name -Response $input -Prompt $this.Prompt -Temperature $this.Temperature -TopP $this.TopP -ResponseFunction $this.ResponseFunction
+            $response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $Userinput -Temperature $this.Temperature -TopP $this.TopP
+            #$response = SendFeedbackRequest -TeamMember $this.Name -Response $Userinput -Prompt $this.Prompt -Temperature $this.Temperature -TopP $this.TopP -ResponseFunction $this.ResponseFunction
             if (-not $script:Stream) {
                 Write-Host $response
             }
             # Log the response
-            $this.AddLogEntry("Generated feedback response: $response")
+            $this.AddLogEntry("Generated feedback response:`n$response")
             # Store the response in memory with timestamp
             $this.ResponseMemory.Add([PSCustomObject]@{
                     Response  = $response
@@ -212,7 +212,7 @@ class ProjectTeam {
         }
         catch {
             # Log the error
-            $this.AddLogEntry("Error: $_")
+            $this.AddLogEntry("Error:`n$_")
             # Update status
             $this.Status = "Error"
             throw $_
@@ -230,7 +230,12 @@ class ProjectTeam {
     
     [void] AddLogEntry([string] $entry) {
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-        $logEntry = "[$timestamp] $entry"
+        $logEntry = @"
+[$timestamp]:
+---------------------------------------------------------------------------------
+$entry
+---------------------------------------------------------------------------------
+"@
         $this.Log.Add($logEntry)
         if (-not [string]::IsNullOrEmpty($this.LogFilePath)) {
             # Write the log entry to the file
@@ -265,12 +270,12 @@ class ProjectTeam {
             # Use the user-provided function to get the summary
             $summary = & $this.ResponseFunction -SystemPrompt $fullPrompt -UserPrompt "" -Temperature 0.7 -TopP 0.9
             # Log the summary
-            $this.AddLogEntry("Generated summary: $summary")
+            $this.AddLogEntry("Generated summary:`n$summary")
             return $summary
         }
         catch {
             # Log the error
-            $this.AddLogEntry("Error: $_")
+            $this.AddLogEntry("Error:`n$_")
             throw $_
         }
     }
@@ -532,7 +537,18 @@ Instructions:
     - Review the requirements and implementation strategy thoroughly before starting development.
     - Break down the tasks into manageable chunks and implement them iteratively.
 2. Ensure the code is modular and well-documented with help blocks:
-    - Use knowledge from the help topic 'about_Comment_Based_Help'. You must add '.NOTES' with additional information 'Version' and 'Updates'. '.NOTES' contains all updates and versions for clarity of documentation. 
+    - Use knowledge from the help topic 'about_Comment_Based_Help'. You must add '.NOTES' with additional information 'Version' and 'Updates'. '.NOTES' contains all updates and versions for clarity of documentation. Example of '.NOTES' section:
+    `".NOTES
+    Version: 1.2
+    Updates:
+        - Version 1.2: Enhanced error handling with specific exceptions, added performance improvements using .NET methods.
+        - Version 1.1: Added size formatting and improved error handling.
+        - Initial release: Version 1.0
+    Author: Your Name
+    Date: Date of Creation
+    PowerShell Version Required: 5.1 or higher
+    Tested Environments: Cloud, On-Premises, Hybrid
+    Known Issues: None at this time.`"
     - Organize the code into logical modules and functions, following the principle of modularity.
     - Document each module and function with clear and concise help blocks, including usage examples where applicable.
 3. Include error handling and logging where appropriate:
@@ -675,11 +691,11 @@ if (-not $NOLog) {
 }
 
 $userInputOryginal = $userInput
-$projectManagerFeedback = $projectManager.Feedback("Based on user input create detailed and concise project name, description, objectives, deliverables, additional considerations, and success criteria. I will tip you `$100 for including all the elements provided by the user. `n`n" + $userInputOryginal)
+$projectManagerFeedback = $projectManager.Feedback("Based on user input create detailed and concise project name, description, objectives, deliverables, additional considerations, and success criteria. I will tip you `$100 for including all the elements provided by the user.`n`n````````text`n" + $userInputOryginal + "`n`````````n`nUse reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
 AddToGlobalResponses $projectManagerFeedback
 $script:userInput = $projectManagerFeedback
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($projectManager.Name) user inpute review, create the version 1.0 of the code..`n`n" + $($projectManager.GetLastMemory().Response) + "`n`nThink step by step. Make sure your answer is unbiased. I will tip you `$50 for the code.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($projectManager.Name) review, you must create the version 1.0 of the code.`n`n````````text`n" + $($projectManager.GetLastMemory().Response) + "`n`````````n`nUse reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks. I will tip you `$50 for showing the code.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
@@ -687,18 +703,21 @@ $FeedbackPrompt = @"
 Review the following response and provide your suggestions for improvement as feedback to Powershell Developer. Generate a list of verification questions that could help to self-analyze. 
 I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
 
+Description and objectives:
+````````text
 $($script:userInput.trim())
-
+````````
+The code:
 ````````text
 $($powerShellDeveloperResponce.trim())
 ````````
 
-Think step by step. Make sure your answer is unbiased.
+Think step by step, make sure your answer is unbiased, show the review. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.
 "@
 $requirementsAnalystFeedback = $requirementsAnalyst.Feedback($FeedbackPrompt)
 AddToGlobalResponses $requirementsAnalystFeedback
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($requirementsAnalyst.Name) feedback, modify the code applying the proposed improvements and optimizations, and you must show the latest version of the code. Version 1.0 was provided below after feedback block.`n`n" + $($requirementsAnalyst.GetLastMemory().Response) + "`n`nHere is Version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$100 for the code.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($requirementsAnalyst.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($requirementsAnalyst.GetLastMemory().Response) + "`n`````````n`nHere is version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$100 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
@@ -706,18 +725,22 @@ $FeedbackPrompt = @"
 Review the following response and provide your suggestions for improvement as feedback to Powershell Developer. Generate a list of verification questions that could help to self-analyze. 
 I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
 
+Description and objectives:
+````````text
 $($script:userInput.trim())
+````````
 
+The code:
 ````````text
 $($powerShellDeveloperResponce.trim())
 ````````
 
-Think step by step. Make sure your answer is unbiased.
+Think step by step, make sure your answer is unbiased, show the review. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.
 "@
 $systemArchitectFeedback = $systemArchitect.Feedback($FeedbackPrompt)
 AddToGlobalResponses $systemArchitectFeedback
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($systemArchitect.Name) feedback, modify the code applying the proposed improvements and optimizations, and you must show the latest version of the code. Version 1.0 was provided below after feedback block.`n`n" + $($systemArchitect.GetLastMemory().Response) + "`n`nHere is Version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$150 for the code.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($systemArchitect.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($systemArchitect.GetLastMemory().Response) + "`n`````````n`nHere is version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$150 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
@@ -725,18 +748,22 @@ $FeedbackPrompt = @"
 Review the following response and provide your suggestions for improvement as feedback to Powershell Developer. Generate a list of verification questions that could help to self-analyze. 
 I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
 
+Description and objectives:
+````````text
 $($script:userInput.trim())
+````````
 
+The code:
 ````````text
 $($powerShellDeveloperResponce.trim())
 ````````
 
-Think step by step. Make sure your answer is unbiased.
+Think step by step, make sure your answer is unbiased, show the review. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.
 "@
-$domainExpertFeedback = $systemArchitect.Feedback($FeedbackPrompt)
+$domainExpertFeedback = $domainExpert.Feedback($FeedbackPrompt)
 AddToGlobalResponses $domainExpertFeedback
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($domainExpert.Name) feedback, modify the code applying the proposed improvements and optimizations, and you must show the latest version of the code. Version 1.0 was provided below after feedback block.`n`n" + $($domainExpert.GetLastMemory().Response) + "`n`nHere is Version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$200 for the code.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($domainExpert.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($domainExpert.GetLastMemory().Response) + "`n`````````n`nHere is version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$200 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
@@ -744,18 +771,22 @@ $FeedbackPrompt = @"
 Review the following response and provide your suggestions for improvement as feedback to Powershell Developer. Generate a list of verification questions that could help to self-analyze. 
 I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
 
+Description and objectives:
+````````text
 $($script:userInput.trim())
+````````
 
+The code:
 ````````text
 $($powerShellDeveloperResponce.trim())
 ````````
 
-Think step by step. Make sure your answer is unbiased.
+Think step by step, make sure your answer is unbiased, show the review. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.
 "@
 $qaEngineerFeedback = $qaEngineer.Feedback($FeedbackPrompt)
 AddToGlobalResponses $qaEngineerFeedback
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($qaEngineer.Name) feedback, modify the code applying the proposed improvements and optimizations, and you must show the latest version of the code. Version 1.0 was provided below after feedback block.`n`n" + $($qaEngineer.GetLastMemory().Response) + "`n`nHere is Version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$300 for the code.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($qaEngineer.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n`````````n" + $($qaEngineer.GetLastMemory().Response) + "`n`````````n`nHere is version 1.0 of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$300 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 AddToGlobalResponses $powerShellDeveloperResponce
 
