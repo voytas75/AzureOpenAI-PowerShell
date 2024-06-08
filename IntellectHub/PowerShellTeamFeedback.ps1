@@ -801,7 +801,7 @@ if (-not $NODocumentator) {
 
 $userChangesPrompt = @"
 Please provide your changes to the code:
-1. The code:
+1. Last developer response:
     ````````text
     $($powerShellDeveloperResponce.trim())
     ````````
