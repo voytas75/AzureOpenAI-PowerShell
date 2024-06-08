@@ -799,10 +799,37 @@ if (-not $NODocumentator) {
     AddToGlobalResponses $documentationSpecialistResponce
 }
 
-$userChanges = Read-Host -Prompt "`n`nPlease describe your changes to the code"
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on user's changes, modify the code with suggested features, improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n`````````n" + $($userChanges.trim()) + "`n`````````n`nHere is previous version of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. Show the next version of the code.")
-$GlobalPSDevResponse += $powerShellDeveloperResponce
-AddToGlobalResponses $powerShellDeveloperResponce
+do {
+    Write-Host "`n`nPlease select an option from the menu:"
+    Write-Host "1. Describe your changes to the code"
+    Write-Host "2. Suggest a new feature"
+    Write-Host "3. Add your own request"
+    Write-Host "Q. Quit"
+    $userOption = Read-Host -Prompt "Enter your choice"
+    if ($userOption -ne 'Q') {
+        switch ($userOption) {
+            '1' {
+                $userChanges = Read-Host -Prompt "Please describe your changes to the code"
+                $promptMessage = "Based on your changes, modify the code with suggested features, improvements and optimizations."
+            }
+            '2' {
+                $userChanges = Read-Host -Prompt "Please suggest a new feature"
+                $promptMessage = "Based on your new feature suggestion, modify the code to incorporate this feature."
+            }
+            '3' {
+                $userChanges = Read-Host -Prompt "Please add your own request"
+                $promptMessage = "Based on your request, modify the code to fulfill this request."
+            }
+            default {
+                Write-Host "Invalid option. Please try again."
+                continue
+            }
+        }
+        $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("$promptMessage The previous version of the code has been shared below after the feedback block.`n`n`````````n" + $($userChanges.trim()) + "`n`````````n`nHere is previous version of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. Show the next version of the code.")
+        $GlobalPSDevResponse += $powerShellDeveloperResponce
+        AddToGlobalResponses $powerShellDeveloperResponce
+    }
+} while ($userOption -ne 'Q')
 
 if (-not $NOPM) {
     # Example of summarizing all steps,  Log final response to file
