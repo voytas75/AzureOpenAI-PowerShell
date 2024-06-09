@@ -41,7 +41,7 @@ Creation Date: 06.2024
 Purpose/Change: Initial release for emulating teamwork within PowerShell scripting context
 #>
 param(
-    [string] $userInput = "A PowerShell project to monitor RAM load and display a single color block based on the load.",
+    [string] $userInput = "Monitor RAM usage and show a single color block based on the load.",
     [bool] $Stream = $true,
     [switch] $NOPM,
     [switch] $NODocumentator,
@@ -537,18 +537,15 @@ Instructions:
     - Review the requirements and implementation strategy thoroughly before starting development.
     - Break down the tasks into manageable chunks and implement them iteratively.
 2. Ensure the code is modular and well-documented with help blocks:
-    - Use knowledge from the help topic 'about_Comment_Based_Help'. You must add '.NOTES' with additional information 'Version' and 'Updates'. '.NOTES' contains all updates and versions for clarity of documentation. Example of '.NOTES' section:
+    - Use knowledge from the help topic 'about_Comment_Based_Help'. You must add '.NOTES' with additional information 'Version' and release notes. '.NOTES' contains all updates and versions for clarity of documentation. Example of '.NOTES' section:
     `".NOTES
     Version: 1.2
     Updates:
         - Version 1.2: Enhanced error handling with specific exceptions, added performance improvements using .NET methods.
         - Version 1.1: Added size formatting and improved error handling.
-        - Initial release: Version 1.0
-    Author: Your Name
-    Date: Date of Creation
-    PowerShell Version Required: 5.1 or higher
-    Tested Environments: Cloud, On-Premises, Hybrid
-    Known Issues: None at this time.`"
+        - Version 1.0: Initial release
+    Author: @voytas75
+    Date: current date as YYYY.MM.DD`"
     - Organize the code into logical modules and functions, following the principle of modularity.
     - Document each module and function with clear and concise help blocks, including usage examples where applicable.
 3. Include error handling and logging where appropriate:
@@ -693,7 +690,7 @@ if (-not $NOLog) {
 }
 
 $userInputOryginal = $userInput
-$projectManagerFeedback = $projectManager.Feedback($powerShellDeveloper, "Based on user input create detailed and concise project name, description, objectives, deliverables, additional considerations, and success criteria. I will tip you `$100 for including all the elements provided by the user.`n`n````````text`n" + $userInputOryginal + "`n`````````n`nUse reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
+$projectManagerFeedback = $projectManager.Feedback($powerShellDeveloper, "Based on user input you must create detailed and concise project name, description, objectives, deliverables, additional considerations, and success criteria only. User will tip you `$100 for including all the elements provided by the user.`n`n````````text`n" + $userInputOryginal + "`n`````````n`n")
 AddToGlobalResponses $projectManagerFeedback
 $script:userInput = $projectManagerFeedback
 
@@ -801,40 +798,33 @@ if (-not $NODocumentator) {
 
 do {
     Write-Host "`n`nPlease select an option from the menu:"
-    Write-Host "1. Describe your changes to the code"
-    Write-Host "2. Suggest a new feature"
-    Write-Host "3. Add your own request"
-    Write-Host "4. Ask a question about the code"
-    Write-Host "Q. Quit"
+    Write-Host "1. Suggest a new feature, enhancement, or change"
+    Write-Host "2. Ask a specific question about the code"
+    Write-Host "3. (Q)uit"
     $userOption = Read-Host -Prompt "Enter your choice"
-    if ($userOption -ne 'Q') {
+    if ($userOption -ne 'Q' -or $userOption -ne "3") {
         switch ($userOption) {
             '1' {
-                $userChanges = Read-Host -Prompt "Please describe your changes to the code"
-                $promptMessage = "Based on described by user changes, modify the code with suggested features, improvements and optimizations. Show the next version of the code."
-            }
+                $userChanges = Read-Host -Prompt "Suggest a new feature, enhancement, or change for the code."
+                $promptMessage = "Based on the user's suggestion, incorporate a feature, enhancement, or change into the code. Show the next version of the code."
+                $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("$promptMessage The previous version of the code has been shared below after the feedback block.`n`n`````````n" + $($userChanges.trim()) + "`n`````````n`nHere is previous version of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased.")
+                $GlobalPSDevResponse += $powerShellDeveloperResponce
+                AddToGlobalResponses $powerShellDeveloperResponce
+                    }
             '2' {
-                $userChanges = Read-Host -Prompt "Please suggest a new feature"
-                $promptMessage = "Based on user new feature suggestion, modify the code to incorporate this feature. Show the next version of the code."
-            }
-            '3' {
-                $userChanges = Read-Host -Prompt "Please add your own request"
-                $promptMessage = "Based on user request, modify the code to fulfill this request. Show the next version of the code."
-            }
-            '4' {
-                $userChanges = Read-Host -Prompt "Please ask your question about the code"
-                $promptMessage = "Based on user question, provide an explanation or modification to the code. You must answer the question only. Do not show the code."
-            }
+                $userChanges = Read-Host -Prompt "Ask a specific question about the code to seek clarification."
+                $promptMessage = "Based on the user's question, provide an explanation or modification to the code. You must answer the question only. Do not show the code."
+                $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("$promptMessage The previous version of the code has been shared below after the feedback block.`n`n`````````n" + $($userChanges.trim()) + "`n`````````n`nHere is previous version of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased.")
+                $GlobalPSDevResponse += $powerShellDeveloperResponce
+                AddToGlobalResponses $powerShellDeveloperResponce
+                    }
             default {
                 Write-Host "Invalid option. Please try again."
                 continue
             }
         }
-        $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("$promptMessage The previous version of the code has been shared below after the feedback block.`n`n`````````n" + $($userChanges.trim()) + "`n`````````n`nHere is previous version of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased.")
-        $GlobalPSDevResponse += $powerShellDeveloperResponce
-        AddToGlobalResponses $powerShellDeveloperResponce
     }
-} while ($userOption -ne 'Q')
+} while ($userOption -ne 'Q' -or $userOption -ne "3" )
 
 
 if (-not $NOPM) {
