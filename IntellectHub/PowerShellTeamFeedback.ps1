@@ -819,7 +819,7 @@ do {
             }
             '3' {
                 $userChanges = Read-Host -Prompt "Please add your own request"
-                $promptMessage = "Based on user request, modify the code to fulfill this request."
+                $promptMessage = "Based on user request, modify the code to fulfill this request. Show the next version of the code."
             }
             '4' {
                 $userChanges = Read-Host -Prompt "Please ask your question about the code"
