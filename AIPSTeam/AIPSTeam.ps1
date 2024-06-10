@@ -1,9 +1,28 @@
+<#PSScriptInfo
+.VERSION 1.0
+.GUID f0f4316d-f106-43b5-936d-0dd93a49be6b
+.DESCRIPTION 
+The script simulates a team of specialists, each with a unique role in executing a project. The user input is processed by one specialist who performs their task and passes the result to the next specialist. This process continues until all tasks are completed.
+.AUTHOR voytas75
+.COMPANYNAME
+.COPYRIGHT
+.TAGS ai,psaoai,llm,project,team
+.LICENSEURI
+.PROJECTURI 
+.ICONURI
+.EXTERNALMODULEDEPENDENCIES
+.REQUIREDSCRIPTS
+.EXTERNALSCRIPTDEPENDENCIES
+.RELEASENOTES
+2024.06: publishing
+2024.05: initializing 
+#>
 <# 
 .SYNOPSIS 
 This script emulates a team of specialists working together on a PowerShell project.
 
 .DESCRIPTION 
-The script simulates a team of specialists, each with a unique role in executing a project. The input is processed by one specialist who performs their task and passes the result to the next specialist. This process continues until all tasks are completed.
+The script simulates a team of specialists, each with a unique role in executing a project. The user input is processed by one specialist who performs their task and passes the result to the next specialist. This process continues until all tasks are completed.
 
 .PARAMETER userInput 
 This parameter defines the project outline as a string. The default value is a project to monitor RAM load and display a color block based on the load levels.
@@ -30,7 +49,7 @@ None. You cannot pipe objects directly to this script. Instead, you must pass th
 The output varies depending on how each specialist processes their part of the project. Typically, text-based results are expected, which may include status messages or visual representations like graphs or color blocks related to system metrics such as RAM load, depending on the user input specification provided via the 'userInput' parameter.
 
 .EXAMPLE 
-PS> .\PowerShellTeamFeedbacks.ps1 -userInput "A PowerShell project to monitor CPU usage and display dynamic graph." -Stream $false
+PS> .\AIPSTeam.ps1 -userInput "A PowerShell project to monitor CPU usage and display dynamic graph." -Stream $false
 
 This command runs the script without streaming output live (-Stream $false) and specifies custom user input about monitoring CPU usage instead of RAM, displaying it through dynamic graphing methods rather than static color blocks.
 
@@ -420,9 +439,30 @@ function Create-FolderInGivenPath {
         return $null
     }
 }
+function Check-ForUpdate {
+    param (
+      [string]$currentVersion,
+      [string]$scriptName
+    )
+  
+    # Get the latest version of the script
+    $latestVersion = Get-LatestVersion -scriptName $scriptName
+  
+    if ($latestVersion) {
+      # Compare versions
+      if ([version]$currentVersion -lt [version]$latestVersion) {
+        Write-Host " A new version ($latestVersion) of $scriptName is available. You are currently using version $currentVersion. `n`n" -BackgroundColor DarkYellow -ForegroundColor Blue
+      } 
+    }
+    else {
+      Write-Error "Unable to check for the latest version."
+    }
+  }
+  
 #endregion Functions
 
 #region Importing Modules and Setting Up Discussion
+
 # Disabe PSAOAI importing banner
 [System.Environment]::SetEnvironmentVariable("PSAOAI_BANNER", "0", "User")
 
@@ -433,19 +473,8 @@ else {
     Write-Host "You need to install PSAOAI module. Use: 'Install-Module PSAOAI'"
     return
 }
-  
-#region Importing Helper Functions
-$scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Definition
-$helperFunctionsPath = Join-Path -Path $scriptPath -ChildPath "helper_functions.ps1"
-Try {
-    #. $helperFunctionsPath
-    #Write-Host "Imported helper function file" -ForegroundColor Blue -BackGroundColor Cyan
-}
-Catch {
-    Write-Error -Message "Failed to import helper function file"
-    return $false
-}
-#endregion Importing Helper Functions
+#endregion Importing Modules and Setting Up Discussion
+
 
 #region Creating Team Discussion Folder
 Try {
@@ -457,7 +486,7 @@ Try {
     }
     else {
         # Create a folder with the current date and time as the name in the example path
-        $script:TeamDiscussionDataFolder = Create-FolderInGivenPath -FolderPath $(Create-FolderInUserDocuments -FolderName "AIPowerShellTeam") -FolderName $currentDateTime
+        $script:TeamDiscussionDataFolder = Create-FolderInGivenPath -FolderPath $(Create-FolderInUserDocuments -FolderName "AIPSTeam") -FolderName $currentDateTime
     }
     if ($script:TeamDiscussionDataFolder) {
         Write-Host "Team discussion folder was created '$script:TeamDiscussionDataFolder'" -ForegroundColor Blue -BackGroundColor Cyan 
@@ -695,6 +724,8 @@ Think step by step. Make sure your answer is unbiased.
 #endregion ProjectTeam
 
 #region Main
+Check-ForUpdate -currentVersion "1.0" -scriptName "AIPSTeam"
+
 $GlobalResponse = @()
 $GlobalPSDevResponse = @()
 

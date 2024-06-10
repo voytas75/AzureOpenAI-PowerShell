@@ -1,0 +1,55 @@
+## PowerShellTeamFeedbacks.ps1 - Simulating Teamwork in Scripting
+
+This README file provides details about the PowerShell script `PowerShellTeamFeedbacks.ps1`.
+
+**Overview**
+
+This script simulates a collaborative environment where specialists work together on a project, mimicking a real-world team dynamic within a single script. User input outlining the project details is passed through a chain of specialists, each performing their designated task and forwarding the information to the next specialist until the project is complete.
+
+**Key Features**
+
+* **Specialist Roles:** The script emulates specialists like a Project Manager, a Documentator, and potentially others depending on your implementation.
+* **User Input Driven:** The user defines the project scope through the `userInput` parameter.
+* **Streaming Control:** The `Stream` parameter enables control over live output streaming during the project execution.
+* **Optional Disabling:** You can selectively disable specific specialist functionalities using the `NOPM`, `NODocumentator`, and `NOLog` parameters.
+* **Customizable Logging:** The `LogFolder` parameter allows defining a location for storing project logs.
+
+**Parameters**
+
+* `userInput (string)`: Defines the project outline. (Default: RAM load monitoring and color block output based on load)
+* `Stream (bool)`: Controls live output streaming. (Default: $true)
+* `NOPM (switch)`: Disables Project Manager functionality.
+* `NODocumentator (switch)`: Disables Documentator functionality.
+* `NOLog (switch)`: Disables logging functionality.
+* `LogFolder (string)`: Specifies the folder for logs.
+
+**Inputs**
+
+The script doesn't accept piped objects. All input comes through the defined parameters.
+
+**Outputs**
+
+Output varies based on specialist actions. It typically includes text messages, status updates, or visual representations (e.g., graphs) depending on the user input.
+
+**Example**
+
+```powershell
+PS> .\PowerShellTeamFeedbacks.ps1 -userInput "A PowerShell project to monitor CPU usage and display dynamic graph." -Stream $false
+```
+
+This example runs the script with disabled live streaming (`-Stream $false`) and defines a project for CPU usage monitoring with a dynamic graph instead of the default RAM load and color block output.
+
+**Notes**
+
+* Version: 1.0.0
+* Author: voytas75
+* Creation Date: 06/2024
+* Purpose/Change: Initial release for simulating teamwork within PowerShell scripting
+
+**Additional Information**
+
+* This script provides a foundation for demonstrating collaborative scripting techniques.
+* You can customize the specialist roles, tasks, and outputs based on your specific project requirements.
+* Consider error handling and validation for a robust implementation.
+
+This README provides a comprehensive overview of the `PowerShellTeamFeedbacks.ps1` script. Feel free to explore and customize it further to suit your needs.
