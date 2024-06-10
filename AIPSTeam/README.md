@@ -37,7 +37,7 @@ Output varies based on specialist actions. It typically includes text messages, 
 
 This example runs the script with disabled live streaming (`-Stream $false`) and defines a project for CPU usage monitoring with a dynamic graph instead of the default RAM load and color block output.
 
-##Additional Information
+## Additional Information
 
 * This script provides a foundation for demonstrating collaborative scripting techniques.
 * You can customize the specialist roles, tasks, and outputs based on your specific project requirements.
