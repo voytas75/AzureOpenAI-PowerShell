@@ -389,6 +389,37 @@ function AddToGlobalResponses {
     param($response)
     $script:GlobalResponse += $response
 }
+
+function Create-FolderInGivenPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$FolderPath,
+        [Parameter(Mandatory = $true)]
+        [string]$FolderName
+    )
+
+    try {
+        write-verbose "Create-FolderInGivenPath: $FolderPath"
+        write-verbose "Create-FolderInGivenPath: $FolderName"
+
+        # Combine the Folder path with the folder name to get the full path
+        $FullFolderPath = Join-Path -Path $FolderPath -ChildPath $FolderName.trim()
+
+        write-verbose "Create-FolderInGivenPath: $FullFolderPath"
+        write-verbose $FullFolderPath.gettype()
+        # Check if the folder exists, if not, create it
+        if (-not $(Test-Path -Path $FullFolderPath)) {
+            New-Item -ItemType Directory -Path $FullFolderPath | Out-Null
+        }
+
+        # Return the full path of the folder
+        return $FullFolderPath
+    }
+    catch {
+        Write-Error -Message "Failed to create folder at path: $FullFolderPath"
+        return $null
+    }
+}
 #endregion Functions
 
 #region Importing Modules and Setting Up Discussion
@@ -407,8 +438,8 @@ else {
 $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $helperFunctionsPath = Join-Path -Path $scriptPath -ChildPath "helper_functions.ps1"
 Try {
-    . $helperFunctionsPath
-    Write-Host "Imported helper function file" -ForegroundColor Blue -BackGroundColor Cyan
+    #. $helperFunctionsPath
+    #Write-Host "Imported helper function file" -ForegroundColor Blue -BackGroundColor Cyan
 }
 Catch {
     Write-Error -Message "Failed to import helper function file"
@@ -426,7 +457,7 @@ Try {
     }
     else {
         # Create a folder with the current date and time as the name in the example path
-        $script:TeamDiscussionDataFolder = Create-FolderInGivenPath -FolderPath $(Create-FolderInUserDocuments -FolderName "OpenDomainDiscussion") -FolderName $currentDateTime
+        $script:TeamDiscussionDataFolder = Create-FolderInGivenPath -FolderPath $(Create-FolderInUserDocuments -FolderName "AIPowerShellTeam") -FolderName $currentDateTime
     }
     if ($script:TeamDiscussionDataFolder) {
         Write-Host "Team discussion folder was created '$script:TeamDiscussionDataFolder'" -ForegroundColor Blue -BackGroundColor Cyan 
@@ -796,25 +827,30 @@ if (-not $NODocumentator) {
     AddToGlobalResponses $documentationSpecialistResponce
 }
 
+$MenuPrompt = "{0} The previous version of the code has been shared below after the feedback block.`n`n`````````n{1}`n`````````n`nHere is previous version of the code:`n`n````````text`n{2}`n`````````n`nThink step by step. Make sure your answer is unbiased."
 do {
     Write-Host "`n`nPlease select an option from the menu:"
     Write-Host "1. Suggest a new feature, enhancement, or change"
     Write-Host "2. Ask a specific question about the code"
     Write-Host "3. (Q)uit"
     $userOption = Read-Host -Prompt "Enter your choice"
-    if ($userOption -ne 'Q' -or $userOption -ne "3") {
+    if ($userOption -ne 'Q' -and $userOption -ne "3") {
         switch ($userOption) {
             '1' {
                 $userChanges = Read-Host -Prompt "Suggest a new feature, enhancement, or change for the code."
                 $promptMessage = "Based on the user's suggestion, incorporate a feature, enhancement, or change into the code. Show the next version of the code."
-                $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("$promptMessage The previous version of the code has been shared below after the feedback block.`n`n`````````n" + $($userChanges.trim()) + "`n`````````n`nHere is previous version of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased.")
+                $powerShellDeveloperLastMemory = $powerShellDeveloper.GetLastMemory().response
+                $MenuPrompt_ = $MenuPrompt -f $promptMessage, $userChanges, $powerShellDeveloperLastMemory
+                $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($MenuPrompt_)
                 $GlobalPSDevResponse += $powerShellDeveloperResponce
                 AddToGlobalResponses $powerShellDeveloperResponce
                     }
             '2' {
                 $userChanges = Read-Host -Prompt "Ask a specific question about the code to seek clarification."
                 $promptMessage = "Based on the user's question, provide an explanation or modification to the code. You must answer the question only. Do not show the code."
-                $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("$promptMessage The previous version of the code has been shared below after the feedback block.`n`n`````````n" + $($userChanges.trim()) + "`n`````````n`nHere is previous version of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased.")
+                $powerShellDeveloperLastMemory = $powerShellDeveloper.GetLastMemory().response
+                $MenuPrompt_ = $MenuPrompt -f $promptMessage, $userChanges, $powerShellDeveloperLastMemory
+                $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($MenuPrompt_)
                 $GlobalPSDevResponse += $powerShellDeveloperResponce
                 AddToGlobalResponses $powerShellDeveloperResponce
                     }
@@ -824,7 +860,7 @@ do {
             }
         }
     }
-} while ($userOption -ne 'Q' -or $userOption -ne "3" )
+} while ($userOption -ne 'Q' -and $userOption -ne "3" )
 
 
 if (-not $NOPM) {
