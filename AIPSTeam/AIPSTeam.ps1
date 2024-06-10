@@ -1,5 +1,5 @@
 <#PSScriptInfo
-.VERSION 1.0
+.VERSION 1.0.0
 .GUID f0f4316d-f106-43b5-936d-0dd93a49be6b
 .DESCRIPTION 
 The script simulates a team of specialists, each with a unique role in executing a project. The user input is processed by one specialist who performs their task and passes the result to the next specialist. This process continues until all tasks are completed.
@@ -56,7 +56,7 @@ This command runs the script without streaming output live (-Stream $false) and 
 .NOTES 
 Version: 1.0.0
 Author: voytas75
-Creation Date: 06.2024
+Creation Date: 05.2024
 Purpose/Change: Initial release for emulating teamwork within PowerShell scripting context
 #>
 param(
@@ -409,59 +409,115 @@ function AddToGlobalResponses {
     $script:GlobalResponse += $response
 }
 
-function Create-FolderInGivenPath {
+function New-FolderAtPath {
     param(
         [Parameter(Mandatory = $true)]
-        [string]$FolderPath,
-        [Parameter(Mandatory = $true)]
+        [string]$Path,
+        [Parameter(Mandatory = $false)]
         [string]$FolderName
     )
 
     try {
-        write-verbose "Create-FolderInGivenPath: $FolderPath"
-        write-verbose "Create-FolderInGivenPath: $FolderName"
+        Write-Verbose "New-FolderAtPath: $Path"
+        Write-Verbose "New-FolderAtPath: $FolderName"
 
         # Combine the Folder path with the folder name to get the full path
-        $FullFolderPath = Join-Path -Path $FolderPath -ChildPath $FolderName.trim()
+        $CompleteFolderPath = Join-Path -Path $Path -ChildPath $FolderName.trim()
 
-        write-verbose "Create-FolderInGivenPath: $FullFolderPath"
-        write-verbose $FullFolderPath.gettype()
+        Write-Verbose "New-FolderAtPath: $CompleteFolderPath"
+        Write-Verbose $CompleteFolderPath.gettype()
         # Check if the folder exists, if not, create it
-        if (-not $(Test-Path -Path $FullFolderPath)) {
-            New-Item -ItemType Directory -Path $FullFolderPath | Out-Null
+        if (-not (Test-Path -Path $CompleteFolderPath)) {
+            New-Item -ItemType Directory -Path $CompleteFolderPath -Force | Out-Null
         }
 
         # Return the full path of the folder
-        return $FullFolderPath
+        return $CompleteFolderPath
     }
     catch {
-        Write-Error -Message "Failed to create folder at path: $FullFolderPath"
+        Write-Warning -Message "Failed to create folder at path: $CompleteFolderPath"
         return $null
     }
 }
-function Check-ForUpdate {
+
+function Get-LatestVersion {
     param (
-      [string]$currentVersion,
-      [string]$scriptName
+        [string]$scriptName
     )
   
-    # Get the latest version of the script
-    $latestVersion = Get-LatestVersion -scriptName $scriptName
+    try {
+        # Find the script on PowerShell Gallery
+        $scriptInfo = Find-Script -Name $scriptName -ErrorAction Stop
   
-    if ($latestVersion) {
-      # Compare versions
-      if ([version]$currentVersion -lt [version]$latestVersion) {
-        Write-Host " A new version ($latestVersion) of $scriptName is available. You are currently using version $currentVersion. `n`n" -BackgroundColor DarkYellow -ForegroundColor Blue
-      } 
+        # Return the latest version
+        return $scriptInfo.Version
+    }
+    catch {
+        #Write-warning "Failed to get the latest version of $scriptName from PowerShell Gallery. $($_.exception)"
+        return $null
+    }
+}
+
+function CheckForScriptUpdate {
+    param (
+        [string]$currentScriptVersion,
+        [string]$scriptName
+    )
+  
+    # Retrieve the latest version of the script
+    $latestScriptVersion = Get-LatestVersion -scriptName $scriptName
+  
+    if ($latestScriptVersion) {
+        # Compare the current version with the latest version
+        if ([version]$currentScriptVersion -lt [version]$latestScriptVersion) {
+            Write-Host " A new version ($latestScriptVersion) of $scriptName is available. You are currently using version $currentScriptVersion. `n`n" -BackgroundColor DarkYellow -ForegroundColor Blue
+        } 
     }
     else {
-      Write-Error "Unable to check for the latest version."
+        Write-Warning "Failed to check for the latest version of the script."
     }
-  }
+}
+
+function Show-Banner {
+    Write-Host @'
+ 
+
+     /$$$$$$  /$$$$$$ /$$$$$$$   /$$$$$$  /$$$$$$$$                               
+    /$$__  $$|_  $$_/| $$__  $$ /$$__  $$|__  $$__/                               
+   | $$  \ $$  | $$  | $$  \ $$| $$  \__/   | $$  /$$$$$$   /$$$$$$  /$$$$$$/$$$$ 
+   | $$$$$$$$  | $$  | $$$$$$$/|  $$$$$$    | $$ /$$__  $$ |____  $$| $$_  $$_  $$
+   | $$__  $$  | $$  | $$____/  \____  $$   | $$| $$$$$$$$  /$$$$$$$| $$ \ $$ \ $$
+   | $$  | $$  | $$  | $$       /$$  \ $$   | $$| $$_____/ /$$__  $$| $$ | $$ | $$
+   | $$  | $$ /$$$$$$| $$      |  $$$$$$/   | $$|  $$$$$$$|  $$$$$$$| $$ | $$ | $$
+   |__/  |__/|______/|__/       \______/    |__/ \_______/ \_______/|__/ |__/ |__/
+                                                                                  
+    AI PowerShell Team                                    powered by PSAOAI Module
+         
+         voytas75; https://github.com/voytas75/
   
+'@
+    Write-Host @"
+         The script is designed to simulate a project team working on a PowerShell project. The script creates different   
+         roles such as Requirements Analyst, System Architect, PowerShell Developer, QA Engineer, Documentation Specialist, 
+         and Project Manager. Each role has specific tasks and responsibilities, and they interact with each other 
+         to complete a PS project.
+         
+"@ -ForegroundColor Blue
+  
+    Write-Host @"
+         "You never know what you're gonna get with an AI, just like a box of chocolates. You might get a whiz-bang algorithm that 
+         writes you a symphony in five minutes flat, or you might get a dud that can't tell a cat from a couch. But hey, that's 
+         the beauty of it all, you keep feedin' it data and see what kind of miraculous contraption it spits out next."
+                      
+                                                                     ~ Who said that? You never know with these AIs these days... 
+                                                                      ...maybe it was Skynet or maybe it was just your toaster :)
+  
+
+"@ -ForegroundColor DarkYellow
+}
 #endregion Functions
 
-#region Importing Modules and Setting Up Discussion
+#region Setting Up
 
 # Disabe PSAOAI importing banner
 [System.Environment]::SetEnvironmentVariable("PSAOAI_BANNER", "0", "User")
@@ -473,20 +529,27 @@ else {
     Write-Host "You need to install PSAOAI module. Use: 'Install-Module PSAOAI'"
     return
 }
-#endregion Importing Modules and Setting Up Discussion
 
+Show-Banner
+$scriptname = "AIPSTeam"
+CheckForScriptUpdate -currentVersion "1.0.0" -scriptName $scriptname
 
-#region Creating Team Discussion Folder
 Try {
     # Get the current date and time
     $currentDateTime = Get-Date -Format "yyyyMMdd_HHmmss"
-    if ($LogFolder) {
+    if (-not [string]::IsNullOrEmpty($LogFolder)) {
         # Create a folder with the current date and time as the name in the example path
-        $script:TeamDiscussionDataFolder = Create-FolderInGivenPath -FolderPath $LogFolder -FolderName $currentDateTime
+        $script:TeamDiscussionDataFolder = New-FolderAtPath -Path $LogFolder -FolderName $currentDateTime
     }
     else {
+        $script:LogFolder = Join-Path -Path ([Environment]::GetFolderPath("MyDocuments")) -ChildPath $scriptname
+        if (-not (Test-Path -Path $script:LogFolder)) {
+            New-Item -ItemType Directory -Path $script:LogFolder | Out-Null
+        }
+        Write-Host "[Info] The logs will be saved in the following folder: $script:LogFolder" -ForegroundColor DarkGray
+        Write-Host ""
         # Create a folder with the current date and time as the name in the example path
-        $script:TeamDiscussionDataFolder = Create-FolderInGivenPath -FolderPath $(Create-FolderInUserDocuments -FolderName "AIPSTeam") -FolderName $currentDateTime
+        $script:TeamDiscussionDataFolder = New-FolderAtPath -Path $script:LogFolder -FolderName $currentDateTime
     }
     if ($script:TeamDiscussionDataFolder) {
         Write-Host "Team discussion folder was created '$script:TeamDiscussionDataFolder'" -ForegroundColor Blue -BackGroundColor Cyan 
@@ -496,7 +559,7 @@ Catch {
     Write-Warning -Message "Failed to create discussion folder"
     return $false
 }
-#endregion Creating Team Discussion Folder
+#endregion Setting Up
 
 #region ProjectTeam
 # Create ProjectTeam expert objects
@@ -724,8 +787,6 @@ Think step by step. Make sure your answer is unbiased.
 #endregion ProjectTeam
 
 #region Main
-Check-ForUpdate -currentVersion "1.0" -scriptName "AIPSTeam"
-
 $GlobalResponse = @()
 $GlobalPSDevResponse = @()
 
@@ -875,7 +936,7 @@ do {
                 $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($MenuPrompt_)
                 $GlobalPSDevResponse += $powerShellDeveloperResponce
                 AddToGlobalResponses $powerShellDeveloperResponce
-                    }
+            }
             '2' {
                 $userChanges = Read-Host -Prompt "Ask a specific question about the code to seek clarification."
                 $promptMessage = "Based on the user's question, provide an explanation or modification to the code. You must answer the question only. Do not show the code."
@@ -884,7 +945,7 @@ do {
                 $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($MenuPrompt_)
                 $GlobalPSDevResponse += $powerShellDeveloperResponce
                 AddToGlobalResponses $powerShellDeveloperResponce
-                    }
+            }
             default {
                 Write-Host "Invalid option. Please try again."
                 continue
