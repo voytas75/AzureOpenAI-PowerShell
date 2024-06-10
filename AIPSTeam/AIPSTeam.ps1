@@ -1,22 +1,18 @@
 <#PSScriptInfo
-.VERSION 1.0.0
+.VERSION 1.0.3
 .GUID f0f4316d-f106-43b5-936d-0dd93a49be6b
-.DESCRIPTION 
-The script simulates a team of specialists, each with a unique role in executing a project. The user input is processed by one specialist who performs their task and passes the result to the next specialist. This process continues until all tasks are completed.
 .AUTHOR voytas75
-.COMPANYNAME
-.COPYRIGHT
 .TAGS ai,psaoai,llm,project,team
-.LICENSEURI
-.PROJECTURI 
-.ICONURI
-.EXTERNALMODULEDEPENDENCIES
-.REQUIREDSCRIPTS
-.EXTERNALSCRIPTDEPENDENCIES
+.PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam
+.EXTERNALMODULEDEPENDENCIES PSAOAI
 .RELEASENOTES
-2024.06: publishing
-2024.05: initializing 
+1.0.3: requirements.
+2024.06: publishing, check version fix, dependience.
+2024.05: initializing.
 #>
+
+#Requires -Modules PSAOAI
+
 <# 
 .SYNOPSIS 
 This script emulates a team of specialists working together on a PowerShell project.
@@ -54,10 +50,10 @@ PS> .\AIPSTeam.ps1 -userInput "A PowerShell project to monitor CPU usage and dis
 This command runs the script without streaming output live (-Stream $false) and specifies custom user input about monitoring CPU usage instead of RAM, displaying it through dynamic graphing methods rather than static color blocks.
 
 .NOTES 
-Version: 1.0.0
+Version: 1.0.3
 Author: voytas75
 Creation Date: 05.2024
-Purpose/Change: Initial release for emulating teamwork within PowerShell scripting context
+Purpose/Change: Initial release for emulating teamwork within PowerShell scripting context, rest in PSScriptInfo Releasenotes.
 #>
 param(
     [string] $userInput = "Monitor RAM usage and show a single color block based on the load.",
@@ -460,7 +456,7 @@ function Get-LatestVersion {
 
 function CheckForScriptUpdate {
     param (
-        [string]$currentScriptVersion,
+        $currentScriptVersion,
         [string]$scriptName
     )
   
@@ -469,8 +465,9 @@ function CheckForScriptUpdate {
   
     if ($latestScriptVersion) {
         # Compare the current version with the latest version
-        if ([version]$currentScriptVersion -lt [version]$latestScriptVersion) {
-            Write-Host " A new version ($latestScriptVersion) of $scriptName is available. You are currently using version $currentScriptVersion. `n`n" -BackgroundColor DarkYellow -ForegroundColor Blue
+        if (([version]$currentScriptVersion) -lt [version]$latestScriptVersion) {
+            Write-Host " A new version ($latestScriptVersion) of $scriptName is available. You are currently using version $currentScriptVersion. " -BackgroundColor DarkYellow -ForegroundColor Blue
+            write-Host "`n`n"
         } 
     }
     else {
@@ -493,7 +490,7 @@ function Show-Banner {
                                                                                   
     AI PowerShell Team                                    powered by PSAOAI Module
          
-         voytas75; https://github.com/voytas75/
+   voytas75; https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam
   
 '@
     Write-Host @"
@@ -526,13 +523,13 @@ if (Get-Module -ListAvailable -Name PSAOAI) {
     [void](Import-module -name PSAOAI -Force)
 }
 else {
-    Write-Host "You need to install PSAOAI module. Use: 'Install-Module PSAOAI'"
+    Write-Warning "You need to install PSAOAI module. Use: 'Install-Module PSAOAI'"
     return
 }
 
 Show-Banner
 $scriptname = "AIPSTeam"
-CheckForScriptUpdate -currentVersion "1.0.0" -scriptName $scriptname
+CheckForScriptUpdate -currentScriptVersion "1.0.3" -scriptName $scriptname
 
 Try {
     # Get the current date and time

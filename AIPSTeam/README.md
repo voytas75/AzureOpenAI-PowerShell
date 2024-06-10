@@ -1,5 +1,7 @@
 # AIPSTeam.ps1 - Simulating Teamwork in PowerShell Scripting
 
+[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/AIPSTeam)](https://www.powershellgallery.com/packages/AIPSTeam)
+
 ## Overview
 
 This script simulates a collaborative environment where specialists work together on a project, mimicking a real-world team dynamic within a single script. User input outlining the project details is passed through a chain of specialists, each performing their designated task and forwarding the information to the next specialist until the project is complete.
