@@ -743,7 +743,7 @@ $responsejson1
     Write-Verbose $Message
     $arguments = @($Message, 500, "Focused", $Entity.name, $Entity.GPTModel, $true)
     try {
-        $output = $Entity.TextCompletion($Message,$true)
+        $output = $Entity.TextCompletion($Message, $true)
         return $output
     }
     catch {
@@ -906,7 +906,7 @@ The scaffolding of a response must be a JSON object with any key structure. Show
 "@
     try {
         # Use the entity invoke completion method to convert the text to JSON
-        $json = $Entity.TextCompletion($prompt,$Stream)
+        $json = $Entity.TextCompletion($prompt, $Stream)
     }
     catch {
         Write-Error "Failed to convert text to JSON: $_. Returning given text."
@@ -917,3 +917,42 @@ The scaffolding of a response must be a JSON object with any key structure. Show
     return $json
 }
 
+function Extract-AndWrite-PowerShellCodeBlocks {
+    param(
+        [string]$InputString,
+        [string]$OutputFilePath,
+        [string]$StartDelimiter,
+        [string]$EndDelimiter
+    )
+
+    # Define the regular expression pattern to match PowerShell code blocks
+    $pattern = '(?s)' + [regex]::Escape($StartDelimiter) + '(.*?)' + [regex]::Escape($EndDelimiter)
+
+    try {
+        # Handle large inputs by processing in chunks
+        $bufferSize = 4096
+        $stringReader = New-Object System.IO.StringReader($InputString)
+        $buffer = New-Object char[] $bufferSize
+        $tempOutput = ""
+        while (($readLen = $stringReader.Read($buffer, 0, $buffer.Length)) -ne 0) {
+            $tempOutput += [string]::new($buffer, 0, $readLen)
+            # Process each complete block found within chunks
+            if ($tempOutput -match $pattern) {
+                $matches_ = [regex]::Matches($tempOutput, $pattern)
+                foreach ($match in $matches_) {
+                    $codeBlock = $match.Groups[1].Value.Trim()
+                    $codeBlock | Out-File -FilePath $OutputFilePath -Append -Encoding UTF8
+                    Write-Output "Code block written to file: $OutputFilePath"
+                }
+                # Reset temporary output to handle remaining incomplete blocks
+                $tempOutput = $tempOutput.SubString($tempOutput.LastIndexOf($EndDelimiter) + $EndDelimiter.Length)
+            }
+        }
+    }
+    catch {
+        Write-Error "An error occurred while processing: $_"
+    }
+    finally {
+        $stringReader.Dispose()
+    }
+}

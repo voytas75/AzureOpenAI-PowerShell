@@ -1,11 +1,12 @@
 <#PSScriptInfo
-.VERSION 1.0.3
+.VERSION 1.0.4
 .GUID f0f4316d-f106-43b5-936d-0dd93a49be6b
 .AUTHOR voytas75
 .TAGS ai,psaoai,llm,project,team
 .PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam
 .EXTERNALMODULEDEPENDENCIES PSAOAI
 .RELEASENOTES
+1.0.4: code export fix added.
 1.0.3: requirements.
 2024.06: publishing, check version fix, dependience.
 2024.05: initializing.
@@ -50,10 +51,10 @@ PS> .\AIPSTeam.ps1 -userInput "A PowerShell project to monitor CPU usage and dis
 This command runs the script without streaming output live (-Stream $false) and specifies custom user input about monitoring CPU usage instead of RAM, displaying it through dynamic graphing methods rather than static color blocks.
 
 .NOTES 
-Version: 1.0.3
+Version: 1.0.4
 Author: voytas75
 Creation Date: 05.2024
-Purpose/Change: Initial release for emulating teamwork within PowerShell scripting context, rest in PSScriptInfo Releasenotes.
+Purpose/Change: Initial release for emulating teamwork within PowerShell scripting context, rest in PSScriptInfo Releasenotes, code export fix added.
 #>
 param(
     [string] $userInput = "Monitor RAM usage and show a single color block based on the load.",
@@ -63,6 +64,8 @@ param(
     [switch] $NOLog,
     [string] $LogFolder
 )
+
+$AIPSTeamVersion = "1.0.4"
 
 #region ProjectTeamClass
 <#
@@ -512,6 +515,47 @@ function Show-Banner {
 
 "@ -ForegroundColor DarkYellow
 }
+
+function Extract-AndWrite-PowerShellCodeBlocks {
+    param(
+        [string]$InputString,
+        [string]$OutputFilePath,
+        [string]$StartDelimiter,
+        [string]$EndDelimiter
+    )
+
+    # Define the regular expression pattern to match PowerShell code blocks
+    $pattern = '(?s)' + [regex]::Escape($StartDelimiter) + '(.*?)' + [regex]::Escape($EndDelimiter)
+
+    try {
+        # Handle large inputs by processing in chunks
+        $bufferSize = 4096
+        $stringReader = New-Object System.IO.StringReader($InputString)
+        $buffer = New-Object char[] $bufferSize
+        $tempOutput = ""
+        while (($readLen = $stringReader.Read($buffer, 0, $buffer.Length)) -ne 0) {
+            $tempOutput += [string]::new($buffer, 0, $readLen)
+            # Process each complete block found within chunks
+            if ($tempOutput -match $pattern) {
+                $matches_ = [regex]::Matches($tempOutput, $pattern)
+                foreach ($match in $matches_) {
+                    $codeBlock = $match.Groups[1].Value.Trim()
+                    $codeBlock | Out-File -FilePath $OutputFilePath -Append -Encoding UTF8
+                    Write-Output "Code block written to file: $OutputFilePath"
+                }
+                # Reset temporary output to handle remaining incomplete blocks
+                $tempOutput = $tempOutput.SubString($tempOutput.LastIndexOf($EndDelimiter) + $EndDelimiter.Length)
+            }
+        }
+    }
+    catch {
+        Write-Error "An error occurred while processing: $_"
+    }
+    finally {
+        $stringReader.Dispose()
+    }
+}
+
 #endregion Functions
 
 #region Setting Up
@@ -529,7 +573,7 @@ else {
 
 Show-Banner
 $scriptname = "AIPSTeam"
-CheckForScriptUpdate -currentScriptVersion "1.0.3" -scriptName $scriptname
+CheckForScriptUpdate -currentScriptVersion $AIPSTeamVersion -scriptName $scriptname
 
 Try {
     # Get the current date and time
@@ -966,7 +1010,7 @@ if (-not $NOPM) {
 if (-not $NOLog) {
     # Log Developer last memory
     ($powerShellDeveloper.GetLastMemory().Response) | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "TheCode.log")
-    .\Extract-AndWrite-PowerShellCodeBlocks.ps1 -InputString $(get-content $(join-path $script:TeamDiscussionDataFolder "TheCode.log") -raw) -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode.ps1")
+    Extract-AndWrite-PowerShellCodeBlocks -InputString $(get-content $(join-path $script:TeamDiscussionDataFolder "TheCode.log") -raw) -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode.ps1")
 
     foreach ($TeamMember in $Team) {
         $TeamMember.DisplayInfo(0) | Out-File -FilePath $TeamMember.LogFilePath -Append
