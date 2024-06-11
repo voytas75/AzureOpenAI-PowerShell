@@ -6,7 +6,7 @@
 .PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam
 .EXTERNALMODULEDEPENDENCIES PSAOAI
 .RELEASENOTES
-1.0.7: 
+1.0.7: Added 'DeploymentChat' parameter.
 1.0.6: Updated function calls to Add-ToGlobalResponses.
 1.0.5: code export fix.
 1.0.4: code export fix added.
@@ -65,7 +65,8 @@ param(
     [switch] $NOPM,
     [switch] $NODocumentator,
     [switch] $NOLog,
-    [string] $LogFolder
+    [string] $LogFolder,
+    [string] $DeploymentChat
 )
 
 $AIPSTeamVersion = "1.0.7"
@@ -627,7 +628,7 @@ Think step by step. Generate a list of self-assessment questions that can help w
     0.9,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
             return $response
         })
 )
@@ -660,7 +661,7 @@ Generate a list of verification questions that could help to self-analyze. Think
     0.9,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $script:Stream
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream
             return $response
         })
 )
@@ -688,7 +689,7 @@ Think step by step. Make sure your answer is unbiased.
     0.85,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
             return $response
         })
 )
@@ -736,7 +737,7 @@ Generate a list of verification questions that could help to self-analyze. Think
     0.8,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4turbo" -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
             return $response
         })
 )
@@ -766,7 +767,7 @@ Think step by step. Make sure your answer is unbiased.
     0.9,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
             return $response
         })
 )
@@ -795,7 +796,7 @@ Think step by step. Make sure your answer is unbiased.
     0.8,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
             return $response
         })
 )
@@ -824,7 +825,7 @@ Think step by step. Make sure your answer is unbiased.
     0.85,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment "udtgpt4" -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
             return $response
         })
 )
