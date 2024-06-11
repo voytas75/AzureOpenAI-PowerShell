@@ -403,7 +403,7 @@ function GetLastMemoryFromFeedbackTeamMembers {
     return ($lastMemories -join "`n")
 }
 
-function AddToGlobalResponses {
+function Add-ToGlobalResponses {
     param($response)
     $script:GlobalResponse += $response
 }
@@ -516,7 +516,7 @@ function Show-Banner {
 "@ -ForegroundColor DarkYellow
 }
 
-function Extract-AndWrite-PowerShellCodeBlocks {
+function Export-AndWritePowerShellCodeBlocks {
     param(
         [string]$InputString,
         [string]$OutputFilePath,
@@ -1004,14 +1004,13 @@ if (-not $NOPM) {
     else {
         $projectManagerResponse = $projectManager.ProcessInput($script:GlobalResponse -join ", ")
     }
-    AddToGlobalResponses $projectManagerResponse
+    Add-ToGlobalResponses $projectManagerResponse
 }
 
 if (-not $NOLog) {
     # Log Developer last memory
     ($powerShellDeveloper.GetLastMemory().Response) | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "TheCode.log")
-    Extract-AndWrite-PowerShellCodeBlocks -InputString $(get-content $(join-path $script:TeamDiscussionDataFolder "TheCode.log") -raw) -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode.ps1")
-
+    Export-AndWritePowerShellCodeBlocks -InputString $(get-content $(join-path $script:TeamDiscussionDataFolder "TheCode.log") -raw) -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode.ps1")
     foreach ($TeamMember in $Team) {
         $TeamMember.DisplayInfo(0) | Out-File -FilePath $TeamMember.LogFilePath -Append
     }
