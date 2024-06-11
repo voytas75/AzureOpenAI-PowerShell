@@ -6,6 +6,12 @@
 
 This script (powered by [PSAOAI Module](https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/PSAOAI)) simulates a collaborative environment where specialists work together on a project, mimicking a real-world team dynamic within a single script. User input outlining the project details is passed through a chain of specialists, each performing their designated task and forwarding the information to the next specialist until the project is complete.
 
+### How to install
+
+```powershell
+Install-Script AIPSTeam
+```
+
 ## Key Features
 
 * **Specialist Roles:** The script emulates specialists like a Project Manager, a Documentator, and potentially others depending on your implementation.
