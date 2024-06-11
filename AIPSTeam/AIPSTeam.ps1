@@ -1,11 +1,12 @@
 <#PSScriptInfo
-.VERSION 1.0.6
+.VERSION 1.0.7
 .GUID f0f4316d-f106-43b5-936d-0dd93a49be6b
 .AUTHOR voytas75
 .TAGS ai,psaoai,llm,project,team,gpt
 .PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam
 .EXTERNALMODULEDEPENDENCIES PSAOAI
 .RELEASENOTES
+1.0.7: 
 1.0.6: Updated function calls to Add-ToGlobalResponses.
 1.0.5: code export fix.
 1.0.4: code export fix added.
@@ -53,7 +54,7 @@ PS> .\AIPSTeam.ps1 -userInput "A PowerShell project to monitor CPU usage and dis
 This command runs the script without streaming output live (-Stream $false) and specifies custom user input about monitoring CPU usage instead of RAM, displaying it through dynamic graphing methods rather than static color blocks.
 
 .NOTES 
-Version: 1.0.6
+Version: 1.0.7
 Author: voytas75
 Creation Date: 05.2024
 Purpose/Change: Initial release for emulating teamwork within PowerShell scripting context, rest in PSScriptInfo Releasenotes, code export fix added.
@@ -67,7 +68,7 @@ param(
     [string] $LogFolder
 )
 
-$AIPSTeamVersion = "1.0.6"
+$AIPSTeamVersion = "1.0.7"
 
 #region ProjectTeamClass
 <#
