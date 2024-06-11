@@ -1,11 +1,12 @@
 <#PSScriptInfo
-.VERSION 1.1.0
+.VERSION 1.1.1
 .GUID f0f4316d-f106-43b5-936d-0dd93a49be6b
 .AUTHOR voytas75
 .TAGS ai,psaoai,llm,project,team,gpt
 .PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam
 .EXTERNALMODULEDEPENDENCIES PSAOAI
 .RELEASENOTES
+1.1.1: 
 1.1.0: default value for DeploymentChat.
 1.0.7: Added 'DeploymentChat' parameter.
 1.0.6: Updated function calls to Add-ToGlobalResponses.
@@ -55,10 +56,10 @@ PS> .\AIPSTeam.ps1 -userInput "A PowerShell project to monitor CPU usage and dis
 This command runs the script without streaming output live (-Stream $false) and specifies custom user input about monitoring CPU usage instead of RAM, displaying it through dynamic graphing methods rather than static color blocks.
 
 .NOTES 
-Version: 1.1.0
+Version: 1.1.1
 Author: voytas75
 Creation Date: 05.2024
-Purpose/Change: Initial release for emulating teamwork within PowerShell scripting context, rest in PSScriptInfo Releasenotes, code export fix added.
+Purpose/Change: Initial release for emulating teamwork within PowerShell scripting context, rest in PSScriptInfo Releasenotes, .
 #>
 param(
     [string] $userInput = "Monitor RAM usage and show a single color block based on the load.",
@@ -70,7 +71,7 @@ param(
     [string] $DeploymentChat = [System.Environment]::GetEnvironmentVariable("PSAOAI_API_AZURE_OPENAI_CC_DEPLOYMENT", "User")
 )
 
-$AIPSTeamVersion = "1.1.0"
+$AIPSTeamVersion = "1.1.1"
 
 #region ProjectTeamClass
 <#
