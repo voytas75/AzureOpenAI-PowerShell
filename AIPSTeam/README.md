@@ -28,7 +28,7 @@ Install-Script AIPSTeam
 * `NODocumentator (switch)`: Disables Documentator functionality.
 * `NOLog (switch)`: Disables logging functionality.
 * `LogFolder (string)`: Specifies the folder for logs.
-* `DeploymentChat`: Model deployment name.
+* `DeploymentChat`: Model deployment name. Default value is taken from [PSAOAI](https://github.com/voytas75/AzureOpenAI-PowerShell/blob/master/PSAOAI/README.md#powershell-azure-openai-psaoai-module) Module, if you configured earlier.
 
 ## Inputs
 
