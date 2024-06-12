@@ -4,7 +4,7 @@
 .AUTHOR voytas75
 .TAGS ai,psaoai,llm,project,team,gpt
 .PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam
-.EXTERNALMODULEDEPENDENCIES PSAOAI
+.EXTERNALMODULEDEPENDENCIES @("PSAOAI", "PSScriptAnalyzer")
 .RELEASENOTES
 1.1.1: 
 1.1.0: default value for DeploymentChat.
@@ -17,7 +17,7 @@
 2024.05: initializing.
 #>
 
-#Requires -Modules PSAOAI
+#Requires -Modules PSAOAI, PSScriptAnalyzer
 
 <# 
 .SYNOPSIS 
@@ -546,8 +546,13 @@ function Export-AndWritePowerShellCodeBlocks {
                 $matches_ = [regex]::Matches($tempOutput, $pattern)
                 foreach ($match in $matches_) {
                     $codeBlock = $match.Groups[1].Value.Trim()
-                    $codeBlock | Out-File -FilePath $OutputFilePath -Append -Encoding UTF8
-                    Write-Output "Code block written to file: $OutputFilePath"
+                    if ($OutputFilePath) {
+                        $codeBlock | Out-File -FilePath $OutputFilePath -Append -Encoding UTF8
+                        Write-Output "Code block written to file: $OutputFilePath"
+                    }
+                    else {
+                        return $codeBlock
+                    }
                 }
                 # Reset temporary output to handle remaining incomplete blocks
                 $tempOutput = $tempOutput.SubString($tempOutput.LastIndexOf($EndDelimiter) + $EndDelimiter.Length)
@@ -562,6 +567,51 @@ function Export-AndWritePowerShellCodeBlocks {
     }
 }
 
+
+function Invoke-CodeWithPSScriptAnalyzer {
+    param(
+        [Parameter(Mandatory=$false)]
+        [string]$FilePath,
+        [Parameter(Mandatory=$false)]
+        [string]$ScriptBlock
+    )
+
+    # Check if PSScriptAnalyzer module is installed
+    if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
+        Write-Warning "PSScriptAnalyzer module is not installed. Install it using: 'Install-Module -Name PSScriptAnalyzer'"
+        return
+    }
+
+    # Import PSScriptAnalyzer module
+    Import-Module -Name PSScriptAnalyzer
+
+    # Check if file exists
+    if ($FilePath -and -not (Test-Path -Path $FilePath)) {
+        Write-Warning "File '$FilePath' does not exist."
+        return
+    }
+
+    # Run PSScriptAnalyzer on the file or script block
+    if ($FilePath) {
+        $analysisResults = Invoke-ScriptAnalyzer -Path $FilePath
+    }
+    elseif ($ScriptBlock) {
+        $analysisResults = Invoke-ScriptAnalyzer -ScriptDefinition $ScriptBlock
+    }
+    else {
+        Write-Warning "No FilePath or ScriptBlock provided for analysis."
+        return
+    }
+
+    # Display the analysis results
+    if ($analysisResults.Count -eq 0) {
+        Write-Host "No issues found by PSScriptAnalyzer."
+    }
+    else {
+        Write-Host "PSScriptAnalyzer found the following issues:"
+        return $analysisResults
+    }
+}
 #endregion Functions
 
 #region Setting Up
@@ -970,10 +1020,11 @@ $MenuPrompt = "{0} The previous version of the code has been shared below after 
 do {
     Write-Host "`n`nPlease select an option from the menu:"
     Write-Host "1. Suggest a new feature, enhancement, or change"
-    Write-Host "2. Ask a specific question about the code"
-    Write-Host "3. (Q)uit"
+    Write-Host "2. Analyze & modify with PSScriptAnalyzer"
+    Write-Host "3. Ask a specific question about the code"
+    Write-Host "4. (Q)uit"
     $userOption = Read-Host -Prompt "Enter your choice"
-    if ($userOption -ne 'Q' -and $userOption -ne "3") {
+    if ($userOption -ne 'Q' -and $userOption -ne "4") {
         switch ($userOption) {
             '1' {
                 $userChanges = Read-Host -Prompt "Suggest a new feature, enhancement, or change for the code."
@@ -985,6 +1036,26 @@ do {
                 Add-ToGlobalResponses $powerShellDeveloperResponce
             }
             '2' {
+                $randomFileName = [System.IO.Path]::GetRandomFileName().Replace(".", "") + ".ps1"
+                Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```' -OutputFilePath $(join-path ([System.Environment]::GetEnvironmentVariable("TEMP", "user")) $randomFileName)
+                # Call the function to check the code in 'TheCode.ps1' file
+                $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock (get-content $(join-path ([System.Environment]::GetEnvironmentVariable("TEMP", "user")) $randomFileName) -raw)
+                Write-Host $issues                
+                foreach ($issue in $issues) {
+                    $issueText += $issue.message + " (line: $($issue.Line); rule: $($issue.Rulename))`n"
+                }
+                #write-Host $issueText
+                $powerShellDeveloperLastMemory = $powerShellDeveloper.GetLastMemory().response
+                $promptMessage = "Use the PSScriptAnalyzer report to troubleshoot the code."
+                $promptMessage += "`n`nPSScriptAnalyzer report:`n``````text`n$issueText`n```````n`n"
+                $promptMessage += "The code:`n````````powershell`n" + $powerShellDeveloperLastMemory + "`n`````````n`nShow the whole improved code as next version."
+                $issues = ""
+                $issueText = ""
+                $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($promptMessage)
+                $GlobalPSDevResponse += $powerShellDeveloperResponce
+                Add-ToGlobalResponses $powerShellDeveloperResponce
+            }
+            '3' {
                 $userChanges = Read-Host -Prompt "Ask a specific question about the code to seek clarification."
                 $promptMessage = "Based on the user's question, provide an explanation or modification to the code. You must answer the question only. Do not show the code."
                 $powerShellDeveloperLastMemory = $powerShellDeveloper.GetLastMemory().response
@@ -999,7 +1070,7 @@ do {
             }
         }
     }
-} while ($userOption -ne 'Q' -and $userOption -ne "3" )
+} while ($userOption -ne 'Q' -and $userOption -ne "4" )
 
 
 if (-not $NOPM) {
@@ -1017,9 +1088,18 @@ if (-not $NOLog) {
     # Log Developer last memory
     ($powerShellDeveloper.GetLastMemory().Response) | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "TheCode.log")
     Export-AndWritePowerShellCodeBlocks -InputString $(get-content $(join-path $script:TeamDiscussionDataFolder "TheCode.log") -raw) -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode.ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
+    if (Test-Path -Path $(Join-Path $script:TeamDiscussionDataFolder "TheCode.ps1")) {
+        # Call the function to check the code in 'TheCode.ps1' file
+        Invoke-CodeWithPSScriptAnalyzer -FilePath (Join-Path $script:TeamDiscussionDataFolder "TheCode.ps1")
+    }
     foreach ($TeamMember in $Team) {
         $TeamMember.DisplayInfo(0) | Out-File -FilePath $TeamMember.LogFilePath -Append
     }
     Stop-Transcript
+}
+else {
+    Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```' -OutputFilePath $(join-path ([System.Environment]::GetEnvironmentVariable("TEMP", "user")) "TheCode.ps1")
+    # Call the function to check the code in 'TheCode.ps1' file
+    Invoke-CodeWithPSScriptAnalyzer -FilePath $(join-path ([System.Environment]::GetEnvironmentVariable("TEMP", "user")) "TheCode.ps1")
 }
 #endregion Main
