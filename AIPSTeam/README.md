@@ -4,11 +4,12 @@
 
 ## Overview
 
-This script (powered by [PSAOAI Module](https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/PSAOAI)) simulates a collaborative environment where specialists work together on a project, mimicking a real-world team dynamic within a single script. User input outlining the project details is passed through a chain of specialists, each performing their designated task and forwarding the information to the next specialist until the project is complete.
+This script (powered by [PSAOAI Module](https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/PSAOAI/README.md)) simulates a collaborative environment where specialists work together on a project, mimicking a real-world team dynamic within a single script. User input outlining the project details is passed through a chain of specialists, each performing their designated task and forwarding the information to the next specialist until the project is complete.
 
 ### How to install
 
 ```powershell
+Install-Module PSAOAI
 Install-Script AIPSTeam
 ```
 
@@ -28,7 +29,7 @@ Install-Script AIPSTeam
 * `NODocumentator (switch)`: Disables Documentator functionality.
 * `NOLog (switch)`: Disables logging functionality.
 * `LogFolder (string)`: Specifies the folder for logs.
-* `DeploymentChat`: Model deployment name. Default value (`env:PSAOAI_API_AZURE_OPENAI_CC_DEPLOYMENT`)is taken from [PSAOAI](https://github.com/voytas75/AzureOpenAI-PowerShell/blob/master/PSAOAI/README.md#powershell-azure-openai-psaoai-module) Module, if you configured earlier.
+* `DeploymentChat`: Azure OpenAI model deployment name. Default value (`env:PSAOAI_API_AZURE_OPENAI_CC_DEPLOYMENT`) is taken from [PSAOAI](https://github.com/voytas75/AzureOpenAI-PowerShell/blob/master/PSAOAI/README.md#powershell-azure-openai-psaoai-module) Module, if you configured earlier.
 
 ## Inputs
 
