@@ -601,6 +601,7 @@ function Invoke-CodeWithPSScriptAnalyzer {
         # Display the analysis results
         if ($analysisResults.Count -eq 0) {
             Write-Host "No issues found by PSScriptAnalyzer."
+            return $false
         }
         else {
             Write-Host "PSScriptAnalyzer found the following issues:"
@@ -611,6 +612,7 @@ function Invoke-CodeWithPSScriptAnalyzer {
     catch {
         Write-Error "An error occurred while processing: $_"
     }
+    return $false
 }
 
 function Show-Header {
@@ -1072,6 +1074,7 @@ do {
     Write-Host "3. Ask a specific question about the code"
     Write-Host "4. (Q)uit"
     $userOption = Read-Host -Prompt "Enter your choice"
+    Write-Output ""
     if ($userOption -ne 'Q' -and $userOption -ne "4") {
         switch ($userOption) {
             '1' {
@@ -1111,6 +1114,7 @@ do {
                 }
             }
             '3' {
+                
                 $userChanges = Read-Host -Prompt "Ask a specific question about the code to seek clarification."
                 $promptMessage = "Based on the user's question, provide an explanation or modification to the code. You must answer the question only. Do not show the code."
                 $powerShellDeveloperLastMemory = $powerShellDeveloper.GetLastMemory().response
@@ -1155,6 +1159,9 @@ if (-not $NOLog) {
 else {
     Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```' -OutputFilePath $(join-path ([System.Environment]::GetEnvironmentVariable("TEMP", "user")) "TheCode.ps1")
     # Call the function to check the code in 'TheCode.ps1' file
-    Invoke-CodeWithPSScriptAnalyzer -FilePath $(join-path ([System.Environment]::GetEnvironmentVariable("TEMP", "user")) "TheCode.ps1")
+    $issues = Invoke-CodeWithPSScriptAnalyzer -FilePath $(join-path ([System.Environment]::GetEnvironmentVariable("TEMP", "user")) "TheCode.ps1")
+    if ($issues) {
+        write-output ($issues | Select-Object line, message | format-table -AutoSize -Wrap)
+    }
 }
 #endregion Main
