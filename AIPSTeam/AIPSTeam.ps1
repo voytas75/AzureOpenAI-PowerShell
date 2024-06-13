@@ -149,9 +149,7 @@ class ProjectTeam {
 
         # If display is set to 1, print the information to the console
         if ($display -eq 1) {
-            Write-Host "---------------------------------------------------------------------------------"
-            Write-Host "Info: $($this.Name) ($($this.Role))"
-            Write-Host "---------------------------------------------------------------------------------"
+            Show-Header -HeaderText "Info: $($this.Name) ($($this.Role))"
             Write-Host "Name: $($infoObject.Name)"
             Write-Host "Role: $($infoObject.Role)"
             Write-Host "System prompt: $($infoObject.'System prompt')"
@@ -172,9 +170,7 @@ class ProjectTeam {
     
     # Method to process the input and generate a response
     [string] ProcessInput([string] $userinput) {
-        Write-Host "---------------------------------------------------------------------------------"
-        Write-Host "Current Expert: $($this.Name) ($($this.Role))"
-        Write-Host "---------------------------------------------------------------------------------"
+        Show-Header -HeaderText "Current Expert: $($this.Name) ($($this.Role))"
         # Log the input
         $this.AddLogEntry("Processing input:`n$userinput")
         # Update status
@@ -225,9 +221,7 @@ class ProjectTeam {
     }
 
     [string] Feedback([ProjectTeam] $AssessedExpert, [string] $Expertinput) {
-        Write-Host "---------------------------------------------------------------------------------------"
-        Write-Host "Feedback by $($this.Name) ($($this.Role)) for $($AssessedExpert.name)"
-        Write-Host "---------------------------------------------------------------------------------------"
+        Show-Header -HeaderText "Feedback by $($this.Name) ($($this.Role)) for $($AssessedExpert.name)"
         # Log the input
         $this.AddLogEntry("Processing input:`n$Expertinput")
         # Update status
@@ -271,9 +265,7 @@ class ProjectTeam {
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         $logEntry = @"
 [$timestamp]:
----------------------------------------------------------------------------------
-$entry
----------------------------------------------------------------------------------
+$(Show-Header -HeaderText $entry -output)
 "@
         $this.Log.Add($logEntry)
         if (-not [string]::IsNullOrEmpty($this.LogFilePath)) {
@@ -548,7 +540,12 @@ function Export-AndWritePowerShellCodeBlocks {
                     $codeBlock = $match.Groups[1].Value.Trim()
                     if ($OutputFilePath) {
                         $codeBlock | Out-File -FilePath $OutputFilePath -Append -Encoding UTF8
-                        Write-Output "Code block written to file: $OutputFilePath"
+                        if (Test-path $OutputFilePath) {
+                            Write-Output "Code block written to file: $OutputFilePath"
+                        }
+                        else {
+                            throw "Error saving file $OutputFilePath"
+                        }
                     }
                     else {
                         return $codeBlock
@@ -570,48 +567,70 @@ function Export-AndWritePowerShellCodeBlocks {
 
 function Invoke-CodeWithPSScriptAnalyzer {
     param(
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [string]$FilePath,
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [string]$ScriptBlock
     )
 
-    # Check if PSScriptAnalyzer module is installed
-    if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
-        Write-Warning "PSScriptAnalyzer module is not installed. Install it using: 'Install-Module -Name PSScriptAnalyzer'"
-        return
-    }
+    try {
+        # Check if PSScriptAnalyzer module is installed
+        if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
+            throw "PSScriptAnalyzer module is not installed. Install it using: 'Install-Module -Name PSScriptAnalyzer'"
+        }
 
-    # Import PSScriptAnalyzer module
-    Import-Module -Name PSScriptAnalyzer
+        # Import PSScriptAnalyzer module
+        Import-Module -Name PSScriptAnalyzer -ErrorAction Stop
 
-    # Check if file exists
-    if ($FilePath -and -not (Test-Path -Path $FilePath)) {
-        Write-Warning "File '$FilePath' does not exist."
-        return
-    }
+        # Check if file exists
+        if ($FilePath -and -not (Test-Path -Path $FilePath)) {
+            throw "File '$FilePath' does not exist."
+        }
 
-    # Run PSScriptAnalyzer on the file or script block
-    if ($FilePath) {
-        $analysisResults = Invoke-ScriptAnalyzer -Path $FilePath
-    }
-    elseif ($ScriptBlock) {
-        $analysisResults = Invoke-ScriptAnalyzer -ScriptDefinition $ScriptBlock
-    }
-    else {
-        Write-Warning "No FilePath or ScriptBlock provided for analysis."
-        return
-    }
+        # Run PSScriptAnalyzer on the file or script block
+        if ($FilePath) {
+            $analysisResults = Invoke-ScriptAnalyzer -Path $FilePath
+        }
+        elseif ($ScriptBlock) {
+            $analysisResults = Invoke-ScriptAnalyzer -ScriptDefinition $ScriptBlock
+        }
+        else {
+            throw "No FilePath or ScriptBlock provided for analysis."
+        }
 
-    # Display the analysis results
-    if ($analysisResults.Count -eq 0) {
-        Write-Host "No issues found by PSScriptAnalyzer."
+        # Display the analysis results
+        if ($analysisResults.Count -eq 0) {
+            Write-Host "No issues found by PSScriptAnalyzer."
+        }
+        else {
+            Write-Host "PSScriptAnalyzer found the following issues:"
+            return $analysisResults
+        }
+        return $false
     }
-    else {
-        Write-Host "PSScriptAnalyzer found the following issues:"
-        return $analysisResults
+    catch {
+        Write-Error "An error occurred while processing: $_"
     }
 }
+
+function Show-Header {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$HeaderText,
+        [switch]$output
+    )
+    if (-not $output) {
+        Write-Host "---------------------------------------------------------------------------------"
+        Write-Host $HeaderText
+        Write-Host "---------------------------------------------------------------------------------"
+    }
+    else {
+        Write-Output "---------------------------------------------------------------------------------`n"
+        Write-Output "$HeaderText`n"
+        Write-Output "---------------------------------------------------------------------------------`n"
+    }
+}
+
 #endregion Functions
 
 #region Setting Up
@@ -1002,9 +1021,38 @@ Think step by step, make sure your answer is unbiased, show the review. Use reli
 $qaEngineerFeedback = $qaEngineer.Feedback($powerShellDeveloper, $FeedbackPrompt)
 Add-ToGlobalResponses $qaEngineerFeedback
 
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($qaEngineer.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n`````````n" + $($qaEngineer.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$300 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
+$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($qaEngineer.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n`````````n" + $($qaEngineer.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n````````text`n" + $($powerShellDeveloper.GetLastMemory().response) + "`n`````````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$300 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks. Show the new version of the code anyway.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 Add-ToGlobalResponses $powerShellDeveloperResponce
+
+
+#redion PSScriptAnalyzer
+Show-Header -HeaderText "Code analysis by PSScriptAnalyzer"
+try {
+    $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $(Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```')
+    if ($issues) {
+        write-output ($issues | Select-Object line, message | format-table -AutoSize -Wrap)
+    }
+}
+catch {
+    Write-Error "An error occurred while PSScriptAnalyzer: $_"
+}
+if ($issues) {
+    foreach ($issue in $issues) {
+        $issueText += $issue.message + " (line: $($issue.Line); rule: $($issue.Rulename))`n"
+    }
+    #write-Host $issueText
+    $powerShellDeveloperLastMemory = $powerShellDeveloper.GetLastMemory().response
+    $promptMessage = "You must address issues found in PSScriptAnalyzer report."
+    $promptMessage += "`n`nPSScriptAnalyzer report, issues:`n``````text`n$issueText`n```````n`n"
+    $promptMessage += "The code:`n````````powershell`n" + $powerShellDeveloperLastMemory + "`n`````````n`nShow the new version of the code where issues are solved."
+    $issues = ""
+    $issueText = ""
+    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($promptMessage)
+    $GlobalPSDevResponse += $powerShellDeveloperResponce
+    Add-ToGlobalResponses $powerShellDeveloperResponce
+} 
+#endregion PSScriptAnalyzer
 
 if (-not $NODocumentator) {
     if (-not $NOLog) {
@@ -1036,24 +1084,31 @@ do {
                 Add-ToGlobalResponses $powerShellDeveloperResponce
             }
             '2' {
-                $randomFileName = [System.IO.Path]::GetRandomFileName().Replace(".", "") + ".ps1"
-                Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```' -OutputFilePath $(join-path ([System.Environment]::GetEnvironmentVariable("TEMP", "user")) $randomFileName)
-                # Call the function to check the code in 'TheCode.ps1' file
-                $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock (get-content $(join-path ([System.Environment]::GetEnvironmentVariable("TEMP", "user")) $randomFileName) -raw)
-                Write-Host $issues                
-                foreach ($issue in $issues) {
-                    $issueText += $issue.message + " (line: $($issue.Line); rule: $($issue.Rulename))`n"
+                try {
+                    # Call the function to check the code in 'TheCode.ps1' file
+                    $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $(Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```')
+                    if ($issues) {
+                        write-output ($issues | Select-Object line, message | format-table -AutoSize -Wrap)
+                    }
                 }
-                #write-Host $issueText
-                $powerShellDeveloperLastMemory = $powerShellDeveloper.GetLastMemory().response
-                $promptMessage = "Use the PSScriptAnalyzer report to troubleshoot the code."
-                $promptMessage += "`n`nPSScriptAnalyzer report:`n``````text`n$issueText`n```````n`n"
-                $promptMessage += "The code:`n````````powershell`n" + $powerShellDeveloperLastMemory + "`n`````````n`nShow the whole improved code as next version."
-                $issues = ""
-                $issueText = ""
-                $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($promptMessage)
-                $GlobalPSDevResponse += $powerShellDeveloperResponce
-                Add-ToGlobalResponses $powerShellDeveloperResponce
+                catch {
+                    Write-Error "An error occurred while PSScriptAnalyzer: $_"
+                }
+                if ($issues) {
+                    foreach ($issue in $issues) {
+                        $issueText += $issue.message + " (line: $($issue.Line); rule: $($issue.Rulename))`n"
+                    }
+                    #write-Host $issueText
+                    $powerShellDeveloperLastMemory = $powerShellDeveloper.GetLastMemory().response
+                    $promptMessage = "You must address issues found in PSScriptAnalyzer report."
+                    $promptMessage += "`n`nPSScriptAnalyzer report, issues:`n``````text`n$issueText`n```````n`n"
+                    $promptMessage += "The code:`n````````powershell`n" + $powerShellDeveloperLastMemory + "`n`````````n`nShow the new version of the code where issues are solved."
+                    $issues = ""
+                    $issueText = ""
+                    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($promptMessage)
+                    $GlobalPSDevResponse += $powerShellDeveloperResponce
+                    Add-ToGlobalResponses $powerShellDeveloperResponce
+                }
             }
             '3' {
                 $userChanges = Read-Host -Prompt "Ask a specific question about the code to seek clarification."
