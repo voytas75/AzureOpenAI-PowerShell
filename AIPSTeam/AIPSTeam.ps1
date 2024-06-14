@@ -1239,7 +1239,7 @@ if (-not $NOLog) {
 else {
     #Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```' -OutputFilePath $(join-path ([System.Environment]::GetEnvironmentVariable("TEMP", "user")) "TheCodeF.ps1")
     # Call the function to check the code in 'TheCode.ps1' file
-    $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $(get-content $lastPSDevCode -raw)
+    $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $lastPSDevCode
     if ($issues) {
         write-output ($issues | Select-Object line, message | format-table -AutoSize -Wrap)
     }
