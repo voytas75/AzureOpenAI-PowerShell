@@ -523,26 +523,30 @@ function Export-AndWritePowerShellCodeBlocks {
     )
     # Define the regular expression pattern to match PowerShell code blocks
     $pattern = '(?s)' + [regex]::Escape($StartDelimiter) + '(.*?)' + [regex]::Escape($EndDelimiter)
+    $codeBlock_ = ""
     try {
         # Process the entire input string at once
         if ($InputString -match $pattern) {
             $matches_ = [regex]::Matches($InputString, $pattern)
             foreach ($match in $matches_) {
                 $codeBlock = $match.Groups[1].Value.Trim()
-                if ($OutputFilePath) {
-                    $codeBlock | Out-File -FilePath $OutputFilePath -Append -Encoding UTF8
-                    if (Test-path $OutputFilePath) {
-                        Write-Information "Code block written to file: $OutputFilePath" -InformationAction Continue
-                        return $OutputFilePath
-                    }
-                    else {
-                        throw "Error saving file $OutputFilePath"
-                        return $false
-                    }
+                $codeBlock_ += $codeBlock
+            }
+            if ($OutputFilePath) {
+                $codeBlock_ | Out-File -FilePath $OutputFilePath -Append -Encoding UTF8
+                if (Test-path $OutputFilePath) {
+                    Write-Information "Code block exported and written to file: $OutputFilePath" -InformationAction Continue
+                    return $OutputFilePath
                 }
                 else {
-                    return $codeBlock
+                    throw "Error saving file $OutputFilePath"
+                    return $false
                 }
+            }
+            else {
+                Write-Information "Code block exported" -InformationAction Continue
+                $codeBlock_ += $codeBlock
+                return $codeBlock_
             }
         }
         else {
@@ -1033,6 +1037,7 @@ Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -O
 #redion PSScriptAnalyzer
 Show-Header -HeaderText "Code analysis by PSScriptAnalyzer"
 try {
+    $(Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```')
     $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $(Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```')
     if ($issues) {
         write-output ($issues | Select-Object line, message | format-table -AutoSize -Wrap)
@@ -1157,8 +1162,9 @@ do {
                 $GlobalPSDevResponse += $powerShellDeveloperResponce
                 Add-ToGlobalResponses $powerShellDeveloperResponce
                 $theCode = Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```'
-                # musimy wykluczyc wyniki gdzie jest np mneij linji niz 10
-                if ($theCode) {
+                $theCode.gettype()
+                $theCode | gm
+                if ($theCode -and ($($theCode.split("`n")).count() -gt 4)) {
                     $theCode | Out-File -FilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_f${finalNumber}.ps1") -Append -Encoding UTF8
                     $finalNumber += 1
                     $lastPSDevCode = $theCode
@@ -1195,7 +1201,7 @@ if (-not $NOLog) {
         if ($issues) {
             write-output ($issues | Select-Object line, message | format-table -AutoSize -Wrap)
         }
-        }
+    }
     foreach ($TeamMember in $Team) {
         $TeamMember.DisplayInfo(0) | Out-File -FilePath $TeamMember.LogFilePath -Append
     }
