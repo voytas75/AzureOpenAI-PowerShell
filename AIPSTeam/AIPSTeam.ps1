@@ -6,7 +6,7 @@
 .PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam/README.md
 .EXTERNALMODULEDEPENDENCIES PSAOAI, PSScriptAnalyzer
 .RELEASENOTES
-1.3.0: add to menu Generate documentation, The code research.
+1.3.0: add to menu Generate documentation, The code research, Requirement for PSAOAI version >= 0.2.1 
 1.2.1: fix EXTERNALMODULEDEPENDENCIES
 1.2.0: add user interaction and use PSScriptAnalyzer.
 1.1.0: default value for DeploymentChat.
@@ -19,7 +19,8 @@
 2024.05: initializing.
 #>
 
-#Requires -Modules PSAOAI, PSScriptAnalyzer
+#Requires -Modules PSAOAI
+#Requires -Modules PSScriptAnalyzer
 
 <# 
 .SYNOPSIS 
@@ -655,24 +656,38 @@ function Get-SourceCodeAnalysis {
         [string]$CodeBlock
     )
 
+    function Analyze-Lines {
+        param (
+            [string[]]$Lines
+        )
+
+        $totalLines = $Lines.Count
+        $comments = ($Lines | Select-String "#" | Measure-Object).Count
+        $blanks = ($Lines | Where-Object { $_ -match "^\s*$" } | Measure-Object).Count
+        $codeLines = $totalLines - ($comments + $blanks)
+        
+        return [PSCustomObject]@{
+            TotalLines = $totalLines
+            CodeLines = $codeLines
+            Comments = $comments
+            Blanks = $blanks
+        }
+    }
+
     if ($FilePath) {
         if (Test-Path $FilePath -PathType Leaf) {
-            $lines = (Get-Content $FilePath | Measure-Object -Line).Lines
-            $comments = (Get-Content $FilePath | Select-String "#" | Measure-Object).Count
-            $blanks = (Get-Content $FilePath | Select-String "^\s*$" | Measure-Object).Count
-            $codeLines = $lines - ($comments + $blanks)
-            Write-Output "$FilePath : $codeLines lines of code, $comments comments, $blanks blank lines"
+            $lines = Get-Content $FilePath
+            $analysis = Analyze-Lines -Lines $lines
+            Write-Output "$FilePath : $($analysis.CodeLines) lines of code, $($analysis.Comments) comments, $($analysis.Blanks) blank lines"
         }
         else {
             Write-Error "File '$FilePath' does not exist."
         }
     }
     elseif ($CodeBlock) {
-        $lines = ($CodeBlock | Measure-Object -Line).Lines
-        $comments = ($CodeBlock | Select-String "#" | Measure-Object).Count
-        $blanks = ($CodeBlock | Select-String -Pattern "^\s*$" | Measure-Object).Count
-        $codeLines = $lines - ($comments + $blanks)
-        Write-Output "Code Block : $codeLines lines of code, $comments comments, $blanks blank lines"
+        $lines = $CodeBlock -split "`r?`n"
+        $analysis = Analyze-Lines -Lines $lines
+        Write-Output "Code Block : $($analysis.CodeLines) lines of code, $($analysis.Comments) comments, $($analysis.Blanks) blank lines"
     }
     else {
         Write-Error "No FilePath or CodeBlock provided for analysis."
@@ -739,11 +754,11 @@ $FileVersion = 1
 # Disabe PSAOAI importing banner
 [System.Environment]::SetEnvironmentVariable("PSAOAI_BANNER", "0", "User")
 
-if (Get-Module -ListAvailable -Name PSAOAI) {
+if ((Get-Module -ListAvailable -Name PSAOAI | Where-Object {[version]$_.version -ge [version]"0.2.1"})) {
     [void](Import-module -name PSAOAI -Force)
 }
 else {
-    Write-Warning "You need to install PSAOAI module. Use: 'Install-Module PSAOAI'"
+    Write-Warning "You need to install/update PSAOAI module version >= 0.2.1. Use: 'Install-Module PSAOAI' or 'Update-Module PSAOAI'"
     return
 }
 
@@ -1035,6 +1050,7 @@ $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($pr
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 Add-ToGlobalResponses $powerShellDeveloperResponce
 $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
+$lastPSDevCode = get-content -Path $_savedFile -raw 
 $FileVersion += 1
 write-verbose $_savedFile
 #endregion PM-PSDev
@@ -1061,6 +1077,7 @@ $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($re
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 Add-ToGlobalResponses $powerShellDeveloperResponce
 $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
+$lastPSDevCode = get-content -Path $_savedFile -raw 
 $FileVersion += 1
 write-verbose $_savedFile
 #endregion RA-PSDev
@@ -1087,6 +1104,7 @@ $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($sy
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 Add-ToGlobalResponses $powerShellDeveloperResponce
 $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
+$lastPSDevCode = get-content -Path $_savedFile -raw 
 $FileVersion += 1
 write-verbose $_savedFile
 #endregion SA-PSDev
@@ -1113,6 +1131,7 @@ $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($do
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 Add-ToGlobalResponses $powerShellDeveloperResponce
 $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
+$lastPSDevCode = get-content -Path $_savedFile -raw 
 $FileVersion += 1
 write-verbose $_savedFile
 #endregion DE-PSDev
@@ -1139,6 +1158,7 @@ $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($qa
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 Add-ToGlobalResponses $powerShellDeveloperResponce
 $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
+$lastPSDevCode = get-content -Path $_savedFile -raw 
 $FileVersion += 1
 write-verbose $_savedFile
 #endregion QAE-PSDev
@@ -1148,6 +1168,7 @@ Show-Header -HeaderText "Code analysis by PSScriptAnalyzer"
 try {
     Write-Verbose "getlatmemory PSDev: $($powerShellDeveloper.GetLastMemory().Response)"
     $_exportedCode = Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```'
+    $lastPSDevCode = $_exportedCode
     write-verbose "_exportCode: $_exportedCode"
     $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $_exportedCode
     if ($issues) {
@@ -1172,9 +1193,9 @@ if ($issues) {
     $GlobalPSDevResponse += $powerShellDeveloperResponce
     Add-ToGlobalResponses $powerShellDeveloperResponce
     $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
-    $FileVersion += 1
     write-verbose $_savedFile
-    $lastPSDevCode = get-content -Path $(join-path $script:TeamDiscussionDataFolder "TheCode_v6.ps1") -raw 
+    $lastPSDevCode = get-content -Path $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -raw 
+    $FileVersion += 1
     write-verbose $lastPSDevCode
 } 
 #endregion PSScriptAnalyzer
@@ -1219,7 +1240,7 @@ do {
                 Add-ToGlobalResponses $powerShellDeveloperResponce
                 $theCode = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -StartDelimiter '```powershell' -EndDelimiter '```'
                 if ($theCode) {
-                    $theCode | Out-File -FilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_f${FileVersion}.ps1") -Append -Encoding UTF8
+                    $theCode | Out-File -FilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -Append -Encoding UTF8
                     $FileVersion += 1
                     $lastPSDevCode = $thecode
                 }
@@ -1250,7 +1271,7 @@ do {
                     Add-ToGlobalResponses $powerShellDeveloperResponce
                     $theCode = Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```'
                     if ($theCode) {
-                        $theCode | Out-File -FilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_f${FileVersion}.ps1") -Append -Encoding UTF8
+                        $theCode | Out-File -FilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -Append -Encoding UTF8
                         $FileVersion += 1
                         $lastPSDevCode = $theCode
                     }
@@ -1287,10 +1308,10 @@ do {
                 $GlobalPSDevResponse += $powerShellDeveloperResponce
                 Add-ToGlobalResponses $powerShellDeveloperResponce
                 $theCode = Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```'
-                $theCode | Export-Clixml -Path $(join-path $script:TeamDiscussionDataFolder "TheCode_f${FileVersion}.xml")
+                $theCode | Export-Clixml -Path $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.xml")
                 if ($theCode) {
                     if ($theCode.split("`n").length() -gt 15) {
-                        $theCode | Out-File -FilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_f${FileVersion}.ps1") -Append -Encoding UTF8
+                        $theCode | Out-File -FilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -Append -Encoding UTF8
                         $FileVersion += 1
                         $lastPSDevCode = $theCode
                     }
@@ -1302,7 +1323,7 @@ do {
             }
             '6' {
                 Show-Header -HeaderText "Generate documentation"
-                $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($powerShellDeveloperresponse) | Out-File -FilePath $DocumentationFullName
+                $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($lastPSDevCode) | Out-File -FilePath $DocumentationFullName
                 if (Test-Path $DocumentationFullName) {
                     Write-Information "++ Documentation saved to $DocumentationFullName" -InformationAction Continue    
                 }
