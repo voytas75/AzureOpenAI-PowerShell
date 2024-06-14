@@ -1,12 +1,12 @@
 <#PSScriptInfo
-.VERSION 1.1.1
+.VERSION 1.2.0
 .GUID f0f4316d-f106-43b5-936d-0dd93a49be6b
 .AUTHOR voytas75
 .TAGS ai,psaoai,llm,project,team,gpt
-.PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam
+.PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam/README.md
 .EXTERNALMODULEDEPENDENCIES @("PSAOAI", "PSScriptAnalyzer")
 .RELEASENOTES
-1.2.0: add interaction and PSScriptAnalyzer.
+1.2.0: add user interaction and use PSScriptAnalyzer.
 1.1.0: default value for DeploymentChat.
 1.0.7: Added 'DeploymentChat' parameter.
 1.0.6: Updated function calls to Add-ToGlobalResponses.
