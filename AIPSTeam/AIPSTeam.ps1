@@ -601,7 +601,6 @@ function Invoke-CodeWithPSScriptAnalyzer {
         }
         else {
             Write-Information "++ PSScriptAnalyzer found the following issues:" -InformationAction Continue
-            Write-Host "PSScriptAnalyzer found the following issues:"
             return $analysisResults
         }
         return $false
