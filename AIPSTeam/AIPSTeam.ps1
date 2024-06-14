@@ -4,9 +4,9 @@
 .AUTHOR voytas75
 .TAGS ai,psaoai,llm,project,team,gpt
 .PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam/README.md
-.EXTERNALMODULEDEPENDENCIES @("PSAOAI", "PSScriptAnalyzer")
+.EXTERNALMODULEDEPENDENCIES PSAOAI, PSScriptAnalyzer
 .RELEASENOTES
-1.2.1: 
+1.2.1: fix EXTERNALMODULEDEPENDENCIES
 1.2.0: add user interaction and use PSScriptAnalyzer.
 1.1.0: default value for DeploymentChat.
 1.0.7: Added 'DeploymentChat' parameter.
