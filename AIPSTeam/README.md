@@ -42,7 +42,7 @@ Output varies based on specialist actions. It typically includes text messages, 
 ## Example
 
 ```powershell
-.\AIPSTeam.ps1 -userInput "A PowerShell project to monitor CPU usage and display dynamic graph." -Stream $false -DeploymentChat "GPT-4"
+AIPSTeam.ps1 -userInput "A PowerShell project to monitor CPU usage and display dynamic graph." -Stream $false -DeploymentChat "GPT-4"
 ```
 
 This example runs the script with disabled live streaming (`-Stream $false`) and defines a project for CPU usage monitoring with a dynamic graph instead of the default RAM load and color block output.
