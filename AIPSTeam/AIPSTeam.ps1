@@ -6,7 +6,7 @@
 .PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam/README.md
 .EXTERNALMODULEDEPENDENCIES PSAOAI, PSScriptAnalyzer
 .RELEASENOTES
-1.3.0: add to menu Generate documentation, The code research, Requirement for PSAOAI version >= 0.2.1 
+1.3.0: add to menu Generate documentation, The code research, Requirement for PSAOAI version >= 0.2.1 , fix CyclomaticComplexity.
 1.2.1: fix EXTERNALMODULEDEPENDENCIES
 1.2.0: add user interaction and use PSScriptAnalyzer.
 1.1.0: default value for DeploymentChat.
@@ -668,9 +668,9 @@ function Get-SourceCodeAnalysis {
         
         return [PSCustomObject]@{
             TotalLines = $totalLines
-            CodeLines = $codeLines
-            Comments = $comments
-            Blanks = $blanks
+            CodeLines  = $codeLines
+            Comments   = $comments
+            Blanks     = $blanks
         }
     }
 
@@ -724,11 +724,18 @@ function Get-CyclomaticComplexity {
         return
     }
 
-    # Find and iterate over all function definitions
-    foreach ($function in $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)) {
+    # Identify and loop through all function definitions
+    $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+    
+    if ($functions.Count -eq 0) {
+        Write-Information "-- No functions found for cyclomatic complexity analysis." -InformationAction Continue
+        return $false
+    }
+
+    foreach ($function in $functions) {
         $cyclomaticComplexity = 1
         $functionTokens = $tokens | Where-Object { $_.Extent.StartOffset -ge $function.Extent.StartOffset -and $_.Extent.EndOffset -le $function.Extent.EndOffset }
-        $seenBlocks = @()
+        $observedBlocks = @()
 
         foreach ($token in $functionTokens) {
             if ($token.Kind -in 'If', 'ElseIf', 'Catch') {
@@ -736,13 +743,12 @@ function Get-CyclomaticComplexity {
             }
             elseif ($token.Kind -in 'While', 'For', 'Switch') {
                 $cyclomaticComplexity++
-                $seenBlocks += $token
+                $observedBlocks += $token
             }
             elseif ($token.Kind -in 'EndWhile', 'EndFor', 'EndSwitch') {
-                $seenBlocks = $seenBlocks | Where-Object { $_ -ne $token }
+                $observedBlocks = $observedBlocks | Where-Object { $_ -ne $token }
             }
         }
-
         Write-Output "$($function.Name) : $cyclomaticComplexity"
     }
 }
@@ -754,7 +760,7 @@ $FileVersion = 1
 # Disabe PSAOAI importing banner
 [System.Environment]::SetEnvironmentVariable("PSAOAI_BANNER", "0", "User")
 
-if ((Get-Module -ListAvailable -Name PSAOAI | Where-Object {[version]$_.version -ge [version]"0.2.1"})) {
+if ((Get-Module -ListAvailable -Name PSAOAI | Where-Object { [version]$_.version -ge [version]"0.2.1" })) {
     [void](Import-module -name PSAOAI -Force)
 }
 else {
@@ -1160,17 +1166,17 @@ Add-ToGlobalResponses $powerShellDeveloperResponce
 $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
 $lastPSDevCode = get-content -Path $_savedFile -raw 
 $FileVersion += 1
-write-verbose $_savedFile
+write-verbose $lastPSDevCode
 #endregion QAE-PSDev
 
 #region PSScriptAnalyzer
 Show-Header -HeaderText "Code analysis by PSScriptAnalyzer"
 try {
-    Write-Verbose "getlatmemory PSDev: $($powerShellDeveloper.GetLastMemory().Response)"
+    Write-Verbose "getlastmemory PSDev: $($powerShellDeveloper.GetLastMemory().Response)"
     $_exportedCode = Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```'
     $lastPSDevCode = $_exportedCode
-    write-verbose "_exportCode: $_exportedCode"
-    $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $_exportedCode
+    write-verbose "_exportCode, lastPSDevCode: $lastPSDevCode"
+    $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $lastPSDevCode
     if ($issues) {
         write-output ($issues | Select-Object line, message | format-table -AutoSize -Wrap)
     }
@@ -1194,29 +1200,37 @@ if ($issues) {
     Add-ToGlobalResponses $powerShellDeveloperResponce
     $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
     write-verbose $_savedFile
-    $lastPSDevCode = get-content -Path $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -raw 
+    $lastPSDevCode = get-content -Path $_savedFile -raw 
     $FileVersion += 1
     write-verbose $lastPSDevCode
 } 
+write-verbose $lastPSDevCode
 #endregion PSScriptAnalyzer
 
 #region Doc
 $DocumentationFullName = Join-Path $script:TeamDiscussionDataFolder "Documentation.txt"
 if (-not $NODocumentator) {
     if (-not $NOLog) {
-        $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($powerShellDeveloperresponse) | Out-File -FilePath $DocumentationFullName
+        $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($lastPSDevCode) | Out-File -FilePath $DocumentationFullName
     }
     else {
-        $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($powerShellDeveloperresponse)
+        $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($lastPSDevCode)
     }
     Add-ToGlobalResponses $documentationSpecialistResponce
 }
 #endregion Doc
 
 #region Menu
+
+# Define the menu prompt message
 $MenuPrompt = "{0} The previous version of the code has been shared below after the feedback block.`n`n````````text`n{1}`n`````````n`nHere is previous version of the code:`n`n``````powershell`n{2}`n```````n`nThink step by step. Make sure your answer is unbiased."
+
+# Start a loop to keep the menu running until the user chooses to quit
 do {
-    Write-Host "`n`nPlease select an option from the menu:"
+    # Display the menu options
+    Write-Output "`n`n"
+    Show-Header -HeaderText "MENU"
+    Write-Host "Please select an option from the menu:"
     Write-Host "1. Suggest a new feature, enhancement, or change"
     Write-Host "2. Analyze & modify with PSScriptAnalyzer"
     Write-Host "3. Analyze PSScriptAnalyzer only"
@@ -1226,11 +1240,16 @@ do {
     Write-Host "7. Show the code"
     Write-Host "8. The code research"
     Write-Host "9. (Q)uit"
+
+    # Get the user's choice
     $userOption = Read-Host -Prompt "Enter your choice"
     Write-Output ""
+
+    # Process the user's choice if it's not 'Q' or '9' (both of which mean 'quit')
     if ($userOption -ne 'Q' -and $userOption -ne "9") {
         switch ($userOption) {
             '1' {
+                # Option 1: Suggest a new feature, enhancement, or change
                 Show-Header -HeaderText "Suggest a new feature, enhancement, or change"
                 $userChanges = Read-Host -Prompt "Suggest a new feature, enhancement, or change for the code."
                 $promptMessage = "Based on the user's suggestion, incorporate a feature, enhancement, or change into the code. Show the next version of the code."
@@ -1246,6 +1265,7 @@ do {
                 }
             }
             '2' {
+                # Option 2: Analyze & modify with PSScriptAnalyzer
                 Show-Header -HeaderText "Analyze & modify with PSScriptAnalyzer"
                 try {
                     # Call the function to check the code in 'TheCode.ps1' file
@@ -1278,6 +1298,7 @@ do {
                 }
             }
             '3' {
+                # Option 3: Analyze PSScriptAnalyzer only
                 Show-Header -HeaderText "Analyze PSScriptAnalyzer only"
                 try {
                     # Call the function to check the code in 'TheCode.ps1' file
@@ -1292,6 +1313,7 @@ do {
 
             }
             '4' {
+                # Option 4: Explain the code
                 Show-Header -HeaderText "Explain the code"
                 $promptMessage = "Explain the code only.`n`n"
                 $promptMessage += "The code:`n``````powershell`n" + $lastPSDevCode + "`n```````n"
@@ -1300,9 +1322,14 @@ do {
                 Add-ToGlobalResponses $powerShellDeveloperResponce
             }
             '5' {
+                # Option 5: Ask a specific question about the code
                 Show-Header -HeaderText "Ask a specific question about the code"
                 $userChanges = Read-Host -Prompt "Ask a specific question about the code to seek clarification."
-                $promptMessage = "Based on the user's question, provide an explanation or modification to the code. You must answer the question only. Do not show the whole code even if user asks."
+                $promptMessage = "Based on the user's question, provide an explanation to the code."
+                if (Test-Path $DocumentationFullName) {
+                    $promptMessage += " The documentation:`n````````text`n$(get-content -path $DocumentationFullName -raw)`n`````````n`n"
+                }
+                $promptMessage += "You must answer the user's question only. Do not show the whole code even if user asks."
                 $MenuPrompt_ = $MenuPrompt -f $promptMessage, $userChanges, $lastPSDevCode
                 $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($MenuPrompt_)
                 $GlobalPSDevResponse += $powerShellDeveloperResponce
@@ -1310,7 +1337,7 @@ do {
                 $theCode = Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```'
                 $theCode | Export-Clixml -Path $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.xml")
                 if ($theCode) {
-                    if ($theCode.split("`n").length() -gt 15) {
+                    if ($theCode.split("`n").length -gt 15) {
                         $theCode | Out-File -FilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -Append -Encoding UTF8
                         $FileVersion += 1
                         $lastPSDevCode = $theCode
@@ -1319,45 +1346,63 @@ do {
                         $lastPSDevCode += $theCode
                     }
                 }
-
             }
             '6' {
+                # Option 6: Generate documentation
                 Show-Header -HeaderText "Generate documentation"
-                $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($lastPSDevCode) | Out-File -FilePath $DocumentationFullName
                 if (Test-Path $DocumentationFullName) {
-                    Write-Information "++ Documentation saved to $DocumentationFullName" -InformationAction Continue    
+                    Write-Information "++ Existing documentation found at $DocumentationFullName" -InformationAction Continue
+                    $userChoice = Read-Host -Prompt "Do you want to review and update the documentation based on the last version of the code? (Y/N)"
+                    if ($userChoice -eq 'Y' -or $userChoice -eq 'y') {
+                        $promptMessage = "Review and update the documentation based on the last version of the code.`n`n"
+                        $promptMessage += "The code:`n``````powershell`n" + $lastPSDevCode + "`n```````n`n"
+                        $promptMessage += "The old documentation:`n````````text`n" + $(get-content -path $DocumentationFullName -raw) + "`n`````````n"
+                        $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($promptMessage)
+                        $documentationSpecialistResponce | Out-File -FilePath $DocumentationFullName -Force
+                        Write-Information "++ Documentation updated and saved to $DocumentationFullName" -InformationAction Continue
+                    }
+                }
+                else {
+                    $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($lastPSDevCode)
+                    $documentationSpecialistResponce | Out-File -FilePath $DocumentationFullName
+                    Write-Information "++ Documentation generated and saved to $DocumentationFullName" -InformationAction Continue
                 }
             }
             '7' {
+                # Option 7: Show the code
                 Show-Header -HeaderText "Show the code"
                 Write-Output $lastPSDevCode
             }
             '8' {
+                # Option 8: The code research
                 Show-Header -HeaderText "The code research"
                 
-                #Source code analysis
+                # Perform source code analysis
                 Write-Output "Source code analysis:"
                 Get-SourceCodeAnalysis -CodeBlock $lastPSDevCode
-                
-                #cyclomatic complexity analysis
+                Write-Output ""                
+                # Perform cyclomatic complexity analysis
+                Write-Verbose "`$lastPSDevCode: $lastPSDevCode"
                 Write-Output "`nCyclomatic complexity analysis:"
-                Get-CyclomaticComplexity -CodeBlock $lastPSDevCode
-                Write-Output "
+                if ($CyclomaticComplexity = Get-CyclomaticComplexity -CodeBlock $lastPSDevCode) {
+                    $CyclomaticComplexity
+                    Write-Output "
     1:       The function has a single execution path with no control flow statements (e.g., if, else, while, etc.). 
              This typically means the function is simple and straightforward.
     2 or 3:  Functions with moderate complexity, having a few conditional paths or loops.
     4-7:     These functions are more complex, with multiple decision points and/or nested control structures.
     Above 7: Indicates higher complexity, which can make the function harder to test and maintain.
                 "
-
+                }
             }
             default {
+                # Handle invalid options
                 Write-Information "-- Invalid option. Please try again." -InformationAction Continue
                 continue
             }
         }
     }
-} while ($userOption -ne 'Q' -and $userOption -ne "9" )
+} while ($userOption -ne 'Q' -and $userOption -ne "9" ) # End the loop when the user chooses to quit
 #endregion Menu
 
 #region PM Project report
