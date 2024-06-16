@@ -752,6 +752,69 @@ function Get-CyclomaticComplexity {
     }
 }
 
+function Get-FeedbackPrompt {
+    param (
+        [string]$description,
+        [string]$code
+    )
+    return @"
+Review the following responses:
+
+1. Description and objectives:
+    ````````text
+    $($description.trim())
+    ````````
+
+2. The code:
+    ``````powershell
+    $code
+    ``````
+
+Think step by step, make sure your answer is unbiased, show the review. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks. Provide your suggestions for improvement as feedback to Powershell Developer. Generate a list of verification questions that could help to self-analyze. I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
+"@
+}
+
+function ProcessFeedbackAndResponse {
+    param (
+        [object]$role,
+        [string]$description,
+        [string]$code,
+        [string]$tipAmount,
+        [ref]$globalResponse,
+        [ref]$lastCode,
+        [ref]$fileVersion,
+        [string]$teamDiscussionDataFolder
+    )
+
+    $feedbackPrompt = Get-FeedbackPrompt -description $description -code $code
+    $feedback = $role.Feedback($powerShellDeveloper, $feedbackPrompt)
+    Add-ToGlobalResponses $feedback
+
+    $response = $powerShellDeveloper.ProcessInput("Based on $($role.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($role.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n``````powershell`n$code`n```````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$tipAmount for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
+
+    if ($response) {
+        $globalResponse.Value += $response
+        Add-ToGlobalResponses $response
+        $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $response -OutputFilePath $(join-path $teamDiscussionDataFolder "TheCode_v$($fileVersion.Value).ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
+        $lastCode.Value = get-content -Path $_savedFile -raw 
+        $fileVersion.Value += 1
+        write-verbose $_savedFile
+    }
+}
+
+function Save-AndUpdateCode {
+    param (
+        [string]$response,
+        [ref]$lastCode,
+        [ref]$fileVersion,
+        [string]$teamDiscussionDataFolder
+    )
+
+    $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $response -OutputFilePath $(join-path $teamDiscussionDataFolder "TheCode_v$($fileVersion.Value).ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
+    $lastCode.Value = get-content -Path $_savedFile -raw 
+    $fileVersion.Value += 1
+    write-verbose $_savedFile
+}
 #endregion Functions
 
 #region Setting Up
@@ -1054,126 +1117,23 @@ $script:userInput = $projectManagerFeedback
 $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($projectManager.Name) review, you must create the first version of the code.`n`n````````text`n$($script:userInput)`n`````````n`nUse reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks. I will tip you `$50 for showing the code.")
 $GlobalPSDevResponse += $powerShellDeveloperResponce
 Add-ToGlobalResponses $powerShellDeveloperResponce
-$_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
-$lastPSDevCode = get-content -Path $_savedFile -raw 
-$FileVersion += 1
-write-verbose $_savedFile
+Save-AndUpdateCode -response $powerShellDeveloperResponce -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $script:TeamDiscussionDataFolder
 #endregion PM-PSDev
 
 #region RA-PSDev
-$FeedbackPrompt = @"
-Review the following responses:
-
-1. Description and objectives:
-    ````````text
-    $($script:userInput.trim())
-    ````````
-
-2. The code:
-    ``````powershell
-    $lastPSDevCode
-    ``````
-
-Think step by step, make sure your answer is unbiased, show the review. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks. Provide your suggestions for improvement as feedback to Powershell Developer. Generate a list of verification questions that could help to self-analyze. I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
-"@
-$requirementsAnalystFeedback = $requirementsAnalyst.Feedback($powerShellDeveloper, $FeedbackPrompt)
-Add-ToGlobalResponses $requirementsAnalystFeedback
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($requirementsAnalyst.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($requirementsAnalyst.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n``````powershell`n$lastPSDevCode`n```````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$100 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
-if ($powerShellDeveloperResponce) {
-    $GlobalPSDevResponse += $powerShellDeveloperResponce
-    Add-ToGlobalResponses $powerShellDeveloperResponce
-    $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
-    $lastPSDevCode = get-content -Path $_savedFile -raw 
-    $FileVersion += 1
-    write-verbose $_savedFile
-}
+ProcessFeedbackAndResponse -role $requirementsAnalyst -description $script:userInput -code $lastPSDevCode -tipAmount 100 -globalResponse ([ref]$GlobalPSDevResponse) -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $script:TeamDiscussionDataFolder
 #endregion RA-PSDev
 
 #region SA-PSDev
-$FeedbackPrompt = @"
-Review the following responses
-
-1. Description and objectives:
-    ````````text
-    $($script:userInput.trim())
-    ````````
-
-2. The code:
-    ``````powershell
-    $lastPSDevCode
-    ``````
-
-Think step by step, make sure your answer is unbiased, show the review. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks. Provide your suggestions for improvement as feedback to Powershell Developer. Generate a list of verification questions that could help to self-analyze. I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
-"@
-$systemArchitectFeedback = $systemArchitect.Feedback($powerShellDeveloper, $FeedbackPrompt)
-Add-ToGlobalResponses $systemArchitectFeedback
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($systemArchitect.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($systemArchitect.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n``````powershell`n$lastPSDevCode`n```````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$150 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
-if ($powerShellDeveloperResponce) {
-    $GlobalPSDevResponse += $powerShellDeveloperResponce
-    Add-ToGlobalResponses $powerShellDeveloperResponce
-    $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
-    $lastPSDevCode = get-content -Path $_savedFile -raw 
-    $FileVersion += 1
-    write-verbose $_savedFile
-}
+ProcessFeedbackAndResponse -role $systemArchitect -description $script:userInput -code $lastPSDevCode -tipAmount 150 -globalResponse ([ref]$GlobalPSDevResponse) -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $script:TeamDiscussionDataFolder
 #endregion SA-PSDev
 
 #region DE-PSDev
-$FeedbackPrompt = @"
-Review the following responses:
-
-1. Description and objectives:
-    ````````text
-    $($script:userInput.trim())
-    ````````
-
-2. The code:
-    ``````powershell
-    $lastPSDevCode
-    ``````
-
-Think step by step, make sure your answer is unbiased, show the review. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks. Provide your suggestions for improvement as feedback to Powershell Developer. Generate a list of verification questions that could help to self-analyze. I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
-"@
-$domainExpertFeedback = $domainExpert.Feedback($powerShellDeveloper, $FeedbackPrompt)
-Add-ToGlobalResponses $domainExpertFeedback
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($domainExpert.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($domainExpert.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n``````powershell`n$lastPSDevCode`n```````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$200 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
-if ($powerShellDeveloperResponce) {
-    $GlobalPSDevResponse += $powerShellDeveloperResponce
-    Add-ToGlobalResponses $powerShellDeveloperResponce
-    $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
-    $lastPSDevCode = get-content -Path $_savedFile -raw 
-    $FileVersion += 1
-    write-verbose $_savedFile
-}
+ProcessFeedbackAndResponse -role $domainExpert -description $script:userInput -code $lastPSDevCode -tipAmount 200 -globalResponse ([ref]$GlobalPSDevResponse) -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $script:TeamDiscussionDataFolder
 #endregion DE-PSDev
 
 #region QAE-PSDev
-$FeedbackPrompt = @"
-You must review the following responses:
-
-1. Description and objectives:
-    ````````text
-    $($script:userInput.trim())
-    ````````
-
-2. The code:
-    ``````powershell
-    $lastPSDevCode
-    ``````
-
-Think step by step, make sure your answer is unbiased, show the review. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks. Provide your suggestions for improvement as feedback to Powershell Developer. Generate a list of verification questions that could help to self-analyze. I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
-"@
-$qaEngineerFeedback = $qaEngineer.Feedback($powerShellDeveloper, $FeedbackPrompt)
-Add-ToGlobalResponses $qaEngineerFeedback
-$powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($qaEngineer.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($qaEngineer.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n``````powershell`n$lastPSDevCode`n```````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$300 for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks. Show the new version of the code anyway.")
-if ($powerShellDeveloperResponce) {
-    $GlobalPSDevResponse += $powerShellDeveloperResponce
-    Add-ToGlobalResponses $powerShellDeveloperResponce
-    $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
-    $lastPSDevCode = get-content -Path $_savedFile -raw 
-    $FileVersion += 1
-    write-verbose $lastPSDevCode
-}
+ProcessFeedbackAndResponse -role $qaEngineer -description $script:userInput -code $lastPSDevCode -tipAmount 300 -globalResponse ([ref]$GlobalPSDevResponse) -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $script:TeamDiscussionDataFolder
 #endregion QAE-PSDev
 
 #region PSScriptAnalyzer
