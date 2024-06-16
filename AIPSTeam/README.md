@@ -172,4 +172,5 @@ This PowerShell script simulates a team of specialists working together on a Pow
    ```
 
 3. **Where are the log files stored?**
+
    Log files are stored in the specified log folder or the default folder in `MyDocuments`.
