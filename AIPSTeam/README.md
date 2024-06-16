@@ -39,18 +39,23 @@ This PowerShell script simulates a team of specialists working together on a Pow
 
 ### Installation
 
-1. **Download the Script**: Clone or download the repository from [GitHub](https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam/README.md).
-2. **Install Required Modules**: Ensure you have the required PowerShell modules installed:
+1. **Install Required Modules**: Ensure you have the required PowerShell modules installed:
 
    ```powershell
    Install-Module -Name PSAOAI
    Install-Module -Name PSScriptAnalyzer
    ```
 
+2. **Install the Script**: Install script from [Powershell Gallery](https://www.powershellgallery.com/packages/AIPSTeam).
+
+   ```powershell
+   Install-Script AIPSTeam
+   ```
+
 3. **Run the Script**: Execute the script using PowerShell:
 
    ```powershell
-   .\AIPSTeam.ps1 -userInput "Your project description here"
+   AIPSTeam.ps1 -userInput "Your project description here"
    ```
 
 ### Configuration
@@ -68,19 +73,19 @@ This PowerShell script simulates a team of specialists working together on a Pow
 1. **Basic Usage**:
 
    ```powershell
-   .\AIPSTeam.ps1 -userInput "Monitor RAM usage and show a single color block based on the load."
+   AIPSTeam.ps1 -userInput "Monitor RAM usage and show a single color block based on the load."
    ```
 
 2. **Disable Live Streaming**:
 
    ```powershell
-   .\AIPSTeam.ps1 -userInput "Monitor RAM usage" -Stream $false
+   AIPSTeam.ps1 -userInput "Monitor RAM usage" -Stream $false
    ```
 
 3. **Specify Log Folder**:
 
    ```powershell
-   .\AIPSTeam.ps1 -userInput "Monitor RAM usage" -LogFolder "C:\Logs"
+   AIPSTeam.ps1 -userInput "Monitor RAM usage" -LogFolder "C:\Logs"
    ```
 
 ## Developer Notes
@@ -106,24 +111,7 @@ This PowerShell script simulates a team of specialists working together on a Pow
 
 ## Installation Instructions
 
-1. **Clone the Repository**:
-
-   ```bash
-   git clone https://github.com/voytas75/AzureOpenAI-PowerShell.git
-   ```
-
-2. **Navigate to the Directory**:
-
-   ```bash
-   cd AzureOpenAI-PowerShell/AIPSTeam
-   ```
-
-3. **Install Required Modules**:
-
-   ```powershell
-   Install-Module -Name PSAOAI
-   Install-Module -Name PSScriptAnalyzer
-   ```
+[Installation](#installation)
 
 ## Dependencies and Prerequisites
 
