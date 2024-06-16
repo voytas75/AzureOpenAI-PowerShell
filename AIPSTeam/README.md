@@ -125,7 +125,7 @@ This PowerShell script simulates a team of specialists working together on a Pow
 1. **Monitor RAM Usage**:
 
    ```powershell
-   .\AIPSTeam.ps1 -userInput "Monitor RAM usage and show a single color block based on the load."
+   AIPSTeam.ps1 -userInput "Monitor RAM usage and show a single color block based on the load."
    ```
 
    **Expected Output**: A color block indicating RAM usage levels.
@@ -133,7 +133,7 @@ This PowerShell script simulates a team of specialists working together on a Pow
 2. **Monitor CPU Usage**:
 
    ```powershell
-   .\AIPSTeam.ps1 -userInput "Monitor CPU usage and display dynamic graph."
+   AIPSTeam.ps1 -userInput "Monitor CPU usage and display dynamic graph."
    ```
 
    **Expected Output**: A dynamic graph showing CPU usage.
@@ -156,7 +156,7 @@ This PowerShell script simulates a team of specialists working together on a Pow
 2. **How do I disable live streaming?**
 
    ```powershell
-   .\AIPSTeam.ps1 -Stream $false
+   AIPSTeam.ps1 ... -Stream $false
    ```
 
 3. **Where are the log files stored?**
