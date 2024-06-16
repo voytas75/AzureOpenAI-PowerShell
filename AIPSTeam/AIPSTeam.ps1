@@ -67,7 +67,7 @@ Creation Date: 05.2024
 Purpose/Change: Initial release for emulating teamwork within PowerShell scripting context, rest in PSScriptInfo Releasenotes, .
 
 .LINK
-https://www.powershellgallery.com/packages/AIPSTeam/1.2.0
+https://www.powershellgallery.com/packages/AIPSTeam
 https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam/README.md
 #>
 param(
