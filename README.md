@@ -70,6 +70,7 @@ By providing the API key through the `ApiKeyVariable` parameter when invoking th
 - [x] DALL-E 3 - Function [`Invoke-AzureOpenAIDalle3`](#function-invoke-azureopenaidalle3)
 - [x] Helper function for displaying information about request parameters - Function [`Invoke-APICall`](#function-invoke-apicall)
 - [x] AI Event Analyzer - Function [`Start-AIEventAnalyzer`](./AIEventAnalyzer/README.md) ([source code](./AIEventAnalyzer/Start-AIEventAnalyzer.ps1))
+- [x] Ai PowerShell team - Script [`AIPSTeam`](./AIPSTeam/README.md) ([source code](./aipsteam/AIPSTeam.ps1))
 
 ### Function: `Invoke-AzureOpenAICompletion`
 
