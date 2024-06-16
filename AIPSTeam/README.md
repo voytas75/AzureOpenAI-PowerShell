@@ -156,7 +156,7 @@ This PowerShell script simulates a team of specialists working together on a Pow
 2. **How do I disable live streaming?**
 
    ```powershell
-   AIPSTeam.ps1 ... -Stream $false
+   AIPSTeam.ps1 -Stream $false
    ```
 
 3. **Where are the log files stored?**
