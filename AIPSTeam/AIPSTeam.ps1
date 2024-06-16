@@ -1,12 +1,13 @@
 <#PSScriptInfo
-.VERSION 1.4.0
+.VERSION 1.5.0
 .GUID f0f4316d-f106-43b5-936d-0dd93a49be6b
 .AUTHOR voytas75
 .TAGS ai,psaoai,llm,project,team,gpt
 .PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam/README.md
 .EXTERNALMODULEDEPENDENCIES PSAOAI, PSScriptAnalyzer
 .RELEASENOTES
-1.4.0: 
+1.5.0: 
+1.4.0: modularize feedback.
 1.3.0: add to menu Generate documentation, The code research, Requirement for PSAOAI version >= 0.2.1 , fix CyclomaticComplexity.
 1.2.1: fix EXTERNALMODULEDEPENDENCIES
 1.2.0: add user interaction and use PSScriptAnalyzer.
@@ -60,7 +61,7 @@ PS> .\AIPSTeam.ps1 -userInput "A PowerShell project to monitor CPU usage and dis
 This command runs the script without streaming output live (-Stream $false) and specifies custom user input about monitoring CPU usage instead of RAM, displaying it through dynamic graphing methods rather than static color blocks.
 
 .NOTES 
-Version: 1.4.0
+Version: 1.5.0
 Author: voytas75
 Creation Date: 05.2024
 Purpose/Change: Initial release for emulating teamwork within PowerShell scripting context, rest in PSScriptInfo Releasenotes, .
@@ -79,7 +80,7 @@ param(
     [string] $DeploymentChat = [System.Environment]::GetEnvironmentVariable("PSAOAI_API_AZURE_OPENAI_CC_DEPLOYMENT", "User")
 )
 
-$AIPSTeamVersion = "1.4.0"
+$AIPSTeamVersion = "1.5.0"
 
 #region ProjectTeamClass
 <#
@@ -819,6 +820,7 @@ function Save-AndUpdateCode {
 
 #region Setting Up
 $FileVersion = 1
+$lastPSDevCode = ""
 # Disabe PSAOAI importing banner
 [System.Environment]::SetEnvironmentVariable("PSAOAI_BANNER", "0", "User")
 
