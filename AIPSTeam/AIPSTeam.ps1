@@ -6,7 +6,7 @@
 .PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam/README.md
 .EXTERNALMODULEDEPENDENCIES PSAOAI, PSScriptAnalyzer
 .RELEASENOTES
-1.5.0: minor fixes, modularize PSScriptAnalyzer logic.
+1.5.0: minor fixes, modularize PSScriptAnalyzer logic, load, save project status.
 1.4.0: modularize feedback.
 1.3.0: add to menu Generate documentation, The code research, Requirement for PSAOAI version >= 0.2.1 , fix CyclomaticComplexity.
 1.2.1: fix EXTERNALMODULEDEPENDENCIES
@@ -78,7 +78,9 @@ param(
     [switch] $NODocumentator,
     [switch] $NOLog,
     [string] $LogFolder,
-    [string] $DeploymentChat = [System.Environment]::GetEnvironmentVariable("PSAOAI_API_AZURE_OPENAI_CC_DEPLOYMENT", "User")
+    [string] $DeploymentChat = [System.Environment]::GetEnvironmentVariable("PSAOAI_API_AZURE_OPENAI_CC_DEPLOYMENT", "User"),
+    [Parameter(ParameterSetName = 'LoadStatus')]
+    [string] $LoadProjectStatus
 )
 
 $AIPSTeamVersion = "1.5.0"
@@ -777,7 +779,7 @@ Think step by step, make sure your answer is unbiased, show the review. Use reli
 }
 
 function Invoke-ProcessFeedbackAndResponse {
-<#
+    <#
 .SYNOPSIS
     Processes feedback and responses for PowerShell code modifications.
 .DESCRIPTION
@@ -872,9 +874,9 @@ function Save-AndUpdateCode {
     #>
 
     param (
-        [string]$response,  # The updated code to be saved
-        [ref]$lastCode,  # Reference to the last code content
-        [ref]$fileVersion,  # Reference to the current file version number
+        [string]$response, # The updated code to be saved
+        [ref]$lastCode, # Reference to the last code content
+        [ref]$fileVersion, # Reference to the current file version number
         [string]$teamDiscussionDataFolder  # Folder to store the code versions
     )
 
@@ -920,10 +922,10 @@ function Invoke-AnalyzeCodeWithPSScriptAnalyzer {
     #>
 
     param (
-        [string]$InputString,  # The PowerShell code to be analyzed
-        [string]$TeamDiscussionDataFolder,  # Folder to store the code versions
-        [ref]$FileVersion,  # Reference to the current file version number
-        [ref]$lastPSDevCode,  # Reference to the last code content
+        [string]$InputString, # The PowerShell code to be analyzed
+        [string]$TeamDiscussionDataFolder, # Folder to store the code versions
+        [ref]$FileVersion, # Reference to the current file version number
+        [ref]$lastPSDevCode, # Reference to the last code content
         [ref]$GlobalPSDevResponse  # Reference to the global response
     )
 
@@ -991,6 +993,35 @@ function Invoke-AnalyzeCodeWithPSScriptAnalyzer {
     # Log the last PowerShell developer code
     Write-Verbose $lastPSDevCode.Value
 }
+
+function Save-ProjectState {
+    param (
+        [string]$FilePath
+    )
+    $projectState = @{
+        LastPSDevCode            = $lastPSDevCode
+        FileVersion              = $FileVersion
+        GlobalPSDevResponse      = $GlobalPSDevResponse
+        TeamDiscussionDataFolder = $script:TeamDiscussionDataFolder
+    }
+    $projectState | Export-Clixml -Path $FilePath
+}
+
+function Get-ProjectState {
+    param (
+        [string]$FilePath
+    )
+    if (Test-Path -Path $FilePath) {
+        $projectState = Import-Clixml -Path $FilePath
+        $script:LastPSDevCode = $projectState.LastPSDevCode
+        $script:FileVersion = $projectState.FileVersion
+        $script:GlobalPSDevResponse = $projectState.GlobalPSDevResponse
+        $script:TeamDiscussionDataFolder = $projectState.TeamDiscussionDataFolder
+    }
+    else {
+        Write-Host "Project state file not found."
+    }
+}
 #endregion Functions
 
 #region Setting Up
@@ -1011,29 +1042,43 @@ Show-Banner
 $scriptname = "AIPSTeam"
 Get-CheckForScriptUpdate -currentScriptVersion $AIPSTeamVersion -scriptName $scriptname
 
-Try {
-    # Get the current date and time
-    $currentDateTime = Get-Date -Format "yyyyMMdd_HHmmss"
-    if (-not [string]::IsNullOrEmpty($LogFolder)) {
-        # Create a folder with the current date and time as the name in the example path
-        $script:TeamDiscussionDataFolder = New-FolderAtPath -Path $LogFolder -FolderName $currentDateTime
+if (Test-Path $LoadProjectStatus) {
+    # Load the project status from the specified file
+    try {
+        Get-ProjectState -FilePath $LoadProjectStatus
+        Write-Information "++ Project state loaded successfully from $LoadProjectStatus" -InformationAction Continue
+        $script:TeamDiscussionDataFolder = Split-Path $LoadProjectStatus -Parent
+        $FileVersion = $script:FileVersion
     }
-    else {
-        $script:LogFolder = Join-Path -Path ([Environment]::GetFolderPath("MyDocuments")) -ChildPath $scriptname
-        if (-not (Test-Path -Path $script:LogFolder)) {
-            New-Item -ItemType Directory -Path $script:LogFolder | Out-Null
-        }
-        Write-Information "++ The logs will be saved in the following folder: $script:LogFolder" -InformationAction Continue
-        # Create a folder with the current date and time as the name in the example path
-        $script:TeamDiscussionDataFolder = New-FolderAtPath -Path $script:LogFolder -FolderName $currentDateTime
-    }
-    if ($script:TeamDiscussionDataFolder) {
-        Write-Information "++ Team discussion folder was created '$script:TeamDiscussionDataFolder'" -InformationAction Continue
+    catch {
+        Write-Warning "!! Failed to load project state from ${LoadProjectStatus}: $_"
     }
 }
-Catch {
-    Write-Warning -Message "Failed to create discussion folder"
-    return $false
+else {
+    Try {
+        # Get the current date and time
+        $currentDateTime = Get-Date -Format "yyyyMMdd_HHmmss"
+        if (-not [string]::IsNullOrEmpty($LogFolder)) {
+            # Create a folder with the current date and time as the name in the example path
+            $script:TeamDiscussionDataFolder = New-FolderAtPath -Path $LogFolder -FolderName $currentDateTime
+        }
+        else {
+            $script:LogFolder = Join-Path -Path ([Environment]::GetFolderPath("MyDocuments")) -ChildPath $scriptname
+            if (-not (Test-Path -Path $script:LogFolder)) {
+                New-Item -ItemType Directory -Path $script:LogFolder | Out-Null
+            }
+            Write-Information "++ The logs will be saved in the following folder: $script:LogFolder" -InformationAction Continue
+            # Create a folder with the current date and time as the name in the example path
+            $script:TeamDiscussionDataFolder = New-FolderAtPath -Path $script:LogFolder -FolderName $currentDateTime
+        }
+        if ($script:TeamDiscussionDataFolder) {
+            Write-Information "++ Team discussion folder was created '$script:TeamDiscussionDataFolder'" -InformationAction Continue
+        }
+    }
+    Catch {
+        Write-Warning -Message "Failed to create discussion folder"
+        return $false
+    }
 }
 #endregion Setting Up
 
@@ -1349,14 +1394,15 @@ do {
     Write-Host "6. Generate documentation"
     Write-Host "7. Show the code"
     Write-Host "8. The code research"
-    Write-Host "9. (Q)uit"
+    Write-Host "9. Save Project State"
+    Write-Host "10. (Q)uit"
 
     # Get the user's choice
     $userOption = Read-Host -Prompt "Enter your choice"
     Write-Output ""
 
     # Process the user's choice if it's not 'Q' or '9' (both of which mean 'quit')
-    if ($userOption -ne 'Q' -and $userOption -ne "9") {
+    if ($userOption -ne 'Q' -and $userOption -ne "10") {
         switch ($userOption) {
             '1' {
                 # Option 1: Suggest a new feature, enhancement, or change
@@ -1509,6 +1555,40 @@ do {
                 "
                 }
             }
+            '9' {
+                Show-Header -HeaderText "Save Project State"
+                $filePath = (Join-Path $script:TeamDiscussionDataFolder "Project.xml")
+                if (-not (Test-Path $filePath)) {
+                    try {
+                        Save-ProjectState -FilePath $filePath
+                        if (Test-Path -Path $filePath) {
+                            Write-Information "++ Project state saved successfully to $filePath" -InformationAction Continue
+                        }
+                        else {
+                            Write-Warning "-- Project state was not saved. Please check the file path and try again."
+                        }
+                    }
+                    catch {
+                        Write-Error "!! An error occurred while saving the project state: $_"
+                    }
+                }
+                else {
+                    $userChoice = Read-Host -Prompt "File 'Project.xml' exists. Do you want to save now? (Y/N)"
+                    if ($userChoice -eq 'Y' -or $userChoice -eq 'y') {
+                        Save-ProjectState -FilePath $filePath
+                        if (Test-Path -Path $filePath) {
+                            Write-Information "++ Project state saved successfully to $filePath" -InformationAction Continue
+                        }
+                        else {
+                            Write-Warning "-- Project state was not saved. Please check the file path and try again."
+                        }
+                    }
+                }
+                
+            }
+            'Q' {
+                Write-Host "Exiting..."
+            }
             default {
                 # Handle invalid options
                 Write-Information "-- Invalid option. Please try again." -InformationAction Continue
@@ -1516,7 +1596,7 @@ do {
             }
         }
     }
-} while ($userOption -ne 'Q' -and $userOption -ne "9" ) # End the loop when the user chooses to quit
+} while ($userOption -ne 'Q' -and $userOption -ne "10" ) # End the loop when the user chooses to quit
 #endregion Menu
 
 #region PM Project report
