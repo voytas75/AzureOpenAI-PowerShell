@@ -1113,6 +1113,7 @@ else {
     }
 }
 $DocumentationFullName = Join-Path $script:TeamDiscussionDataFolder "Documentation.txt"
+$ProjectfilePath = (Join-Path $script:TeamDiscussionDataFolder "Project.xml")
 #endregion Setting Up
 
 #region ProjectTeam
@@ -1590,12 +1591,11 @@ do {
             }
             '9' {
                 Show-Header -HeaderText "Save Project State"
-                $filePath = (Join-Path $script:TeamDiscussionDataFolder "Project.xml")
-                if (-not (Test-Path $filePath)) {
+                if (-not (Test-Path $ProjectfilePath)) {
                     try {
-                        Save-ProjectState -FilePath $filePath
-                        if (Test-Path -Path $filePath) {
-                            Write-Information "++ Project state saved successfully to $filePath" -InformationAction Continue
+                        Save-ProjectState -FilePath $ProjectfilePath
+                        if (Test-Path -Path $ProjectfilePath) {
+                            Write-Information "++ Project state saved successfully to $ProjectfilePath" -InformationAction Continue
                         }
                         else {
                             Write-Warning "-- Project state was not saved. Please check the file path and try again."
@@ -1608,9 +1608,9 @@ do {
                 else {
                     $userChoice = Read-Host -Prompt "File 'Project.xml' exists. Do you want to save now? (Y/N)"
                     if ($userChoice -eq 'Y' -or $userChoice -eq 'y') {
-                        Save-ProjectState -FilePath $filePath
-                        if (Test-Path -Path $filePath) {
-                            Write-Information "++ Project state saved successfully to $filePath" -InformationAction Continue
+                        Save-ProjectState -FilePath $ProjectfilePath
+                        if (Test-Path -Path $ProjectfilePath) {
+                            Write-Information "++ Project state saved successfully to $ProjectfilePath" -InformationAction Continue
                         }
                         else {
                             Write-Warning "-- Project state was not saved. Please check the file path and try again."
@@ -1618,9 +1618,6 @@ do {
                     }
                 }
                 
-            }
-            'Q' {
-                Write-Host "Exiting..."
             }
             default {
                 # Handle invalid options
@@ -1673,4 +1670,6 @@ else {
     }
 }
 #endregion Final code
+Save-ProjectState -FilePath $ProjectfilePath
+Write-Host "Exiting..."
 #endregion Main
