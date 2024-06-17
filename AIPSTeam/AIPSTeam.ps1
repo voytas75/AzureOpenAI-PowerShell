@@ -407,7 +407,7 @@ Think step by step. Make sure your answer is unbiased.
     return $feedback
 }
 
-function GetLastMemoryFromFeedbackTeamMembers {
+function Get-LastMemoryFromFeedbackTeamMembers {
     param (
         [array] $FeedbackTeam
     )
@@ -476,7 +476,7 @@ function Get-LatestVersion {
     }
 }
 
-function CheckForScriptUpdate {
+function Get-CheckForScriptUpdate {
     param (
         $currentScriptVersion,
         [string]$scriptName
@@ -775,6 +775,7 @@ Think step by step, make sure your answer is unbiased, show the review. Use reli
 "@
 }
 
+function Invoke-ProcessFeedbackAndResponse {
 <#
 .SYNOPSIS
     Processes feedback and responses for PowerShell code modifications.
@@ -802,7 +803,6 @@ Think step by step, make sure your answer is unbiased, show the review. Use reli
 .NOTES
     Ensure that the role object has the Feedback method implemented.
 #>
-function Invoke-ProcessFeedbackAndResponse {
     param (
         [object]$role,
         [string]$description,
@@ -846,64 +846,149 @@ function Invoke-ProcessFeedbackAndResponse {
 }
 
 function Save-AndUpdateCode {
+    <#
+    .SYNOPSIS
+    Saves the updated code to a file and updates the last code and file version.
+
+    .DESCRIPTION
+    This function takes the response string, saves it to a file with a versioned filename, 
+    updates the last code content, increments the file version, and logs the saved file path.
+
+    .PARAMETER response
+    The response string containing the updated code to be saved.
+
+    .PARAMETER lastCode
+    A reference to the variable holding the last version of the code.
+
+    .PARAMETER fileVersion
+    A reference to the variable holding the current file version number.
+
+    .PARAMETER teamDiscussionDataFolder
+    The folder where the team discussion data and code versions are stored.
+
+    .EXAMPLE
+    Save-AndUpdateCode -response $response -lastCode ([ref]$lastCode) -fileVersion ([ref]$fileVersion) -teamDiscussionDataFolder "C:\TeamData"
+    #>
+
     param (
-        [string]$response,
-        [ref]$lastCode,
-        [ref]$fileVersion,
-        [string]$teamDiscussionDataFolder
+        [string]$response,  # The updated code to be saved
+        [ref]$lastCode,  # Reference to the last code content
+        [ref]$fileVersion,  # Reference to the current file version number
+        [string]$teamDiscussionDataFolder  # Folder to store the code versions
     )
 
+    # Save the response to a versioned file
     $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $response -OutputFilePath $(join-path $teamDiscussionDataFolder "TheCode_v$($fileVersion.Value).ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
+    
+    # Update the last code content with the saved file content
     $lastCode.Value = get-content -Path $_savedFile -raw 
+    
+    # Increment the file version number
     $fileVersion.Value += 1
+    
+    # Log the saved file path for verbose output
     write-verbose $_savedFile
 }
 
 function Invoke-AnalyzeCodeWithPSScriptAnalyzer {
+    <#
+    .SYNOPSIS
+    Analyzes PowerShell code using PSScriptAnalyzer and processes the results.
+
+    .DESCRIPTION
+    This function takes an input string containing PowerShell code, analyzes it using PSScriptAnalyzer, and processes any issues found. 
+    It updates the last version of the code and the global response with the analysis results.
+
+    .PARAMETER InputString
+    The PowerShell code to be analyzed.
+
+    .PARAMETER TeamDiscussionDataFolder
+    The folder where team discussion data and code versions are stored.
+
+    .PARAMETER FileVersion
+    A reference to the variable holding the current file version number.
+
+    .PARAMETER lastPSDevCode
+    A reference to the variable holding the last version of the PowerShell code.
+
+    .PARAMETER GlobalPSDevResponse
+    A reference to the variable holding the global response from the PowerShell developer.
+
+    .EXAMPLE
+    Invoke-AnalyzeCodeWithPSScriptAnalyzer -InputString $code -TeamDiscussionDataFolder "C:\TeamData" -FileVersion ([ref]$fileVersion) -lastPSDevCode ([ref]$lastPSDevCode) -GlobalPSDevResponse ([ref]$globalResponse)
+    #>
+
     param (
-        [string]$InputString,
-        [string]$TeamDiscussionDataFolder,
-        [ref]$FileVersion,
-        [ref]$lastPSDevCode,
-        [ref]$GlobalPSDevResponse
+        [string]$InputString,  # The PowerShell code to be analyzed
+        [string]$TeamDiscussionDataFolder,  # Folder to store the code versions
+        [ref]$FileVersion,  # Reference to the current file version number
+        [ref]$lastPSDevCode,  # Reference to the last code content
+        [ref]$GlobalPSDevResponse  # Reference to the global response
     )
 
+    # Display header for code analysis
     Show-Header -HeaderText "Code analysis by PSScriptAnalyzer"
     try {
+        # Log the last memory response from the PowerShell developer
         Write-Verbose "getlastmemory PSDev: $($powerShellDeveloper.GetLastMemory().Response)"
+        
+        # Export the PowerShell code blocks from the input string
         $_exportedCode = Export-AndWritePowerShellCodeBlocks -InputString $InputString -StartDelimiter '```powershell' -EndDelimiter '```'
+        
+        # Update the last PowerShell developer code with the exported code
         $lastPSDevCode.Value = $_exportedCode
-        write-verbose "_exportCode, lastPSDevCode: $($lastPSDevCode.Value)"
+        Write-Verbose "_exportCode, lastPSDevCode: $($lastPSDevCode.Value)"
+        
+        # Analyze the code using PSScriptAnalyzer
         $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $lastPSDevCode.Value
+        
+        # Output the issues found by PSScriptAnalyzer
         if ($issues) {
-            write-output ($issues | Select-Object line, message | format-table -AutoSize -Wrap)
+            Write-Output ($issues | Select-Object line, message | Format-Table -AutoSize -Wrap)
         }
     }
     catch {
+        # Handle any errors that occur during analysis
         Write-Error "An error occurred while PSScriptAnalyzer: $_"
         return
     }
+
+    # If issues were found, process them
     if ($issues) {
         foreach ($issue in $issues) {
             $issueText += $issue.message + " (line: $($issue.Line); rule: $($issue.Rulename))`n"
         }
+        
+        # Create a prompt message to address the issues found
         $promptMessage = "You must address issues found in PSScriptAnalyzer report."
         $promptMessage += "`n`nPSScriptAnalyzer report, issues:`n``````text`n$issueText`n```````n`n"
         $promptMessage += "The code:`n``````powershell`n$($lastPSDevCode.Value)`n```````n`nShow the new version of the code where issues are solved."
+        
+        # Reset issues and issueText variables
         $issues = ""
         $issueText = ""
+        
+        # Process the input with the PowerShell developer
         $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($promptMessage)
+        
         if ($powerShellDeveloperResponce) {
+            # Update the global response with the new response
             $GlobalPSDevResponse.Value += $powerShellDeveloperResponce
             Add-ToGlobalResponses $powerShellDeveloperResponce
-            $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(join-path $TeamDiscussionDataFolder "TheCode_v$($FileVersion.Value).ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
-            write-verbose $_savedFile
-            $lastPSDevCode.Value = get-content -Path $_savedFile -raw 
+            
+            # Save the new version of the code to a file
+            $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(Join-Path $TeamDiscussionDataFolder "TheCode_v$($FileVersion.Value).ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
+            Write-Verbose $_savedFile
+            
+            # Update the last code and file version
+            $lastPSDevCode.Value = Get-Content -Path $_savedFile -Raw 
             $FileVersion.Value += 1
-            write-verbose $lastPSDevCode.Value
+            Write-Verbose $lastPSDevCode.Value
         }
     } 
-    write-verbose $lastPSDevCode.Value
+    
+    # Log the last PowerShell developer code
+    Write-Verbose $lastPSDevCode.Value
 }
 #endregion Functions
 
@@ -923,7 +1008,7 @@ else {
 
 Show-Banner
 $scriptname = "AIPSTeam"
-CheckForScriptUpdate -currentScriptVersion $AIPSTeamVersion -scriptName $scriptname
+Get-CheckForScriptUpdate -currentScriptVersion $AIPSTeamVersion -scriptName $scriptname
 
 Try {
     # Get the current date and time
