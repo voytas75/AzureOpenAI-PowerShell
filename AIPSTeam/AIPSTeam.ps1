@@ -32,7 +32,7 @@ This script emulates a team of specialists working together on a PowerShell proj
 The script simulates a team of specialists, each with a unique role in executing a project. The user input is processed by one specialist who performs their task and passes the result to the next specialist. This process continues until all tasks are completed.
 
 .PARAMETER userInput 
-This parameter defines the project outline as a string. The default value is a project to monitor RAM load and display a color block based on the load levels.
+This parameter defines the project outline as a string. The default value is a project to monitor RAM load and display a color block based on the load levels. This parameter can also accept input from the pipeline.
 
 .PARAMETER Stream 
 This parameter controls whether the output should be streamed live. By default, this parameter is set to $true, enabling live streaming. If set to $false, live streaming is disabled.
@@ -50,13 +50,13 @@ This optional switch disables the logging functions when used.
 This parameter specifies the folder where logs should be stored.
 
 .INPUTS 
-None. You cannot pipe objects directly to this script. Instead, you must pass them as arguments using the parameters defined above.
+System.String. You can pipe a string to the 'userInput' parameter.
 
 .OUTPUTS 
 The output varies depending on how each specialist processes their part of the project. Typically, text-based results are expected, which may include status messages or visual representations like graphs or color blocks related to system metrics such as RAM load, depending on the user input specification provided via the 'userInput' parameter.
 
 .EXAMPLE 
-PS> .\AIPSTeam.ps1 -userInput "A PowerShell project to monitor CPU usage and display dynamic graph." -Stream $false
+PS> "A PowerShell project to monitor CPU usage and display dynamic graph." | .\AIPSTeam.ps1 -Stream $false
 
 This command runs the script without streaming output live (-Stream $false) and specifies custom user input about monitoring CPU usage instead of RAM, displaying it through dynamic graphing methods rather than static color blocks.
 
@@ -71,6 +71,7 @@ https://www.powershellgallery.com/packages/AIPSTeam
 https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam/README.md
 #>
 param(
+    [Parameter(ValueFromPipeline = $true)]
     [string] $userInput = "Monitor RAM usage and show a single color block based on the load.",
     [bool] $Stream = $true,
     [switch] $NOPM,

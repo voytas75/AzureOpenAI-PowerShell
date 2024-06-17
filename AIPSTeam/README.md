@@ -58,13 +58,13 @@ This PowerShell script simulates a team of specialists working together on a Pow
 3. **Run the Script**: Execute the script using PowerShell:
 
    ```powershell
-   AIPSTeam.ps1 -userInput "Your project description here"
+   "Your project description here" | AIPSTeam.ps1
    ```
 
 ### Configuration
 
 - **Parameters**:
-  - `-userInput`: Defines the project outline as a string.
+  - `-userInput`: Defines the project outline as a string (can also be piped).
   - `-Stream`: Controls whether the output should be streamed live (default: `$true`).
   - `-NOPM`: Disables the Project Manager functions.
   - `-NODocumentator`: Disables the Documentator functions.
@@ -77,19 +77,19 @@ This PowerShell script simulates a team of specialists working together on a Pow
 1. **Basic Usage**:
 
    ```powershell
-   AIPSTeam.ps1 -userInput "Monitor RAM usage and show a single color block based on the load."
+   "Monitor RAM usage and show a single color block based on the load." | AIPSTeam.ps1
    ```
 
 2. **Disable Live Streaming**:
 
    ```powershell
-   AIPSTeam.ps1 -userInput "Monitor RAM usage" -Stream $false
+   "Monitor RAM usage" | AIPSTeam.ps1 -Stream $false
    ```
 
 3. **Specify Log Folder**:
 
    ```powershell
-   AIPSTeam.ps1 -userInput "Monitor RAM usage" -LogFolder "C:\Logs"
+   "Monitor RAM usage" | AIPSTeam.ps1 -LogFolder "C:\Logs"
    ```
 
 ## Developer Notes
@@ -129,7 +129,7 @@ This PowerShell script simulates a team of specialists working together on a Pow
 1. **Monitor RAM Usage**:
 
    ```powershell
-   AIPSTeam.ps1 -userInput "Monitor RAM usage and show a single color block based on the load."
+   "Monitor RAM usage and show a single color block based on the load." | AIPSTeam.ps1
    ```
 
    **Expected Output**: A color block indicating RAM usage levels.
@@ -137,7 +137,7 @@ This PowerShell script simulates a team of specialists working together on a Pow
 2. **Monitor CPU Usage**:
 
    ```powershell
-   AIPSTeam.ps1 -userInput "Monitor CPU usage and display dynamic graph."
+   "Monitor CPU usage and display dynamic graph." | AIPSTeam.ps1
    ```
 
    **Expected Output**: A dynamic graph showing CPU usage.
