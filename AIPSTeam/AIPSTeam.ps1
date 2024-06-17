@@ -6,7 +6,7 @@
 .PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam/README.md
 .EXTERNALMODULEDEPENDENCIES PSAOAI, PSScriptAnalyzer
 .RELEASENOTES
-1.5.0: minor fixes.
+1.5.0: minor fixes, modularize PSScriptAnalyzer logic.
 1.4.0: modularize feedback.
 1.3.0: add to menu Generate documentation, The code research, Requirement for PSAOAI version >= 0.2.1 , fix CyclomaticComplexity.
 1.2.1: fix EXTERNALMODULEDEPENDENCIES
@@ -775,7 +775,34 @@ Think step by step, make sure your answer is unbiased, show the review. Use reli
 "@
 }
 
-function ProcessFeedbackAndResponse {
+<#
+.SYNOPSIS
+    Processes feedback and responses for PowerShell code modifications.
+.DESCRIPTION
+    This function takes in various parameters including role, description, code, tip amount, global response, last code, file version, and team discussion data folder.
+    It generates a feedback prompt, processes the feedback, and updates the global response and file version accordingly.
+.PARAMETER role
+    The role object that provides feedback.
+.PARAMETER description
+    A string describing the code or context.
+.PARAMETER code
+    The PowerShell code to be reviewed and modified.
+.PARAMETER tipAmount
+    The amount to be tipped for correct code.
+.PARAMETER globalResponse
+    A reference to the global response object.
+.PARAMETER lastCode
+    A reference to the last version of the code.
+.PARAMETER fileVersion
+    A reference to the file version number.
+.PARAMETER teamDiscussionDataFolder
+    The folder where team discussion data is stored.
+.EXAMPLE
+    Invoke-ProcessFeedbackAndResponse -role $role -description "Sample description" -code $code -tipAmount "100" -globalResponse ([ref]$globalResponse) -lastCode ([ref]$lastCode) -fileVersion ([ref]$fileVersion) -teamDiscussionDataFolder "C:\TeamData"
+.NOTES
+    Ensure that the role object has the Feedback method implemented.
+#>
+function Invoke-ProcessFeedbackAndResponse {
     param (
         [object]$role,
         [string]$description,
@@ -787,18 +814,33 @@ function ProcessFeedbackAndResponse {
         [string]$teamDiscussionDataFolder
     )
 
+    # Generate the feedback prompt using the provided description and code
     $feedbackPrompt = Get-FeedbackPrompt -description $description -code $code
+    
+    # Get feedback from the role object
     $feedback = $role.Feedback($powerShellDeveloper, $feedbackPrompt)
+    
+    # Add the feedback to global responses
     Add-ToGlobalResponses $feedback
 
+    # Process the feedback and generate a response
     $response = $powerShellDeveloper.ProcessInput("Based on $($role.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($role.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n``````powershell`n$code`n```````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$tipAmount for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
 
     if ($response) {
+        # Update the global response with the new response
         $globalResponse.Value += $response
+        
+        # Add the new response to global responses
         Add-ToGlobalResponses $response
+        
+        # Save the new version of the code to a file
         $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $response -OutputFilePath $(join-path $teamDiscussionDataFolder "TheCode_v$($fileVersion.Value).ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
+        
+        # Update the last code and file version
         $lastCode.Value = get-content -Path $_savedFile -raw 
         $fileVersion.Value += 1
+        
+        # Output the saved file path for verbose logging
         write-verbose $_savedFile
     }
 }
@@ -815,6 +857,53 @@ function Save-AndUpdateCode {
     $lastCode.Value = get-content -Path $_savedFile -raw 
     $fileVersion.Value += 1
     write-verbose $_savedFile
+}
+
+function Invoke-AnalyzeCodeWithPSScriptAnalyzer {
+    param (
+        [string]$InputString,
+        [string]$TeamDiscussionDataFolder,
+        [ref]$FileVersion,
+        [ref]$lastPSDevCode,
+        [ref]$GlobalPSDevResponse
+    )
+
+    Show-Header -HeaderText "Code analysis by PSScriptAnalyzer"
+    try {
+        Write-Verbose "getlastmemory PSDev: $($powerShellDeveloper.GetLastMemory().Response)"
+        $_exportedCode = Export-AndWritePowerShellCodeBlocks -InputString $InputString -StartDelimiter '```powershell' -EndDelimiter '```'
+        $lastPSDevCode.Value = $_exportedCode
+        write-verbose "_exportCode, lastPSDevCode: $($lastPSDevCode.Value)"
+        $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $lastPSDevCode.Value
+        if ($issues) {
+            write-output ($issues | Select-Object line, message | format-table -AutoSize -Wrap)
+        }
+    }
+    catch {
+        Write-Error "An error occurred while PSScriptAnalyzer: $_"
+        return
+    }
+    if ($issues) {
+        foreach ($issue in $issues) {
+            $issueText += $issue.message + " (line: $($issue.Line); rule: $($issue.Rulename))`n"
+        }
+        $promptMessage = "You must address issues found in PSScriptAnalyzer report."
+        $promptMessage += "`n`nPSScriptAnalyzer report, issues:`n``````text`n$issueText`n```````n`n"
+        $promptMessage += "The code:`n``````powershell`n$($lastPSDevCode.Value)`n```````n`nShow the new version of the code where issues are solved."
+        $issues = ""
+        $issueText = ""
+        $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($promptMessage)
+        if ($powerShellDeveloperResponce) {
+            $GlobalPSDevResponse.Value += $powerShellDeveloperResponce
+            Add-ToGlobalResponses $powerShellDeveloperResponce
+            $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(join-path $TeamDiscussionDataFolder "TheCode_v$($FileVersion.Value).ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
+            write-verbose $_savedFile
+            $lastPSDevCode.Value = get-content -Path $_savedFile -raw 
+            $FileVersion.Value += 1
+            write-verbose $lastPSDevCode.Value
+        }
+    } 
+    write-verbose $lastPSDevCode.Value
 }
 #endregion Functions
 
@@ -1123,59 +1212,23 @@ Save-AndUpdateCode -response $powerShellDeveloperResponce -lastCode ([ref]$lastP
 #endregion PM-PSDev
 
 #region RA-PSDev
-ProcessFeedbackAndResponse -role $requirementsAnalyst -description $script:userInput -code $lastPSDevCode -tipAmount 100 -globalResponse ([ref]$GlobalPSDevResponse) -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $script:TeamDiscussionDataFolder
+Invoke-ProcessFeedbackAndResponse -role $requirementsAnalyst -description $script:userInput -code $lastPSDevCode -tipAmount 100 -globalResponse ([ref]$GlobalPSDevResponse) -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $script:TeamDiscussionDataFolder
 #endregion RA-PSDev
 
 #region SA-PSDev
-ProcessFeedbackAndResponse -role $systemArchitect -description $script:userInput -code $lastPSDevCode -tipAmount 150 -globalResponse ([ref]$GlobalPSDevResponse) -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $script:TeamDiscussionDataFolder
+Invoke-ProcessFeedbackAndResponse -role $systemArchitect -description $script:userInput -code $lastPSDevCode -tipAmount 150 -globalResponse ([ref]$GlobalPSDevResponse) -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $script:TeamDiscussionDataFolder
 #endregion SA-PSDev
 
 #region DE-PSDev
-ProcessFeedbackAndResponse -role $domainExpert -description $script:userInput -code $lastPSDevCode -tipAmount 200 -globalResponse ([ref]$GlobalPSDevResponse) -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $script:TeamDiscussionDataFolder
+Invoke-ProcessFeedbackAndResponse -role $domainExpert -description $script:userInput -code $lastPSDevCode -tipAmount 200 -globalResponse ([ref]$GlobalPSDevResponse) -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $script:TeamDiscussionDataFolder
 #endregion DE-PSDev
 
 #region QAE-PSDev
-ProcessFeedbackAndResponse -role $qaEngineer -description $script:userInput -code $lastPSDevCode -tipAmount 300 -globalResponse ([ref]$GlobalPSDevResponse) -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $script:TeamDiscussionDataFolder
+Invoke-ProcessFeedbackAndResponse -role $qaEngineer -description $script:userInput -code $lastPSDevCode -tipAmount 300 -globalResponse ([ref]$GlobalPSDevResponse) -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $script:TeamDiscussionDataFolder
 #endregion QAE-PSDev
 
 #region PSScriptAnalyzer
-Show-Header -HeaderText "Code analysis by PSScriptAnalyzer"
-try {
-    Write-Verbose "getlastmemory PSDev: $($powerShellDeveloper.GetLastMemory().Response)"
-    $_exportedCode = Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```'
-    $lastPSDevCode = $_exportedCode
-    write-verbose "_exportCode, lastPSDevCode: $lastPSDevCode"
-    $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $lastPSDevCode
-    if ($issues) {
-        write-output ($issues | Select-Object line, message | format-table -AutoSize -Wrap)
-    }
-}
-catch {
-    Write-Error "An error occurred while PSScriptAnalyzer: $_"
-    return
-}
-if ($issues) {
-    foreach ($issue in $issues) {
-        $issueText += $issue.message + " (line: $($issue.Line); rule: $($issue.Rulename))`n"
-    }
-    #$powerShellDeveloperLastMemory = $powerShellDeveloper.GetLastMemory().response
-    $promptMessage = "You must address issues found in PSScriptAnalyzer report."
-    $promptMessage += "`n`nPSScriptAnalyzer report, issues:`n``````text`n$issueText`n```````n`n"
-    $promptMessage += "The code:`n``````powershell`n$lastPSDevCode`n```````n`nShow the new version of the code where issues are solved."
-    $issues = ""
-    $issueText = ""
-    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($promptMessage)
-    if ($powerShellDeveloperResponce) {
-        $GlobalPSDevResponse += $powerShellDeveloperResponce
-        Add-ToGlobalResponses $powerShellDeveloperResponce
-        $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
-        write-verbose $_savedFile
-        $lastPSDevCode = get-content -Path $_savedFile -raw 
-        $FileVersion += 1
-        write-verbose $lastPSDevCode
-    }
-} 
-write-verbose $lastPSDevCode
+Invoke-AnalyzeCodeWithPSScriptAnalyzer -InputString $($powerShellDeveloper.GetLastMemory().Response) -TeamDiscussionDataFolder $script:TeamDiscussionDataFolder -FileVersion ([ref]$FileVersion) -lastPSDevCode ([ref]$lastPSDevCode) -GlobalPSDevResponse ([ref]$GlobalPSDevResponse)
 #endregion PSScriptAnalyzer
 
 #region Doc
