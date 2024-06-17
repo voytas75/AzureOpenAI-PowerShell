@@ -17,8 +17,8 @@
 1.0.5: code export fix.
 1.0.4: code export fix added.
 1.0.3: requirements.
-2024.06: publishing, check version fix, dependience.
-2024.05: initializing.
+1.0.2: publishing, check version fix, dependience.
+1.0.1: initializing.
 #>
 
 #Requires -Modules PSAOAI
