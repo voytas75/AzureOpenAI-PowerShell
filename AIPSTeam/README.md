@@ -70,6 +70,7 @@ This PowerShell script simulates a team of specialists working together on a Pow
   - `-NODocumentator`: Disables the Documentator functions.
   - `-NOLog`: Disables the logging functions.
   - `-LogFolder`: Specifies the folder where logs should be stored.
+  - `-DeploymentChat`: Specifies the deployment chat environment variable for Azure OpenAI (default: retrieved from environment variable `PSAOAI_API_AZURE_OPENAI_CC_DEPLOYMENT` - [PSAOAI](https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/PSAOAI#powershell-azure-openai-psaoai-module)).
 
 ### Usage
 
