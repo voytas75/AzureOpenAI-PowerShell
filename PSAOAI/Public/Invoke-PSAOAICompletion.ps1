@@ -60,6 +60,9 @@ function Invoke-PSAOAICompletion {
     .PARAMETER User
     The user to which the request will be sent. If empty, the API will select a user automatically.
 
+    .PARAMETER TimeOut
+    Timeout in seconds.
+
     .LINK
     Azure OpenAI Service Documentation: https://learn.microsoft.com/en-us/azure/cognitive-services/openai/
     Azure OpenAI Service REST API reference: https://learn.microsoft.com/en-us/azure/cognitive-services/openai/reference
@@ -129,7 +132,10 @@ function Invoke-PSAOAICompletion {
         [Parameter(Mandatory = $false)]
         [string]$Endpoint = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"),
         [Parameter(Position = 4, Mandatory = $false)]
-        [string]$Deployment = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_C_DEPLOYMENT -PromptMessage "Please enter the deployment")
+        [string]$Deployment = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_C_DEPLOYMENT -PromptMessage "Please enter the deployment"),
+        [Parameter(Mandatory = $false)]
+        [int] $TimeOut = 240
+
     )
     
     # Define system and user messages
@@ -386,7 +392,7 @@ function Invoke-PSAOAICompletion {
             #write-host $urlChat
             #write-host $headers
             #write-host $bodyJSON
-            $response = Invoke-PSAOAIApiRequestStream -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240 -LogFile $logFullNamePath | out-string
+            $response = Invoke-PSAOAIApiRequestStream -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout $TimeOut -LogFile $logFullNamePath | out-string
             if ([string]::IsNullOrEmpty($response)) {
                 Write-Warning "Response is empty"
                 return
@@ -395,7 +401,7 @@ function Invoke-PSAOAICompletion {
             $responseText = $response
         }
         else {
-            $response = Invoke-PSAOAIApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240
+            $response = Invoke-PSAOAIApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout $TimeOut
             #Write-Host ($response | ConvertTo-Json -Depth 100)
             if (-not $($response.choices[0].text)) {
                 Write-Warning "Response is empty"

@@ -66,6 +66,9 @@ function Invoke-PSAOAIChatCompletion {
     .PARAMETER simpleresponse
     Indicates whether the simpleresponse parameter is enabled.
 
+    .PARAMETER TimeOut
+    Timeout in seconds.
+
     .EXAMPLE
     PS C:\> Invoke-PSAOAIChatCompletion -APIVersion "2023-06-01-preview" -Endpoint "https://example.openai.azure.com" -Deployment "example_model_gpt35_!" -User "BobbyK" -Temperature 0.6 -N 1 -FrequencyPenalty 0 -PresencePenalty 0 -TopP 0 -Stop $null -Stream $false
 
@@ -127,7 +130,9 @@ function Invoke-PSAOAIChatCompletion {
         [Parameter(Mandatory = $false)]
         [string]$Stop = $null,
         [Parameter(Mandatory = $false)]
-        [bool]$Stream = $true
+        [bool]$Stream = $true,
+        [Parameter(Mandatory = $false)]
+        [int] $TimeOut = 240
     )
 
     # Function to assemble system and user messages
@@ -543,7 +548,7 @@ function Invoke-PSAOAIChatCompletion {
                 #write-host $urlChat
                 #write-host $headers
                 #write-host $bodyJSON
-                $response = Invoke-PSAOAIApiRequestStream -url $urlChat -headers $headers -bodyJSON $bodyJSON -Chat -timeout 240 -logfile $logfile | out-string
+                $response = Invoke-PSAOAIApiRequestStream -url $urlChat -headers $headers -bodyJSON $bodyJSON -Chat -timeout $TimeOut -logfile $logfile | out-string
                 if ([string]::IsNullOrEmpty($response)) {
                     Write-Warning "Response is empty"
                     Write-LogMessage -Message "Response is empty" "WARNING" -LogFile $logfile
@@ -552,7 +557,7 @@ function Invoke-PSAOAIChatCompletion {
                 $assistant_response = $response
             }
             else {
-                $response = Invoke-PSAOAIApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout 240
+                $response = Invoke-PSAOAIApiRequest -url $urlChat -headers $headers -bodyJSON $bodyJSON -timeout $TimeOut
                 #write-Host ($response | ConvertTo-Json -Depth 100)
                 #if ([string]::IsNullOrEmpty($($response.choices[0].text))) {
                 if ([string]::IsNullOrEmpty($($response.choices[0].message.content))) {
