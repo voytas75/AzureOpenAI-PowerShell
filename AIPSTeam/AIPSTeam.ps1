@@ -792,15 +792,15 @@ function Get-FeedbackPrompt {
     return @"
 Review the following responses:
 
-1. Description and objectives:
-    ````````text
-    $($description.trim())
-    ````````
+Description and objectives:
+````````text
+$($description.trim())
+````````
 
-2. The code:
-    ``````powershell
-    $code
-    ``````
+The code:
+``````powershell
+$code
+``````
 
 Think step by step, make sure your answer is unbiased, show the review. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks. Provide your suggestions for improvement as feedback to Powershell Developer. Generate a list of verification questions that could help to self-analyze. I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
 "@
@@ -831,7 +831,7 @@ function Invoke-ProcessFeedbackAndResponse {
     )
 
     # Generate the feedback prompt using the provided description and code
-    $feedbackPrompt = Get-FeedbackPrompt -description $Global.UserInput -code $GlobalState.LastPSDevCode
+    $feedbackPrompt = Get-FeedbackPrompt -description $GlobalState.UserInput -code $GlobalState.LastPSDevCode
     
     # Get feedback from the role object
     $feedback = $role.Feedback($powerShellDeveloper, $feedbackPrompt)
