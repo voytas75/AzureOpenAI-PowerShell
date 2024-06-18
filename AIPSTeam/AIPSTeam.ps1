@@ -6,14 +6,14 @@
 .PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam/README.md
 .EXTERNALMODULEDEPENDENCIES PSAOAI, PSScriptAnalyzer
 .RELEASENOTES
-1.5.0: minor fixes, modularize PSScriptAnalyzer logic, load, save project status.
+1.5.0: minor fixes, modularize PSScriptAnalyzer logic, load, save project status, State Management Object, refactoring.
 1.4.0: modularize feedback.
 1.3.0: add to menu Generate documentation, The code research, Requirement for PSAOAI version >= 0.2.1 , fix CyclomaticComplexity.
 1.2.1: fix EXTERNALMODULEDEPENDENCIES
 1.2.0: add user interaction and use PSScriptAnalyzer.
 1.1.0: default value for DeploymentChat.
 1.0.7: Added 'DeploymentChat' parameter.
-1.0.6: Updated function calls to Add-ToGlobalResponses.
+1.0.6: Updated function calls to Add-ToGlobalResponses $GlobalState .
 1.0.5: code export fix.
 1.0.4: code export fix.
 1.0.3: requirements.
@@ -139,9 +139,10 @@ class ProjectTeam {
     [scriptblock] $ResponseFunction  # Function to process the input and generate a response
     [string] $LogFilePath  # Path to the log file
     [array] $FeedbackTeam  # Team of experts providing feedback
+    [PSCustomObject] $GlobalState
     
     # Constructor for the ProjectTeam class
-    ProjectTeam([string] $name, [string] $role, [string] $prompt, [double] $temperature, [double] $top_p, [scriptblock] $responseFunction) {
+    ProjectTeam([string] $name, [string] $role, [string] $prompt, [double] $temperature, [double] $top_p, [scriptblock] $responseFunction, [PSCustomObject] $GlobalState) {
         $this.Name = $name
         $this.Role = $role
         $this.Prompt = $prompt
@@ -152,8 +153,10 @@ class ProjectTeam {
         $this.Status = "Not Started"
         $this.Log = @()
         $this.ResponseFunction = $responseFunction
-        $this.LogFilePath = "$script:TeamDiscussionDataFolder\$name.log"
+        $this.GlobalState = $GlobalState
+        $this.LogFilePath = "$($GlobalState.TeamDiscussionDataFolder)\$name.log"
         $this.FeedbackTeam = @()
+        
     }
 
     # Method to display the team member's information
@@ -403,7 +406,8 @@ function SendFeedbackRequest {
         [string] $Prompt, # The prompt for the feedback request
         [double] $Temperature, # The temperature parameter for the LLM model
         [double] $TopP, # The TopP parameter for the LLM model
-        [scriptblock] $ResponseFunction # The function to generate the response
+        [scriptblock] $ResponseFunction, # The function to generate the response
+        [PSCustomObject]$GlobalState
     )
 
     # Define the feedback request prompt
@@ -412,7 +416,7 @@ function SendFeedbackRequest {
 Review the following response and provide your suggestions for improvement as feedback to $($this.name). Generate a list of verification questions that could help to self-analyze. 
 I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
 
-$($script:userInput.trim())
+$($GlobalState.userInput.trim())
 
 ````````text
 $($Response.trim())
@@ -444,8 +448,14 @@ function Get-LastMemoryFromFeedbackTeamMembers {
 }
 
 function Add-ToGlobalResponses {
-    param($response)
-    $script:GlobalResponse += $response
+    param (
+        [Parameter()]
+        [PSCustomObject] 
+        $GlobalState,
+    
+        $response
+    )
+    $GlobalState.GlobalResponse += $response
 }
 
 function New-FolderAtPath {
@@ -648,7 +658,7 @@ function Invoke-CodeWithPSScriptAnalyzer {
         return $false
     }
     catch {
-        Write-Error "An error occurred while processing: $_"
+        Write-Error "!! An error occurred while processing: $_"
     }
     return $false
 }
@@ -805,20 +815,10 @@ function Invoke-ProcessFeedbackAndResponse {
     It generates a feedback prompt, processes the feedback, and updates the global response and file version accordingly.
 .PARAMETER role
     The role object that provides feedback.
-.PARAMETER description
-    A string describing the code or context.
-.PARAMETER code
-    The PowerShell code to be reviewed and modified.
 .PARAMETER tipAmount
     The amount to be tipped for correct code.
-.PARAMETER globalResponse
-    A reference to the global response object.
-.PARAMETER lastCode
-    A reference to the last version of the code.
-.PARAMETER fileVersion
-    A reference to the file version number.
-.PARAMETER teamDiscussionDataFolder
-    The folder where team discussion data is stored.
+.PARAMETER GlobalState
+    Globalstate
 .EXAMPLE
     Invoke-ProcessFeedbackAndResponse -role $role -description "Sample description" -code $code -tipAmount "100" -globalResponse ([ref]$globalResponse) -lastCode ([ref]$lastCode) -fileVersion ([ref]$fileVersion) -teamDiscussionDataFolder "C:\TeamData"
 .NOTES
@@ -826,40 +826,35 @@ function Invoke-ProcessFeedbackAndResponse {
 #>
     param (
         [object]$role,
-        [string]$description,
-        [string]$code,
         [string]$tipAmount,
-        [ref]$globalResponse,
-        [ref]$lastCode,
-        [ref]$fileVersion,
-        [string]$teamDiscussionDataFolder
+        [PSCustomObject] $GlobalState
     )
 
     # Generate the feedback prompt using the provided description and code
-    $feedbackPrompt = Get-FeedbackPrompt -description $description -code $code
+    $feedbackPrompt = Get-FeedbackPrompt -description $Global.UserInput -code $GlobalState.LastPSDevCode
     
     # Get feedback from the role object
     $feedback = $role.Feedback($powerShellDeveloper, $feedbackPrompt)
     
     # Add the feedback to global responses
-    Add-ToGlobalResponses $feedback
+    Add-ToGlobalResponses $GlobalState $feedback
 
     # Process the feedback and generate a response
-    $response = $powerShellDeveloper.ProcessInput("Based on $($role.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($role.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n``````powershell`n$code`n```````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$tipAmount for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
+    $response = $powerShellDeveloper.ProcessInput("Based on $($role.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($role.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n``````powershell`n$($GlobalState.LastPSDevCode)`n```````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$tipAmount for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
 
     if ($response) {
         # Update the global response with the new response
-        $globalResponse.Value += $response
+        $GlobalState.GlobalPSDevResponse += $response
         
         # Add the new response to global responses
-        Add-ToGlobalResponses $response
+        Add-ToGlobalResponses $GlobalState $response
         
         # Save the new version of the code to a file
-        $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $response -OutputFilePath $(join-path $teamDiscussionDataFolder "TheCode_v$($fileVersion.Value).ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
+        $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $response -OutputFilePath $(join-path $GlobalState.teamDiscussionDataFolder "TheCode_v$($GlobalState.fileVersion).ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
         
         # Update the last code and file version
-        $lastCode.Value = get-content -Path $_savedFile -raw 
-        $fileVersion.Value += 1
+        $GlobalState.lastPSDevCode = get-content -Path $_savedFile -raw 
+        $GlobalState.fileVersion += 1
         
         # Output the saved file path for verbose logging
         write-verbose $_savedFile
@@ -878,34 +873,26 @@ function Save-AndUpdateCode {
     .PARAMETER response
     The response string containing the updated code to be saved.
 
-    .PARAMETER lastCode
-    A reference to the variable holding the last version of the code.
-
-    .PARAMETER fileVersion
-    A reference to the variable holding the current file version number.
-
-    .PARAMETER teamDiscussionDataFolder
-    The folder where the team discussion data and code versions are stored.
+    .PARAMETER GlobalState
+    GlobalState
 
     .EXAMPLE
     Save-AndUpdateCode -response $response -lastCode ([ref]$lastCode) -fileVersion ([ref]$fileVersion) -teamDiscussionDataFolder "C:\TeamData"
     #>
 
     param (
-        [string]$response, # The updated code to be saved
-        [ref]$lastCode, # Reference to the last code content
-        [ref]$fileVersion, # Reference to the current file version number
-        [string]$teamDiscussionDataFolder  # Folder to store the code versions
+        [string] $response, # The updated code to be saved
+        [PSCustomObject] $GlobalState
     )
 
     # Save the response to a versioned file
-    $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $response -OutputFilePath $(join-path $teamDiscussionDataFolder "TheCode_v$($fileVersion.Value).ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
+    $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $response -OutputFilePath $(join-path $GlobalState.teamDiscussionDataFolder "TheCode_v$($GlobalState.fileVersion).ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
     
     # Update the last code content with the saved file content
-    $lastCode.Value = get-content -Path $_savedFile -raw 
+    $GlobalState.lastPSDevCode = get-content -Path $_savedFile -raw 
     
     # Increment the file version number
-    $fileVersion.Value += 1
+    $GlobalState.fileVersion += 1
     
     # Log the saved file path for verbose output
     write-verbose $_savedFile
@@ -940,28 +927,26 @@ function Invoke-AnalyzeCodeWithPSScriptAnalyzer {
     #>
 
     param (
-        [string]$InputString, # The PowerShell code to be analyzed
-        [string]$TeamDiscussionDataFolder, # Folder to store the code versions
-        [ref]$FileVersion, # Reference to the current file version number
-        [ref]$lastPSDevCode, # Reference to the last code content
-        [ref]$GlobalPSDevResponse  # Reference to the global response
+        [string] $InputString, # The PowerShell code to be analyzed
+        [object] $role,
+        [PSCustomObject] $GlobalState
     )
 
     # Display header for code analysis
     Show-Header -HeaderText "Code analysis by PSScriptAnalyzer"
     try {
         # Log the last memory response from the PowerShell developer
-        Write-Verbose "getlastmemory PSDev: $($powerShellDeveloper.GetLastMemory().Response)"
+        Write-Verbose "getlastmemory PSDev: $InputString"
         
         # Export the PowerShell code blocks from the input string
         $_exportedCode = Export-AndWritePowerShellCodeBlocks -InputString $InputString -StartDelimiter '```powershell' -EndDelimiter '```'
         
         # Update the last PowerShell developer code with the exported code
-        $lastPSDevCode.Value = $_exportedCode
-        Write-Verbose "_exportCode, lastPSDevCode: $($lastPSDevCode.Value)"
+        $GlobalState.lastPSDevCode = $_exportedCode
+        Write-Verbose "_exportCode, lastPSDevCode: $($GlobalState.lastPSDevCode)"
         
         # Analyze the code using PSScriptAnalyzer
-        $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $lastPSDevCode.Value
+        $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $GlobalState.lastPSDevCode
         
         # Output the issues found by PSScriptAnalyzer
         if ($issues) {
@@ -970,7 +955,7 @@ function Invoke-AnalyzeCodeWithPSScriptAnalyzer {
     }
     catch {
         # Handle any errors that occur during analysis
-        Write-Error "An error occurred while PSScriptAnalyzer: $_"
+        Write-Error "!! An error occurred while PSScriptAnalyzer: $_"
         return
     }
 
@@ -983,74 +968,88 @@ function Invoke-AnalyzeCodeWithPSScriptAnalyzer {
         # Create a prompt message to address the issues found
         $promptMessage = "You must address issues found in PSScriptAnalyzer report."
         $promptMessage += "`n`nPSScriptAnalyzer report, issues:`n``````text`n$issueText`n```````n`n"
-        $promptMessage += "The code:`n``````powershell`n$($lastPSDevCode.Value)`n```````n`nShow the new version of the code where issues are solved."
+        $promptMessage += "The code:`n``````powershell`n$($GlobalState.lastPSDevCode)`n```````n`nShow the new version of the code where issues are solved."
         
         # Reset issues and issueText variables
         $issues = ""
         $issueText = ""
         
         # Process the input with the PowerShell developer
-        $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($promptMessage)
+        $powerShellDeveloperResponce = $role.ProcessInput($promptMessage)
         
         if ($powerShellDeveloperResponce) {
             # Update the global response with the new response
-            $GlobalPSDevResponse.Value += $powerShellDeveloperResponce
-            Add-ToGlobalResponses $powerShellDeveloperResponce
+            $GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+            Add-ToGlobalResponses $GlobalState $powerShellDeveloperResponce
             
             # Save the new version of the code to a file
-            $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(Join-Path $TeamDiscussionDataFolder "TheCode_v$($FileVersion.Value).ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
+            $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(Join-Path $GlobalState.TeamDiscussionDataFolder "TheCode_v$($GlobalState.FileVersion).ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
             Write-Verbose $_savedFile
             
             # Update the last code and file version
-            $lastPSDevCode.Value = Get-Content -Path $_savedFile -Raw 
-            $FileVersion.Value += 1
-            Write-Verbose $lastPSDevCode.Value
+            $GlobalState.lastPSDevCode = Get-Content -Path $_savedFile -Raw 
+            $GlobalState.FileVersion += 1
+            Write-Verbose $GlobalState.lastPSDevCode
         }
     } 
     
     # Log the last PowerShell developer code
-    Write-Verbose $lastPSDevCode.Value
+    Write-Verbose $GlobalState.lastPSDevCode
 }
 
 function Save-ProjectState {
     param (
-        [string]$FilePath
+        [string]$FilePath,
+        [PSCustomObject] $GlobalState
     )
     $projectState = @{
-        LastPSDevCode            = $lastPSDevCode
-        FileVersion              = $FileVersion
-        GlobalPSDevResponse      = $GlobalPSDevResponse
-        GlobalResponse           = $script:GlobalResponse
-        TeamDiscussionDataFolder = $script:TeamDiscussionDataFolder
-        UserInput                = $script:userInput
+        LastPSDevCode            = $GlobalState.lastPSDevCode
+        FileVersion              = $GlobalState.FileVersion
+        GlobalPSDevResponse      = $GlobalState.GlobalPSDevResponse
+        GlobalResponse           = $GlobalState.GlobalResponse
+        TeamDiscussionDataFolder = $GlobalState.TeamDiscussionDataFolder
+        UserInput                = $GlobalState.userInput
+        OrgUserInput             = $GlobalState.OrgUserInput
+        LogFolder                = $GlobalState.LogFolder
     }
     $projectState | Export-Clixml -Path $FilePath
 }
 
 function Get-ProjectState {
     param (
-        [string]$FilePath
+        [string]$FilePath,
+        [PSCustomObject]$GlobalState
     )
     if (Test-Path -Path $FilePath) {
         $projectState = Import-Clixml -Path $FilePath
-        $script:LastPSDevCode = $projectState.LastPSDevCode
-        $script:FileVersion = $projectState.FileVersion
-        $script:GlobalPSDevResponse = $projectState.GlobalPSDevResponse
-        $script:TeamDiscussionDataFolder = $projectState.TeamDiscussionDataFolder
-        $script:userInput = $projectState.UserInput
-        $script:GlobalResponse = $projectState.GlobalResponse
+        $GlobalState.LastPSDevCode = $projectState.LastPSDevCode
+        $GlobalState.FileVersion = $projectState.FileVersion
+        $GlobalState.GlobalPSDevResponse = $projectState.GlobalPSDevResponse
+        $GlobalState.TeamDiscussionDataFolder = $projectState.TeamDiscussionDataFolder
+        $GlobalState.userInput = $projectState.UserInput
+        $GlobalState.GlobalResponse = $projectState.GlobalResponse
+        $GlobalState.OrgUserInput = $projectState.OrgUserInput
+        $GlobalState.LogFolder = $projectState.LogFolder
     }
     else {
-        Write-Host "Project state file not found."
+        Write-Host "-- Project state file not found."
     }
 }
 #endregion Functions
 
 #region Setting Up
-$FileVersion = 1
-$lastPSDevCode = ""
-$GlobalResponse = @()
-$GlobalPSDevResponse = @()
+# Define a state management object
+$GlobalState = [PSCustomObject]@{
+    TeamDiscussionDataFolder = $null
+    GlobalResponse           = @()
+    FileVersion              = 1
+    LastPSDevCode            = ""
+    GlobalPSDevResponse      = @()
+    OrgUserInput             = ""
+    UserInput                = ""
+    LogFolder                = ""
+}
+$GlobalState.LogFolder = $LogFolder
 
 # Disabe PSAOAI importing banner
 [System.Environment]::SetEnvironmentVariable("PSAOAI_BANNER", "0", "User")
@@ -1059,7 +1058,7 @@ if ((Get-Module -ListAvailable -Name PSAOAI | Where-Object { [version]$_.version
     [void](Import-module -name PSAOAI -Force)
 }
 else {
-    Write-Warning "You need to install/update PSAOAI module version >= 0.2.1. Use: 'Install-Module PSAOAI' or 'Update-Module PSAOAI'"
+    Write-Warning "-- You need to install/update PSAOAI module version >= 0.2.1. Use: 'Install-Module PSAOAI' or 'Update-Module PSAOAI'"
     return
 }
 
@@ -1070,17 +1069,16 @@ Get-CheckForScriptUpdate -currentScriptVersion $AIPSTeamVersion -scriptName $scr
 if ($LoadProjectStatus) {
     # Load the project status from the specified file
     try {
-        Get-ProjectState -FilePath $LoadProjectStatus
+        Get-ProjectState -FilePath $LoadProjectStatus -State $GlobalState
         Write-Information "++ Project state loaded successfully from $LoadProjectStatus" -InformationAction Continue
-        $script:TeamDiscussionDataFolder = Split-Path $LoadProjectStatus -Parent
-        $FileVersion = $script:FileVersion
-        $LastPSDevCode = $script:LastPSDevCode
-        $GlobalPSDevResponse = $script:GlobalPSDevResponse
-        Write-Verbose "`$script:TeamDiscussionDataFolder: $script:TeamDiscussionDataFolder"
-        Write-Verbose "`$FileVersion: $FileVersion"
-        Write-Verbose "`$LastPSDevCode: $LastPSDevCode"
-        Write-Verbose "`$GlobalPSDevResponse: $GlobalPSDevResponse"
-        Write-Verbose "`$script:UserInput: $script:UserInput"
+        Write-Verbose "`$GlobalState.TeamDiscussionDataFolder: $($GlobalState.TeamDiscussionDataFolder)"
+        Write-Verbose "`$GlobalState.FileVersion: $($GlobalState.FileVersion)"
+        Write-Verbose "`$GlobalState.LastPSDevCode: $($GlobalState.LastPSDevCode)"
+        Write-Verbose "`$GlobalState.GlobalPSDevResponse: $($GlobalState.GlobalPSDevResponse)"
+        Write-Verbose "`$GlobalState.GlobalResponse: $($GlobalState.GlobalResponse)"
+        Write-Verbose "`$GlobalState.OrgUserInput: $($GlobalState.OrgUserInput)"
+        Write-Verbose "`$GlobalState.UserInput: $($GlobalState.UserInput)"
+        Write-Verbose "`$GlobalState.LogFolder: $($GlobalState.LogFolder)"
     }
     catch {
         Write-Warning "!! Failed to load project state from ${LoadProjectStatus}: $_"
@@ -1090,30 +1088,30 @@ else {
     Try {
         # Get the current date and time
         $currentDateTime = Get-Date -Format "yyyyMMdd_HHmmss"
-        if (-not [string]::IsNullOrEmpty($LogFolder)) {
+        if (-not [string]::IsNullOrEmpty($GlobalState.LogFolder)) {
             # Create a folder with the current date and time as the name in the example path
-            $script:TeamDiscussionDataFolder = New-FolderAtPath -Path $LogFolder -FolderName $currentDateTime
+            $GlobalState.TeamDiscussionDataFolder = New-FolderAtPath -Path $GlobalState.LogFolder -FolderName $currentDateTime
         }
         else {
-            $script:LogFolder = Join-Path -Path ([Environment]::GetFolderPath("MyDocuments")) -ChildPath $scriptname
-            if (-not (Test-Path -Path $script:LogFolder)) {
-                New-Item -ItemType Directory -Path $script:LogFolder | Out-Null
+            $GlobalState.LogFolder = Join-Path -Path ([Environment]::GetFolderPath("MyDocuments")) -ChildPath $scriptname
+            if (-not (Test-Path -Path $GlobalState.LogFolder)) {
+                New-Item -ItemType Directory -Path $GlobalState.LogFolder | Out-Null
             }
-            Write-Information "++ The logs will be saved in the following folder: $script:LogFolder" -InformationAction Continue
+            Write-Information "++ The logs will be saved in the following folder: $($GlobalState.LogFolder)" -InformationAction Continue
             # Create a folder with the current date and time as the name in the example path
-            $script:TeamDiscussionDataFolder = New-FolderAtPath -Path $script:LogFolder -FolderName $currentDateTime
+            $GlobalState.TeamDiscussionDataFolder = New-FolderAtPath -Path $GlobalState.LogFolder -FolderName $currentDateTime
         }
-        if ($script:TeamDiscussionDataFolder) {
-            Write-Information "++ Team discussion folder was created '$script:TeamDiscussionDataFolder'" -InformationAction Continue
+        if ($GlobalState.TeamDiscussionDataFolder) {
+            Write-Information "++ Team discussion folder was created '$($GlobalState.TeamDiscussionDataFolder)'" -InformationAction Continue
         }
     }
     Catch {
-        Write-Warning -Message "Failed to create discussion folder"
+        Write-Warning -Message "!! Failed to create discussion folder"
         return $false
     }
 }
-$DocumentationFullName = Join-Path $script:TeamDiscussionDataFolder "Documentation.txt"
-$ProjectfilePath = (Join-Path $script:TeamDiscussionDataFolder "Project.xml")
+$DocumentationFullName = Join-Path $GlobalState.TeamDiscussionDataFolder "Documentation.txt"
+$ProjectfilePath = Join-Path $GlobalState.TeamDiscussionDataFolder "Project.xml"
 #endregion Setting Up
 
 #region ProjectTeam
@@ -1138,9 +1136,10 @@ Think step by step. Generate a list of self-assessment questions that can help w
     0.9,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $GlobalState.TeamDiscussionDataFolder
             return $response
-        })
+        }),
+    $GlobalState
 )
 
 $domainExpertRole = "Domain Expert"
@@ -1173,7 +1172,8 @@ Generate a list of verification questions that could help to self-analyze. Think
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
             $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream
             return $response
-        })
+        }),
+    $GlobalState
 )
 
 $systemArchitectRole = "System Architect"
@@ -1199,9 +1199,10 @@ Think step by step. Make sure your answer is unbiased.
     0.85,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $GlobalState.TeamDiscussionDataFolder
             return $response
-        })
+        }),
+    $GlobalState
 )
 
 $powerShellDeveloperRole = "PowerShell Developer"
@@ -1247,9 +1248,10 @@ Generate a list of verification questions that could help to self-analyze. Think
     0.8,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $GlobalState.TeamDiscussionDataFolder
             return $response
-        })
+        }),
+    $GlobalState
 )
 
 $qaEngineerRole = "Quality Assurance Engineer"
@@ -1275,9 +1277,10 @@ Think step by step. Make sure your answer is unbiased.
     0.9,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $GlobalState.TeamDiscussionDataFolder
             return $response
-        })
+        }),
+    $GlobalState
 )
 
 $documentationSpecialistRole = "Documentation Specialist"
@@ -1304,9 +1307,10 @@ Think step by step. Make sure your answer is unbiased.
     0.8,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $GlobalState.TeamDiscussionDataFolder
             return $response
-        })
+        }),
+    $GlobalState
 )
 
 $projectManagerRole = "Project Manager"
@@ -1333,9 +1337,10 @@ Think step by step. Make sure your answer is unbiased.
     0.85,
     [scriptblock]::Create({
             param ($SystemPrompt, $UserPrompt, $Temperature, $TopP)
-            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $script:TeamDiscussionDataFolder
+            $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $GlobalState.TeamDiscussionDataFolder
             return $response
-        })
+        }),
+    $GlobalState
 )
 #endregion ProjectTeam
 
@@ -1359,52 +1364,52 @@ if (-not $NOLog) {
     foreach ($TeamMember in $Team) {
         $TeamMember.DisplayInfo(0) | Out-File -FilePath $TeamMember.LogFilePath -Append
     }
-    Start-Transcript -Path (join-path $script:TeamDiscussionDataFolder "TRANSCRIPT.log") -Append
+    Start-Transcript -Path (join-path $GlobalState.TeamDiscussionDataFolder "TRANSCRIPT.log") -Append
 }
 
 if (-not $LoadProjectStatus) {
-
-
     #region PM-PSDev
     $userInputOryginal = $userInput
+    $GlobalState.OrgUserInput = $userInputOryginal
     $projectManagerFeedback = $projectManager.Feedback($powerShellDeveloper, "Based on user input you must create detailed and concise project name, description, objectives, deliverables, additional considerations, and success criteria only. User will tip you `$100 for including all the elements provided by the user.`n`n````````text`n" + $userInputOryginal + "`n`````````n`n")
-    Add-ToGlobalResponses $projectManagerFeedback
-    $script:userInput = $projectManagerFeedback
+    Add-ToGlobalResponses $GlobalState $projectManagerFeedback
+    $GlobalState.userInput = $projectManagerFeedback
     $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($projectManager.Name) review, you must create the first version of the code.`n`n````````text`n$($script:userInput)`n`````````n`nUse reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks. I will tip you `$50 for showing the code.")
-    $GlobalPSDevResponse += $powerShellDeveloperResponce
-    Add-ToGlobalResponses $powerShellDeveloperResponce
-    Save-AndUpdateCode -response $powerShellDeveloperResponce -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $script:TeamDiscussionDataFolder
+    $GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+    Add-ToGlobalResponses $GlobalState $powerShellDeveloperResponce
+    Save-AndUpdateCode -response $powerShellDeveloperResponce -GlobalState $GlobalState
     #endregion PM-PSDev
 
     #region RA-PSDev
-    Invoke-ProcessFeedbackAndResponse -role $requirementsAnalyst -description $script:userInput -code $lastPSDevCode -tipAmount 100 -globalResponse ([ref]$GlobalPSDevResponse) -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $script:TeamDiscussionDataFolder
+    #Invoke-ProcessFeedbackAndResponse -role $requirementsAnalyst -description $GlobalState.userInput -code $lastPSDevCode -tipAmount 100 -globalResponse ([ref]$GlobalPSDevResponse) -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $GlobalState.TeamDiscussionDataFolder
+    Invoke-ProcessFeedbackAndResponse -role $requirementsAnalyst -tipAmount 100 -GlobalState $GlobalState
     #endregion RA-PSDev
 
     #region SA-PSDev
-    Invoke-ProcessFeedbackAndResponse -role $systemArchitect -description $script:userInput -code $lastPSDevCode -tipAmount 150 -globalResponse ([ref]$GlobalPSDevResponse) -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $script:TeamDiscussionDataFolder
+    Invoke-ProcessFeedbackAndResponse -role $systemArchitect -tipAmount 150 -GlobalState $GlobalState
     #endregion SA-PSDev
 
     #region DE-PSDev
-    Invoke-ProcessFeedbackAndResponse -role $domainExpert -description $script:userInput -code $lastPSDevCode -tipAmount 200 -globalResponse ([ref]$GlobalPSDevResponse) -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $script:TeamDiscussionDataFolder
+    Invoke-ProcessFeedbackAndResponse -role $domainExpert -tipAmount 200 -GlobalState $GlobalState
     #endregion DE-PSDev
 
     #region QAE-PSDev
-    Invoke-ProcessFeedbackAndResponse -role $qaEngineer -description $script:userInput -code $lastPSDevCode -tipAmount 300 -globalResponse ([ref]$GlobalPSDevResponse) -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $script:TeamDiscussionDataFolder
+    Invoke-ProcessFeedbackAndResponse -role $qaEngineer -tipAmount 300 -GlobalState $GlobalState
     #endregion QAE-PSDev
 
     #region PSScriptAnalyzer
-    Invoke-AnalyzeCodeWithPSScriptAnalyzer -InputString $($powerShellDeveloper.GetLastMemory().Response) -TeamDiscussionDataFolder $script:TeamDiscussionDataFolder -FileVersion ([ref]$FileVersion) -lastPSDevCode ([ref]$lastPSDevCode) -GlobalPSDevResponse ([ref]$GlobalPSDevResponse)
+    Invoke-AnalyzeCodeWithPSScriptAnalyzer -InputString $($powerShellDeveloper.GetLastMemory().Response) -Role $powerShellDeveloper -GlobalState $GlobalState
     #endregion PSScriptAnalyzer
 
     #region Doc
     if (-not $NODocumentator) {
         if (-not $NOLog) {
-            $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($lastPSDevCode) | Out-File -FilePath $DocumentationFullName
+            $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($GlobalState.lastPSDevCode) | Out-File -FilePath $DocumentationFullName
         }
         else {
-            $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($lastPSDevCode)
+            $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($GlobalState.lastPSDevCode)
         }
-        Add-ToGlobalResponses $documentationSpecialistResponce
+        Add-ToGlobalResponses $GlobalState $documentationSpecialistResponce
     }
     #endregion Doc
 }
@@ -1425,33 +1430,32 @@ do {
     Write-Host "4. Explain the code"
     Write-Host "5. Ask a specific question about the code"
     Write-Host "6. Generate documentation"
-    Write-Host "7. Show the code"
-    Write-Host "8. The code research"
-    Write-Host "9. Save Project State"
-    Write-Host "10. (Q)uit"
+    Write-Host "7. Show the code with research"
+    Write-Host "8. Save Project State"
+    Write-Host "9. (Q)uit"
 
     # Get the user's choice
     $userOption = Read-Host -Prompt "Enter your choice"
     Write-Output ""
 
     # Process the user's choice if it's not 'Q' or '9' (both of which mean 'quit')
-    if ($userOption -ne 'Q' -and $userOption -ne "10") {
+    if ($userOption -ne 'Q' -and $userOption -ne "9") {
         switch ($userOption) {
             '1' {
                 # Option 1: Suggest a new feature, enhancement, or change
                 Show-Header -HeaderText "Suggest a new feature, enhancement, or change"
                 $userChanges = Read-Host -Prompt "Suggest a new feature, enhancement, or change for the code."
                 $promptMessage = "Based on the user's suggestion, incorporate a feature, enhancement, or change into the code. Show the next version of the code."
-                $MenuPrompt_ = $MenuPrompt -f $promptMessage, $userChanges, $lastPSDevCode
+                $MenuPrompt_ = $MenuPrompt -f $promptMessage, $userChanges, $GlobalState.lastPSDevCode
                 $MenuPrompt_ += "`nYou need to show all the code."
                 $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($MenuPrompt_)
-                $GlobalPSDevResponse += $powerShellDeveloperResponce
-                Add-ToGlobalResponses $powerShellDeveloperResponce
+                $GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+                Add-ToGlobalResponses $GlobalState $powerShellDeveloperResponce
                 $theCode = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -StartDelimiter '```powershell' -EndDelimiter '```'
                 if ($theCode) {
-                    $theCode | Out-File -FilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -Append -Encoding UTF8
-                    $FileVersion += 1
-                    $lastPSDevCode = $thecode
+                    $theCode | Out-File -FilePath $(join-path $GlobalState.TeamDiscussionDataFolder "TheCode_v$($GlobalState.FileVersion).ps1") -Append -Encoding UTF8
+                    $GlobalState.FileVersion += 1
+                    $GlobalState.lastPSDevCode = $thecode
                 }
             }
             '2' {
@@ -1478,10 +1482,10 @@ do {
                     $issueText = ""
                     $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($promptMessage)
                     $GlobalPSDevResponse += $powerShellDeveloperResponce
-                    Add-ToGlobalResponses $powerShellDeveloperResponce
+                    Add-ToGlobalResponses $GlobalState $powerShellDeveloperResponce
                     $theCode = Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```'
                     if ($theCode) {
-                        $theCode | Out-File -FilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -Append -Encoding UTF8
+                        $theCode | Out-File -FilePath $(join-path $GlobalState.TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -Append -Encoding UTF8
                         $FileVersion += 1
                         $lastPSDevCode = $theCode
                     }
@@ -1493,13 +1497,13 @@ do {
                 try {
                     # Call the function to check the code in 'TheCode.ps1' file
                     #$issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $(Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```')
-                    $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $lastPSDevCode
+                    $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $GlobalState.lastPSDevCode
                     if ($issues) {
                         write-output ($issues | Select-Object line, message | format-table -AutoSize -Wrap)
                     }
                 }
                 catch {
-                    Write-Error "An error occurred while PSScriptAnalyzer: $_"
+                    Write-Error "!! An error occurred while PSScriptAnalyzer: $_"
                 }
 
             }
@@ -1507,31 +1511,47 @@ do {
                 # Option 4: Explain the code
                 Show-Header -HeaderText "Explain the code"
                 $promptMessage = "Explain the code only.`n`n"
-                $promptMessage += "The code:`n``````powershell`n" + $lastPSDevCode + "`n```````n"
-                $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($promptMessage)
-                $GlobalPSDevResponse += $powerShellDeveloperResponce
-                Add-ToGlobalResponses $powerShellDeveloperResponce
+                $promptMessage += "The code:`n``````powershell`n" + $GlobalState.lastPSDevCode + "`n```````n"
+                try {
+                    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($promptMessage)
+                    $GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+                    Add-ToGlobalResponses $GlobalState $powerShellDeveloperResponce
+                }
+                catch [System.Exception] {
+                    Write-Error "!! An error occurred while processing the input: $_"
+                }
             }
             '5' {
                 # Option 5: Ask a specific question about the code
                 Show-Header -HeaderText "Ask a specific question about the code"
-                $userChanges = Read-Host -Prompt "Ask a specific question about the code to seek clarification."
-                $promptMessage = "Based on the user's question for the code, provide only the answer."
-                if (Test-Path $DocumentationFullName) {
-                    $promptMessage += " The documentation:`n````````text`n$(get-content -path $DocumentationFullName -raw)`n`````````n`n"
+                try {
+                    $userChanges = Read-Host -Prompt "Ask a specific question about the code to seek clarification."
+                    $promptMessage = "Based on the user's question for the code, provide only the answer."
+                    if (Test-Path $DocumentationFullName) {
+                        $promptMessage += " The documentation:`n````````text`n$(get-content -path $DocumentationFullName -raw)`n`````````n`n"
+                    }
+                    $promptMessage += "You must answer the user's question only. Do not show the whole code even if user asks."
+                    $MenuPrompt_ = $MenuPrompt -f $promptMessage, $userChanges, $GlobalState.lastPSDevCode
+                    $MenuPrompt_ += $userChanges
+                    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($MenuPrompt_)
+                    $GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+                    Add-ToGlobalResponses $GlobalState $powerShellDeveloperResponce
                 }
-                $promptMessage += "You must answer the user's question only. Do not show the whole code even if user asks."
-                $MenuPrompt_ = $MenuPrompt -f $promptMessage, $userChanges, $lastPSDevCode
-                $MenuPrompt_ += $userChanges
-                $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($MenuPrompt_)
-                $GlobalPSDevResponse += $powerShellDeveloperResponce
-                Add-ToGlobalResponses $powerShellDeveloperResponce
+                catch [System.Management.Automation.PSInvalidOperationException] {
+                    Write-Error "!! An invalid operation occurred: $_"
+                }
+                catch [System.IO.IOException] {
+                    Write-Error "!! An I/O error occurred: $_"
+                }
+                catch [System.Exception] {
+                    Write-Error "!! An unexpected error occurred: $_"
+                }
                 <#
                 $theCode = Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```'
-                $theCode | Export-Clixml -Path $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.xml")
+                $theCode | Export-Clixml -Path $(join-path $GlobalState.TeamDiscussionDataFolder "TheCode_v${FileVersion}.xml")
                 if ($theCode) {
                     if ($theCode.split("`n").length -gt 15) {
-                        $theCode | Out-File -FilePath $(join-path $script:TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -Append -Encoding UTF8
+                        $theCode | Out-File -FilePath $(join-path $GlobalState.TeamDiscussionDataFolder "TheCode_v${FileVersion}.ps1") -Append -Encoding UTF8
                         $FileVersion += 1
                         $lastPSDevCode = $theCode
                     }
@@ -1544,41 +1564,53 @@ do {
             '6' {
                 # Option 6: Generate documentation
                 Show-Header -HeaderText "Generate documentation"
-                if (Test-Path -Path $DocumentationFullName -ErrorAction SilentlyContinue) {
-                    Write-Information "++ Existing documentation found at $DocumentationFullName" -InformationAction Continue
-                    $userChoice = Read-Host -Prompt "Do you want to review and update the documentation based on the last version of the code? (Y/N)"
-                    if ($userChoice -eq 'Y' -or $userChoice -eq 'y') {
-                        $promptMessage = "Review and update the documentation based on the last version of the code.`n`n"
-                        $promptMessage += "The code:`n``````powershell`n" + $lastPSDevCode + "`n```````n`n"
-                        $promptMessage += "The old documentation:`n````````text`n" + $(get-content -path $DocumentationFullName -raw) + "`n`````````n"
-                        $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($promptMessage)
-                        $documentationSpecialistResponce | Out-File -FilePath $DocumentationFullName -Force
-                        Write-Information "++ Documentation updated and saved to $DocumentationFullName" -InformationAction Continue
+                try {
+                    if (Test-Path -Path $DocumentationFullName -ErrorAction SilentlyContinue) {
+                        Write-Information "++ Existing documentation found at $DocumentationFullName" -InformationAction Continue
+                        $userChoice = Read-Host -Prompt "Do you want to review and update the documentation based on the last version of the code? (Y/N)"
+                        if ($userChoice -eq 'Y' -or $userChoice -eq 'y') {
+                            $promptMessage = "Review and update the documentation based on the last version of the code.`n`n"
+                            $promptMessage += "The code:`n``````powershell`n" + $GlobalState.lastPSDevCode + "`n```````n`n"
+                            $promptMessage += "The old documentation:`n````````text`n" + $(get-content -path $DocumentationFullName -raw) + "`n`````````n"
+                            $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($promptMessage)
+                            $documentationSpecialistResponce | Out-File -FilePath $DocumentationFullName -Force
+                            Write-Information "++ Documentation updated and saved to $DocumentationFullName" -InformationAction Continue
+                        }
+                    }
+                    else {
+                        $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($lastPSDevCode)
+                        $documentationSpecialistResponce | Out-File -FilePath $DocumentationFullName
+                        Write-Information "++ Documentation generated and saved to $DocumentationFullName" -InformationAction Continue
                     }
                 }
-                else {
-                    $documentationSpecialistResponce = $documentationSpecialist.ProcessInput($lastPSDevCode)
-                    $documentationSpecialistResponce | Out-File -FilePath $DocumentationFullName
-                    Write-Information "++ Documentation generated and saved to $DocumentationFullName" -InformationAction Continue
+                catch [System.Management.Automation.PSInvalidOperationException] {
+                    Write-Error "!! An invalid operation occurred: $_"
+                }
+                catch [System.IO.IOException] {
+                    Write-Error "!! An I/O error occurred: $_"
+                }
+                catch [System.UnauthorizedAccessException] {
+                    Write-Error "!! Unauthorized access: $_"
+                }
+                catch [System.Exception] {
+                    Write-Error "!! An unexpected error occurred: $_"
                 }
             }
             '7' {
                 # Option 7: Show the code
-                Show-Header -HeaderText "Show the code"
-                Write-Output $lastPSDevCode
-            }
-            '8' {
+                Show-Header -HeaderText "Show the code with research"
+                Write-Output $GlobalState.lastPSDevCode
                 # Option 8: The code research
                 Show-Header -HeaderText "The code research"
                 
                 # Perform source code analysis
                 Write-Output "Source code analysis:"
-                Get-SourceCodeAnalysis -CodeBlock $lastPSDevCode
+                Get-SourceCodeAnalysis -CodeBlock $GlobalState.lastPSDevCode
                 Write-Output ""                
                 # Perform cyclomatic complexity analysis
-                Write-Verbose "`$lastPSDevCode: $lastPSDevCode"
+                Write-Verbose "`$lastPSDevCode: $($GlobalState.lastPSDevCode)"
                 Write-Output "`nCyclomatic complexity analysis:"
-                if ($CyclomaticComplexity = Get-CyclomaticComplexity -CodeBlock $lastPSDevCode) {
+                if ($CyclomaticComplexity = Get-CyclomaticComplexity -CodeBlock $GlobalState.lastPSDevCode) {
                     $CyclomaticComplexity
                     Write-Output "
     1:       The function has a single execution path with no control flow statements (e.g., if, else, while, etc.). 
@@ -1588,12 +1620,13 @@ do {
     Above 7: Indicates higher complexity, which can make the function harder to test and maintain.
                 "
                 }
+
             }
-            '9' {
+            '8' {
                 Show-Header -HeaderText "Save Project State"
                 if (-not (Test-Path $ProjectfilePath)) {
                     try {
-                        Save-ProjectState -FilePath $ProjectfilePath
+                        Save-ProjectState -FilePath $ProjectfilePath -GlobalState $GlobalState
                         if (Test-Path -Path $ProjectfilePath) {
                             Write-Information "++ Project state saved successfully to $ProjectfilePath" -InformationAction Continue
                         }
@@ -1608,7 +1641,7 @@ do {
                 else {
                     $userChoice = Read-Host -Prompt "File 'Project.xml' exists. Do you want to save now? (Y/N)"
                     if ($userChoice -eq 'Y' -or $userChoice -eq 'y') {
-                        Save-ProjectState -FilePath $ProjectfilePath
+                        Save-ProjectState -FilePath $ProjectfilePath -GlobalState $GlobalState
                         if (Test-Path -Path $ProjectfilePath) {
                             Write-Information "++ Project state saved successfully to $ProjectfilePath" -InformationAction Continue
                         }
@@ -1626,28 +1659,28 @@ do {
             }
         }
     }
-} while ($userOption -ne 'Q' -and $userOption -ne "10" ) # End the loop when the user chooses to quit
+} while ($userOption -ne 'Q' -and $userOption -ne "9" ) # End the loop when the user chooses to quit
 #endregion Menu
 
 #region PM Project report
 if (-not $NOPM) {
     # Example of summarizing all steps,  Log final response to file
     if (-not $NOLog) {
-        $projectManagerResponse = $projectManager.ProcessInput($script:GlobalResponse -join ", ") | Out-File -FilePath (Join-Path $script:TeamDiscussionDataFolder "ProjectSummary.log")
+        $projectManagerResponse = $projectManager.ProcessInput($GlobalState.GlobalResponse -join ", ") | Out-File -FilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ProjectSummary.log")
     }
     else {
-        $projectManagerResponse = $projectManager.ProcessInput($script:GlobalResponse -join ", ")
+        $projectManagerResponse = $projectManager.ProcessInput($GlobalState.GlobalResponse -join ", ")
     }
-    Add-ToGlobalResponses $projectManagerResponse
+    Add-ToGlobalResponses $GlobalState $projectManagerResponse
 }
 #endregion PM Project report
 
 #region Final code
 if (-not $NOLog) {
     # Log Developer last memory
-    $TheFinalCodeFullName = Join-Path $script:TeamDiscussionDataFolder "TheCodeF.PS1"
-    $lastPSDevCode | Out-File -FilePath $TheFinalCodeFullName
-    #Export-AndWritePowerShellCodeBlocks -InputString $(get-content $(join-path $script:TeamDiscussionDataFolder "TheCodeF.log") -raw) -OutputFilePath $(join-path $script:TeamDiscussionDataFolder "TheCode.ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
+    $TheFinalCodeFullName = Join-Path $GlobalState.TeamDiscussionDataFolder "TheCodeF.PS1"
+    $GlobalState.lastPSDevCode | Out-File -FilePath $TheFinalCodeFullName
+    #Export-AndWritePowerShellCodeBlocks -InputString $(get-content $(join-path $GlobalState.TeamDiscussionDataFolder "TheCodeF.log") -raw) -OutputFilePath $(join-path $GlobalState.TeamDiscussionDataFolder "TheCode.ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
     if (Test-Path -Path $TheFinalCodeFullName) {
         # Call the function to check the code in 'TheCode.ps1' file
         Write-Information "The final code was exported to $TheFinalCodeFullName" -InformationAction Continue
@@ -1664,12 +1697,12 @@ if (-not $NOLog) {
 else {
     #Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```' -OutputFilePath $(join-path ([System.Environment]::GetEnvironmentVariable("TEMP", "user")) "TheCodeF.ps1")
     # Call the function to check the code in 'TheCode.ps1' file
-    $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $lastPSDevCode
+    $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $GlobalState.lastPSDevCode
     if ($issues) {
         write-output ($issues | Select-Object line, message | format-table -AutoSize -Wrap)
     }
 }
 #endregion Final code
-Save-ProjectState -FilePath $ProjectfilePath
+Save-ProjectState -FilePath $ProjectfilePath -GlobalState $GlobalState
 Write-Host "Exiting..."
 #endregion Main
