@@ -275,126 +275,60 @@ function Invoke-PSAOAIChatCompletion {
         }
     }
 
-    while (-not $APIVersion) {
-        $APIVersion = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API Version"
+    function Get-EnvironmentVariableValue {
+        param (
+            [string]$VariableName,
+            [string]$PromptMessage,
+            [switch]$Secure
+        )
+    
+        $variableValue = [System.Environment]::GetEnvironmentVariable($VariableName, [System.EnvironmentVariableTarget]::User)
+    
+        while (-not $variableValue) {
+            if ($Secure) {
+                $variableValue = Read-Host -Prompt $PromptMessage -AsSecureString | ConvertFrom-SecureString
+            }
+            else {
+                $variableValue = Read-Host -Prompt $PromptMessage
+            }
+            [System.Environment]::SetEnvironmentVariable($VariableName, $variableValue, [System.EnvironmentVariableTarget]::User)
+        }
+    
+        return $variableValue
     }
 
-    while (-not $Endpoint) {
-        # Get the endpoint from the environment variable
-        $Endpoint = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the Endpoint"
+    $APIVersion = Get-EnvironmentVariableValue -VariableName "API_AZURE_OPENAI_APIVERSION" -PromptMessage "Please enter the API Version"
+    $Endpoint = Get-EnvironmentVariableValue -VariableName "API_AZURE_OPENAI_ENDPOINT" -PromptMessage "Please enter the Endpoint"
+    $Deployment = Get-EnvironmentVariableValue -VariableName "API_AZURE_OPENAI_CC_DEPLOYMENT" -PromptMessage "Please enter the Deployment"
+    $ApiKey = Get-EnvironmentVariableValue -VariableName "API_AZURE_OPENAI_KEY" -PromptMessage "Please enter the API Key" -Secure
+  
+    # Define a hashtable to map modes to their respective settings
+    $modeSettings = @{
+        "Precise"      = @{ UltraPrecise = $false; Precise = $true; Focused = $false; Balanced = $false; Informative = $false; Creative = $false; Surreal = $false }
+        "Creative"     = @{ UltraPrecise = $false; Precise = $false; Focused = $false; Balanced = $false; Informative = $false; Creative = $true; Surreal = $false }
+        "UltraPrecise" = @{ UltraPrecise = $true; Precise = $false; Focused = $false; Balanced = $false; Informative = $false; Creative = $false; Surreal = $false }
+        "Focused"      = @{ UltraPrecise = $false; Precise = $false; Focused = $true; Balanced = $false; Informative = $false; Creative = $false; Surreal = $false }
+        "Balanced"     = @{ UltraPrecise = $false; Precise = $false; Focused = $false; Balanced = $true; Informative = $false; Creative = $false; Surreal = $false }
+        "Informative"  = @{ UltraPrecise = $false; Precise = $false; Focused = $false; Balanced = $false; Informative = $true; Creative = $false; Surreal = $false }
+        "Surreal"      = @{ UltraPrecise = $false; Precise = $false; Focused = $false; Balanced = $false; Informative = $false; Creative = $false; Surreal = $true }
     }
 
-    while (-not $Deployment) {
-        # Get the deployment from the environment variable
-        $Deployment = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_CC_DEPLOYMENT -PromptMessage "Please enter the Deployment"
+    # Apply settings based on the selected mode
+    if ($modeSettings.ContainsKey($Mode)) {
+        $settings = $modeSettings[$Mode]
+        $UltraPrecise = $settings.UltraPrecise
+        $Precise = $settings.Precise
+        $Focused = $settings.Focused
+        $Balanced = $settings.Balanced
+        $Informative = $settings.Informative
+        $Creative = $settings.Creative
+        $Surreal = $settings.Surreal
     }
-
-    Write-Verbose "APIKEY: $ApiKey"
-    while ([string]::IsNullOrEmpty($ApiKey)) {
-        if (-not ($ApiKey = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API Key" -Secure)) {
-            Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_KEY -VariableValue $null
-            $ApiKey = Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API Key" -Secure
-        }
-        
+    else {
+        # Default case
+        [double]$Temperature = $Temperature
+        [double]$TopP = $TopP
     }
-<#
-    switch ($Mode) {
-        "Precise" {
-            $UltraPrecise = $false
-            $Precise = $true
-            $Focused = $false
-            $Balanced = $false
-            $Informative = $false
-            $Creative = $false
-            $Surreal = $false                
-        }
-        "Creative" {
-            $UltraPrecise = $false
-            $Precise = $false
-            $Focused = $false
-            $Balanced = $false
-            $Informative = $false
-            $Creative = $true
-            $Surreal = $false                
-        }
-        "UltraPrecise" {
-            $UltraPrecise = $true
-            $Precise = $false
-            $Focused = $false
-            $Balanced = $false
-            $Informative = $false
-            $Creative = $false
-            $Surreal = $false                
-        }
-        "Focused" {
-            $UltraPrecise = $false
-            $Precise = $false
-            $Focused = $true
-            $Balanced = $false
-            $Informative = $false
-            $Creative = $false
-            $Surreal = $false                
-        }
-        "Balanced" {
-            $UltraPrecise = $false
-            $Precise = $false
-            $Focused = $false
-            $Balanced = $true
-            $Informative = $false
-            $Creative = $false
-            $Surreal = $false                
-        }
-        "Informative" {
-            $UltraPrecise = $false
-            $Precise = $false
-            $Focused = $false
-            $Balanced = $false
-            $Informative = $true
-            $Creative = $false
-            $Surreal = $false                
-        }
-        "Surreal" {
-            $UltraPrecise = $false
-            $Precise = $false
-            $Focused = $false
-            $Balanced = $false
-            $Informative = $false
-            $Creative = $false
-            $Surreal = $true                
-        }
-        default {
-            # Code for default case
-            [double]$Temperature = $Temperature
-            [double]$TopP = $TopP
-        }
-    }
-#>
-# Define a hashtable to map modes to their respective settings
-$modeSettings = @{
-    "Precise"      = @{ UltraPrecise = $false; Precise = $true; Focused = $false; Balanced = $false; Informative = $false; Creative = $false; Surreal = $false }
-    "Creative"     = @{ UltraPrecise = $false; Precise = $false; Focused = $false; Balanced = $false; Informative = $false; Creative = $true; Surreal = $false }
-    "UltraPrecise" = @{ UltraPrecise = $true; Precise = $false; Focused = $false; Balanced = $false; Informative = $false; Creative = $false; Surreal = $false }
-    "Focused"      = @{ UltraPrecise = $false; Precise = $false; Focused = $true; Balanced = $false; Informative = $false; Creative = $false; Surreal = $false }
-    "Balanced"     = @{ UltraPrecise = $false; Precise = $false; Focused = $false; Balanced = $true; Informative = $false; Creative = $false; Surreal = $false }
-    "Informative"  = @{ UltraPrecise = $false; Precise = $false; Focused = $false; Balanced = $false; Informative = $true; Creative = $false; Surreal = $false }
-    "Surreal"      = @{ UltraPrecise = $false; Precise = $false; Focused = $false; Balanced = $false; Informative = $false; Creative = $false; Surreal = $true }
-}
-
-# Apply settings based on the selected mode
-if ($modeSettings.ContainsKey($Mode)) {
-    $settings = $modeSettings[$Mode]
-    $UltraPrecise = $settings.UltraPrecise
-    $Precise = $settings.Precise
-    $Focused = $settings.Focused
-    $Balanced = $settings.Balanced
-    $Informative = $settings.Informative
-    $Creative = $settings.Creative
-    $Surreal = $settings.Surreal
-} else {
-    # Default case
-    [double]$Temperature = $Temperature
-    [double]$TopP = $TopP
-}
 
 
     $userWasAsked = $false
