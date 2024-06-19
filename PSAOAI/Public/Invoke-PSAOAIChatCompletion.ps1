@@ -114,11 +114,11 @@ function Invoke-PSAOAIChatCompletion {
         [Parameter(Position = 4, Mandatory = $false)]
         [switch]$simpleresponse,
         [Parameter(Mandatory = $false)]
-        [string]$APIVersion = (Get-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_APIVERSION),
+        [string]$APIVersion = $null,
         [Parameter(Mandatory = $false)]
-        [string]$Endpoint = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"),
+        [string]$Endpoint = $null,
         [Parameter(Position = 6, Mandatory = $false)]
-        [string]$Deployment = (Set-EnvironmentVariable -VariableName $script:API_AZURE_OPENAI_CC_DEPLOYMENT -PromptMessage "Please enter the deployment"),
+        [string]$Deployment = $null,
         [Parameter(Position = 5, Mandatory = $false)]
         [string]$User = "",
         [Parameter(Mandatory = $false)]
@@ -184,40 +184,40 @@ function Invoke-PSAOAIChatCompletion {
     }
     
     # Function to output the response message
-    function Show-ResponseMessage {
+    function Write-ResponseMessage {
         <#
         .SYNOPSIS
         This function outputs the response message to the console.
-        
+    
         .DESCRIPTION
-        Show-ResponseMessage is a function that takes in a content and a stream type and outputs the response message. 
+        Write-ResponseMessage is a function that takes in a content and a stream type and outputs the response message.
         The output format can be simplified by using the -simpleresponse switch.
-        
+    
         .PARAMETER content
         The content to be displayed. This parameter is mandatory.
-        
+    
         .PARAMETER stream
         The stream type of the content. This parameter is mandatory.
-        
+    
         .PARAMETER simpleresponse
         A switch parameter. If used, the function will return only the content, without the stream type.
-        
+    
         .EXAMPLE
-        Show-ResponseMessage -content "Hello, how can I assist you today?" -stream "system"
-        
+        Write-ResponseMessage -content "Hello, how can I assist you today?" -stream "system"
+    
         .EXAMPLE
-        Show-ResponseMessage -content "Hello, how can I assist you today?" -stream "system" -simpleresponse
-        
+        Write-ResponseMessage -content "Hello, how can I assist you today?" -stream "system" -simpleresponse
+    
         .OUTPUTS
         String. This function outputs the response message to the console.
-        #> 
+        #>
         param(
             [Parameter(Mandatory = $true)]
             [string]$content, # The content to be displayed
-
+    
             [Parameter(Mandatory = $true)]
             [string]$stream, # The stream type of the content
-
+    
             [switch]$simpleresponse # A switch to simplify the response output
         )
     
@@ -276,14 +276,17 @@ function Invoke-PSAOAIChatCompletion {
     }
 
     function Get-EnvironmentVariableValue {
+        [CmdletBinding()]
         param (
+            [Parameter(Mandatory = $true)]
             [string]$VariableName,
+            [Parameter(Mandatory = $true)]
             [string]$PromptMessage,
             [switch]$Secure
         )
-    
+ 
         $variableValue = [System.Environment]::GetEnvironmentVariable($VariableName, [System.EnvironmentVariableTarget]::User)
-    
+ 
         while (-not $variableValue) {
             if ($Secure) {
                 $variableValue = Read-Host -Prompt $PromptMessage -AsSecureString | ConvertFrom-SecureString
@@ -293,7 +296,7 @@ function Invoke-PSAOAIChatCompletion {
             }
             [System.Environment]::SetEnvironmentVariable($VariableName, $variableValue, [System.EnvironmentVariableTarget]::User)
         }
-    
+ 
         return $variableValue
     }
 
@@ -434,11 +437,10 @@ function Invoke-PSAOAIChatCompletion {
         Write-LogMessage -Message "temperature=$Temperature, topP=$TopP" -LogFile $logfile
 
         # Call functions to execute API request and output results
-        $headers = Get-Headers -ApiKeyVariable $script:API_AZURE_OPENAI_KEY -Secure
+        $headers = Get-Headers -ApiKeyVariable $ApiKey -Secure
 
         # system prompt
         if ($SystemPromptFileName) {
-            #$system_message = get-content -path (Join-Path $PSScriptRoot "prompts\$SystemPromptFileName") -Encoding UTF8 -Raw 
             $system_message = get-content -path $SystemPromptFileName -Encoding UTF8 -Raw 
         }
         else {
@@ -449,13 +451,12 @@ function Invoke-PSAOAIChatCompletion {
         $system_message = [System.Text.RegularExpressions.Regex]::Replace($system_message, "[^\x00-\x7F]", "")        
 
         if ($VerbosePreference -eq "Continue") {
-            Write-verbose (Show-ResponseMessage -content $system_message -stream "system" | Out-String)
+            Write-verbose (Write-ResponseMessage -content $system_message -stream "system" | Out-String)
         }
 
         # user prompt message
         if ($OneTimeUserPrompt) {
             # cleaning user message
-            #$userMessage = [System.Text.RegularExpressions.Regex]::Replace($OneTimeUserPrompt, "[^\x00-\x7F]", "") | Out-String # must be string not array of strings
             $userMessage = Format-Message -Message $OneTimeUserPrompt
             Write-Verbose "OneTimeUserPrompt: $userMessage"
         }
@@ -464,7 +465,6 @@ function Invoke-PSAOAIChatCompletion {
             if (-not $userMessage) {
                 $userMessage = Read-Host "Enter chat message (user)"
             }
-            #$userMessage = [System.Text.RegularExpressions.Regex]::Replace($usermessage, "[^\x00-\x7F]", "") | Out-String # must be string not array of strings
             $userMessage = Format-Message -Message $userMessage
             Write-Verbose $userMessage
         }
@@ -544,11 +544,11 @@ function Invoke-PSAOAIChatCompletion {
                     Write-Verbose "Show-Usage"
                     Write-Information -MessageData (Show-Usage -usage $response.usage | Out-String) -InformationAction Continue
                 }
-                Write-Verbose "Show-ResponseMessage - return"
+                Write-Verbose "Write-ResponseMessage - return"
 
                 if (-not $Stream) {
                     # Get the response text
-                    $responseText = (Show-ResponseMessage -content $assistant_response -stream "assistant" -simpleresponse:$simpleresponse | Out-String)
+                    $responseText = (Write-ResponseMessage -content $assistant_response -stream "assistant" -simpleresponse:$simpleresponse | Out-String)
                 }
                 else {
                     $responseText = $response
@@ -569,7 +569,7 @@ function Invoke-PSAOAIChatCompletion {
                 Write-Verbose "NO OneTimeUserPrompt"
                 if (-not $Stream) {
                     # Show the response message
-                    Show-ResponseMessage -content $assistant_response -stream "assistant" -simpleresponse:$simpleresponse
+                    Write-ResponseMessage -content $assistant_response -stream "assistant" -simpleresponse:$simpleresponse
                 }
             
                 # Write the assistant response to the log file
@@ -602,21 +602,3 @@ function Invoke-PSAOAIChatCompletion {
         return
     }
 }
-
-<#
-# Define constants for environment variable names
-$API_AZURE_OPENAI_APIVERSION = "API_AZURE_OPENAI_APIVERSION"
-$API_AZURE_OPENAI_ENDPOINT = "API_AZURE_OPENAI_ENDPOINT"
-$API_AZURE_OPENAI_DEPLOYMENT = "API_AZURE_OPENAI_DEPLOYMENT"
-$API_AZURE_OPENAI_KEY = "API_AZURE_OPENAI_KEY"
-
-# Get the API version from the environment variable
-$APIVersion = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_APIVERSION -PromptMessage "Please enter the API version"
-# Get the endpoint from the environment variable
-$Endpoint = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_ENDPOINT -PromptMessage "Please enter the endpoint"
-# Get the deployment from the environment variable
-$Deployment = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_DEPLOYMENT -PromptMessage "Please enter the deployment"
-# Get the API key from the environment variable
-$ApiKey = Set-EnvironmentVariable -VariableName $API_AZURE_OPENAI_KEY -PromptMessage "Please enter the API key"
-#>
-
