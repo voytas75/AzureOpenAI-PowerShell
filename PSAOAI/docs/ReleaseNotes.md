@@ -17,7 +17,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ### Changed
 
 - Chat: Enhanced mode,
-- Chat: Simplified environment variable handling.
+- Chat: Simplified environment variable handling,
+- Refactoring.
 
 ## [0.3.0] - 2024.06.19
 
