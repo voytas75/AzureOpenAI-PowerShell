@@ -85,11 +85,14 @@ function Invoke-PSAOAIChatCompletion {
     param(
         [Parameter(Position = 0, ParameterSetName = 'SystemPrompt_Mode', Mandatory = $true)]
         [Parameter(Position = 0, ParameterSetName = 'SystemPrompt_TempTop', Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$SystemPrompt,
         [Parameter(ParameterSetName = 'SystemPromptFileName_Mode', Mandatory = $true)]
         [Parameter(ParameterSetName = 'SystemPromptFileName_TempTop', Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$SystemPromptFileName,
         [Parameter(Position = 1, Mandatory = $true, ValueFromPipeline = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$usermessage,
         [Parameter(Position = 3, Mandatory = $false)]
         [switch]$OneTimeUserPrompt,
@@ -437,7 +440,7 @@ function Invoke-PSAOAIChatCompletion {
         Write-LogMessage -Message "temperature=$Temperature, topP=$TopP" -LogFile $logfile
 
         # Call functions to execute API request and output results
-        $headers = Get-Headers -ApiKeyVariable $ApiKey -Secure
+        $headers = Get-Headers -ApiKeyVariable $script:API_AZURE_OPENAI_KEY -Secure
 
         # system prompt
         if ($SystemPromptFileName) {
@@ -597,7 +600,7 @@ function Invoke-PSAOAIChatCompletion {
     catch {
         #Format-Error -ErrorVar $_
         #Show-Error -ErrorVar $_
-        Write-LogMessage "An error occurred: $_" "ERROR" -LogFile $logfile
+        Write-LogMessage -Message"An error occurred: $_" -Level "ERROR" -LogFile $logfile
         Write-Error $_
         return
     }
