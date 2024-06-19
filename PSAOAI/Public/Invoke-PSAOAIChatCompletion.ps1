@@ -297,7 +297,7 @@ function Invoke-PSAOAIChatCompletion {
         }
         
     }
-
+<#
     switch ($Mode) {
         "Precise" {
             $UltraPrecise = $false
@@ -368,6 +368,34 @@ function Invoke-PSAOAIChatCompletion {
             [double]$TopP = $TopP
         }
     }
+#>
+# Define a hashtable to map modes to their respective settings
+$modeSettings = @{
+    "Precise"      = @{ UltraPrecise = $false; Precise = $true; Focused = $false; Balanced = $false; Informative = $false; Creative = $false; Surreal = $false }
+    "Creative"     = @{ UltraPrecise = $false; Precise = $false; Focused = $false; Balanced = $false; Informative = $false; Creative = $true; Surreal = $false }
+    "UltraPrecise" = @{ UltraPrecise = $true; Precise = $false; Focused = $false; Balanced = $false; Informative = $false; Creative = $false; Surreal = $false }
+    "Focused"      = @{ UltraPrecise = $false; Precise = $false; Focused = $true; Balanced = $false; Informative = $false; Creative = $false; Surreal = $false }
+    "Balanced"     = @{ UltraPrecise = $false; Precise = $false; Focused = $false; Balanced = $true; Informative = $false; Creative = $false; Surreal = $false }
+    "Informative"  = @{ UltraPrecise = $false; Precise = $false; Focused = $false; Balanced = $false; Informative = $true; Creative = $false; Surreal = $false }
+    "Surreal"      = @{ UltraPrecise = $false; Precise = $false; Focused = $false; Balanced = $false; Informative = $false; Creative = $false; Surreal = $true }
+}
+
+# Apply settings based on the selected mode
+if ($modeSettings.ContainsKey($Mode)) {
+    $settings = $modeSettings[$Mode]
+    $UltraPrecise = $settings.UltraPrecise
+    $Precise = $settings.Precise
+    $Focused = $settings.Focused
+    $Balanced = $settings.Balanced
+    $Informative = $settings.Informative
+    $Creative = $settings.Creative
+    $Surreal = $settings.Surreal
+} else {
+    # Default case
+    [double]$Temperature = $Temperature
+    [double]$TopP = $TopP
+}
+
 
     $userWasAsked = $false
 
@@ -540,7 +568,7 @@ function Invoke-PSAOAIChatCompletion {
                     Write-Host "{SysPFile:'$(Split-Path -Path $SystemPromptFileName -Leaf)', temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', max_tokens:'${Maxtokens}', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
                 }
                 else {
-                    Write-Host "{SysPrompt, temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', max_tokens:'${Maxtokens}, fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
+                    Write-Host "{SysPrompt, temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', max_tokens:'${Maxtokens}', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
                 }
             }
            

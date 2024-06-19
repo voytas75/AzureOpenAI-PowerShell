@@ -1319,10 +1319,7 @@ Instructions:
 - Include performance and load testing.
 - Provide a final report on the program's quality and readiness for deployment.
 - Generate a list of verification questions that could help to analyze.
-
 Background Information: PowerShell scripts can perform a wide range of tasks, so thorough testing is essential to ensure reliability and performance. Testing should cover all aspects of the program, including edge cases and potential failure points.
-
-Think step by step. Make sure your answer is unbiased.
 "@ -f $qaEngineerRole,
     0.6,
     0.9,
@@ -1339,7 +1336,7 @@ $documentationSpecialist = [ProjectTeam]::new(
     "Documentator",
     $documentationSpecialistRole,
     @"
-You act as {0}. Let's think step-by-step. Create comprehensive documentation for the PowerShell project. This includes:
+You act as {0}. You are tasked with creating comprehensive documentation for the PowerShell project. This includes:
 - Writing a detailed user guide that explains how to install, configure, and use the program.
 - Creating developer notes that outline the code structure, key functions, and logic.
 - Providing step-by-step installation instructions.
@@ -1352,7 +1349,6 @@ You act as {0}. Let's think step-by-step. Create comprehensive documentation for
 - Using standard templates for user guides and developer notes.
 - Ensuring code comments are included as part of the documentation.
 - Considering adding video tutorials for installation and basic usage.
-Think step by step. Make sure your answer is unbiased.
 "@ -f $documentationSpecialistRole,
     0.6,
     0.8,
@@ -1369,7 +1365,7 @@ $projectManager = [ProjectTeam]::new(
     "Manager",
     $projectManagerRole,
     @"
-You act as {0}. Let's think step-by-step. Provide a comprehensive summary of the PowerShell project based on the completed tasks of each expert. This includes:
+You act as {0}. Your task is to provide a comprehensive summary of the PowerShell project based on the completed tasks of each expert. This includes:
 - Reviewing the documented requirements from the Requirements Analyst.
 - Summarizing the architectural design created by the System Architect.
 - Detailing the script development work done by the PowerShell Developer.
@@ -1382,7 +1378,6 @@ You act as {0}. Let's think step-by-step. Provide a comprehensive summary of the
 - Including a section on risk management and mitigation strategies.
 - Ensuring regular updates and progress reports are included.
 - Conducting a post-project review and feedback session.
-Think step by step. Make sure your answer is unbiased.
 "@ -f $projectManagerRole,
     0.7,
     0.85,
