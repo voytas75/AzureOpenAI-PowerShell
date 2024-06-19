@@ -142,42 +142,22 @@ function Invoke-PSAOAIChatCompletion {
     )
 
     # Function to assemble system and user messages
-    function Get-Messages {
-        <#
-        .SYNOPSIS
-        Assembles system and user messages into a structured array.
-        
-        .DESCRIPTION
-        This function accepts a system message and a user message as parameters. It then structures these messages into an array, with each message represented as a hashtable with 'role' and 'content' keys.
-        
-        .PARAMETER system_message
-        The system message to be included in the chat. This parameter is mandatory.
-        
-        .PARAMETER UserMessage
-        The user message to be included in the chat. This parameter is mandatory.
-        
-        .EXAMPLE
-        Get-Messages -system_message "Hello, how can I assist you today?" -UserMessage "I need help with my code."
-        
-        .OUTPUTS
-        Array of hashtables, each representing a system or user message.
-        #>    
+    function Get-PSAOAIMessages {
+        # Function to assemble system and user messages
         param(
             [Parameter(Mandatory = $true)]
-            [string]$system_message,
+            [string]$SystemMessage,
             [Parameter(Mandatory = $true)]
             [string]$UserMessage
         )
-
-        # Log the system and user messages for debugging purposes
-        Write-Verbose "System message in Get-Messages: $system_message"
-        Write-Verbose "User message in Get-Messages: $UserMessage"
-            
-        # Return an array of hashtables representing the system and user messages
+    
+        Write-Verbose "System message in Get-PSAOAIMessages: $SystemMessage"
+        Write-Verbose "User message in Get-PSAOAIMessages: $UserMessage"
+    
         return @(
             @{
                 "role"    = "system"
-                "content" = $system_message
+                "content" = $SystemMessage
             },
             @{
                 "role"    = "user"
@@ -187,13 +167,13 @@ function Invoke-PSAOAIChatCompletion {
     }
     
     # Function to output the response message
-    function Write-ResponseMessage {
+    function Write-PSAOAIResponseMessage {
         <#
         .SYNOPSIS
         This function outputs the response message to the console.
     
         .DESCRIPTION
-        Write-ResponseMessage is a function that takes in a content and a stream type and outputs the response message.
+        Write-PSAOAIResponseMessage is a function that takes in a content and a stream type and outputs the response message.
         The output format can be simplified by using the -simpleresponse switch.
     
         .PARAMETER content
@@ -206,10 +186,10 @@ function Invoke-PSAOAIChatCompletion {
         A switch parameter. If used, the function will return only the content, without the stream type.
     
         .EXAMPLE
-        Write-ResponseMessage -content "Hello, how can I assist you today?" -stream "system"
+        Write-PSAOAIResponseMessage -content "Hello, how can I assist you today?" -stream "system"
     
         .EXAMPLE
-        Write-ResponseMessage -content "Hello, how can I assist you today?" -stream "system" -simpleresponse
+        Write-PSAOAIResponseMessage -content "Hello, how can I assist you today?" -stream "system" -simpleresponse
     
         .OUTPUTS
         String. This function outputs the response message to the console.
@@ -235,7 +215,7 @@ function Invoke-PSAOAIChatCompletion {
         }
     }
     
-    function Show-PromptFilterResults {
+    function Show-PSAOAIPromptFilterResults {
         <#
         .SYNOPSIS
         Displays the results of the prompt filter.
@@ -249,7 +229,7 @@ function Invoke-PSAOAIChatCompletion {
         A PSCustomObject that contains the prompt filter results to be displayed. This parameter is mandatory.
 
         .EXAMPLE
-        Show-PromptFilterResults -response $response
+        Show-PSAOAIPromptFilterResults -response $response
 
         .OUTPUTS
         String. Outputs the 'content_filter_results' for each 'prompt_index' in the console.
@@ -278,7 +258,7 @@ function Invoke-PSAOAIChatCompletion {
         }
     }
 
-    function Get-EnvironmentVariableValue {
+    function Get-PSAOAIEnvironmentVariableValue {
         [CmdletBinding()]
         param (
             [Parameter(Mandatory = $true)]
@@ -303,10 +283,10 @@ function Invoke-PSAOAIChatCompletion {
         return $variableValue
     }
 
-    $APIVersion = Get-EnvironmentVariableValue -VariableName "API_AZURE_OPENAI_APIVERSION" -PromptMessage "Please enter the API Version"
-    $Endpoint = Get-EnvironmentVariableValue -VariableName "API_AZURE_OPENAI_ENDPOINT" -PromptMessage "Please enter the Endpoint"
-    $Deployment = Get-EnvironmentVariableValue -VariableName "API_AZURE_OPENAI_CC_DEPLOYMENT" -PromptMessage "Please enter the Deployment"
-    $ApiKey = Get-EnvironmentVariableValue -VariableName "API_AZURE_OPENAI_KEY" -PromptMessage "Please enter the API Key" -Secure
+    $APIVersion = Get-PSAOAIEnvironmentVariableValue -VariableName "API_AZURE_OPENAI_APIVERSION" -PromptMessage "Please enter the API Version"
+    $Endpoint = Get-PSAOAIEnvironmentVariableValue -VariableName "API_AZURE_OPENAI_ENDPOINT" -PromptMessage "Please enter the Endpoint"
+    $Deployment = Get-PSAOAIEnvironmentVariableValue -VariableName "API_AZURE_OPENAI_CC_DEPLOYMENT" -PromptMessage "Please enter the Deployment"
+    $ApiKey = Get-PSAOAIEnvironmentVariableValue -VariableName "API_AZURE_OPENAI_KEY" -PromptMessage "Please enter the API Key" -Secure
   
     # Define a hashtable to map modes to their respective settings
     $modeSettings = @{
@@ -454,7 +434,7 @@ function Invoke-PSAOAIChatCompletion {
         $system_message = [System.Text.RegularExpressions.Regex]::Replace($system_message, "[^\x00-\x7F]", "")        
 
         if ($VerbosePreference -eq "Continue") {
-            Write-verbose (Write-ResponseMessage -content $system_message -stream "system" | Out-String)
+            Write-verbose (Write-PSAOAIResponseMessage -content $system_message -stream "system" | Out-String)
         }
 
         # user prompt message
@@ -473,7 +453,7 @@ function Invoke-PSAOAIChatCompletion {
         }
         
         # Get the messages from the system and user
-        $messages = Get-Messages -system_message $system_message -UserMessage $userMessage
+        $messages = Get-PSAOAIMessages -system_message $system_message -UserMessage $userMessage
         # Write the messages to the verbose output
         Write-Verbose "Messages: $($messages | out-string)"
 
@@ -542,16 +522,16 @@ function Invoke-PSAOAIChatCompletion {
                 if (-not $simpleresponse -and (-not $Stream)) {
                     Write-Verbose "Show-FinishReason"
                     Write-Information -MessageData (Show-FinishReason -finishReason $response.choices.finish_reason | Out-String) -InformationAction Continue
-                    Write-Verbose "Show-PromptFilterResults"
-                    Write-Information -MessageData (Show-PromptFilterResults -response $response | Out-String) -InformationAction Continue
+                    Write-Verbose "Show-PSAOAIPromptFilterResults"
+                    Write-Information -MessageData (Show-PSAOAIPromptFilterResults -response $response | Out-String) -InformationAction Continue
                     Write-Verbose "Show-Usage"
                     Write-Information -MessageData (Show-Usage -usage $response.usage | Out-String) -InformationAction Continue
                 }
-                Write-Verbose "Write-ResponseMessage - return"
+                Write-Verbose "Write-PSAOAIResponseMessage - return"
 
                 if (-not $Stream) {
                     # Get the response text
-                    $responseText = (Write-ResponseMessage -content $assistant_response -stream "assistant" -simpleresponse:$simpleresponse | Out-String)
+                    $responseText = (Write-PSAOAIResponseMessage -content $assistant_response -stream "assistant" -simpleresponse:$simpleresponse | Out-String)
                 }
                 else {
                     $responseText = $response
@@ -572,7 +552,7 @@ function Invoke-PSAOAIChatCompletion {
                 Write-Verbose "NO OneTimeUserPrompt"
                 if (-not $Stream) {
                     # Show the response message
-                    Write-ResponseMessage -content $assistant_response -stream "assistant" -simpleresponse:$simpleresponse
+                    Write-PSAOAIResponseMessage -content $assistant_response -stream "assistant" -simpleresponse:$simpleresponse
                 }
             
                 # Write the assistant response to the log file
