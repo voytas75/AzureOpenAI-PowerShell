@@ -132,7 +132,10 @@ function Invoke-PSAOAIChatCompletion {
         [Parameter(Mandatory = $false)]
         [bool]$Stream = $true,
         [Parameter(Mandatory = $false)]
-        [int] $TimeOut = 240
+        [int] $TimeOut = 240,
+        [Parameter(Mandatory = $false)]
+        [int] $MaxTokens = 4096
+
     )
 
     # Function to assemble system and user messages
@@ -522,7 +525,7 @@ function Invoke-PSAOAIChatCompletion {
 
         do {
             # Get the body of the message
-            $body = Get-PSAOAIChatBody -messages $messages -temperature $parameters['Temperature'] -top_p $parameters['TopP'] -frequency_penalty $FrequencyPenalty -presence_penalty $PresencePenalty -user $User -n $N -stop $Stop -stream $Stream
+            $body = Get-PSAOAIChatBody -messages $messages -temperature $parameters['Temperature'] -top_p $parameters['TopP'] -frequency_penalty $FrequencyPenalty -presence_penalty $PresencePenalty -user $User -n $N -stop $Stop -stream $Stream -MaxTokens $MaxTokens
 
             # Convert the body to JSON
             $bodyJSON = ($body | ConvertTo-Json)
@@ -534,20 +537,15 @@ function Invoke-PSAOAIChatCompletion {
                     Write-Host "{Logfile:'${logfile}'} " -ForegroundColor Magenta
                 }
                 if ($SystemPromptFileName) {
-                    Write-Host "{SysPFile:'$(Split-Path -Path $SystemPromptFileName -Leaf)', temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
+                    Write-Host "{SysPFile:'$(Split-Path -Path $SystemPromptFileName -Leaf)', temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', max_tokens:'${Maxtokens}', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
                 }
                 else {
-                    Write-Host "{SysPrompt, temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
+                    Write-Host "{SysPrompt, temp:'$($parameters['Temperature'])', top_p:'$($parameters['TopP'])', max_tokens:'${Maxtokens}, fp:'${FrequencyPenalty}', pp:'${PresencePenalty}', user:'${User}', n:'${N}', stop:'${Stop}', stream:'${Stream}'} " -NoNewline -ForegroundColor Magenta
                 }
             }
            
             # Invoke the API request
             if ($Stream) {
-                Write-host ""
-                Write-host ""
-                #write-host $urlChat
-                #write-host $headers
-                #write-host $bodyJSON
                 $response = Invoke-PSAOAIApiRequestStream -url $urlChat -headers $headers -bodyJSON $bodyJSON -Chat -timeout $TimeOut -logfile $logfile | out-string
                 if ([string]::IsNullOrEmpty($response)) {
                     Write-Warning "Response is empty"

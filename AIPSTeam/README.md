@@ -71,6 +71,7 @@ This PowerShell script simulates a team of specialists working together on a Pow
   - `-NOLog`: Disables the logging functions.
   - `-LogFolder`: Specifies the folder where logs should be stored.
   - `-DeploymentChat`: Specifies the deployment chat environment variable for Azure OpenAI (default: retrieved from environment variable `PSAOAI_API_AZURE_OPENAI_CC_DEPLOYMENT` - [PSAOAI](https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/PSAOAI#powershell-azure-openai-psaoai-module)).
+  - `MaxTokens`: Specifies the maximum number of tokens to generate in the response. This parameter controls the length of the generated output. The default value is set within the script, but it can be overridden by the user if needed.
 
 ### Usage
 
@@ -78,6 +79,12 @@ This PowerShell script simulates a team of specialists working together on a Pow
 
    ```powershell
    "Monitor RAM usage and show a single color block based on the load." | AIPSTeam.ps1
+   ```
+
+   or
+
+   ```powershell
+   AIPSTeam -userInput "Monitor RAM usage and show a single color block based on the load."
    ```
 
 2. **Disable Live Streaming**:
@@ -91,6 +98,46 @@ This PowerShell script simulates a team of specialists working together on a Pow
    ```powershell
    "Monitor RAM usage" | AIPSTeam.ps1 -LogFolder "C:\Logs"
    ```
+
+4. **Monitor Disk Usage**:
+
+   ```powershell
+   "Monitor disk usage and display a pie chart of used vs free space." | AIPSTeam.ps1 -Stream $false
+   ```
+
+   **Description**: This example monitors the disk usage and displays a pie chart showing the used versus free space. The `-Stream $false` parameter disables live streaming of the output.
+
+5. **Generate System Report**:
+
+   ```powershell
+   "Generate a detailed system report including CPU, RAM, and disk usage." | AIPSTeam.ps1 -LogFolder "C:\SystemReports"
+   ```
+
+   **Description**: This example generates a comprehensive system report that includes details about CPU, RAM, and disk usage. The report is saved in the specified log folder `C:\SystemReports`.
+
+6. **Check Network Latency**:
+
+   ```powershell
+   "Check network latency and display a line graph of latency over time." | AIPSTeam.ps1 -NOPM
+   ```
+
+   **Description**: This example checks the network latency and displays a line graph showing the latency over time. The `-NOPM` parameter disables the Project Manager functions.
+
+7. **Analyze Event Logs**:
+
+   ```powershell
+   "Analyze Windows Event Logs and summarize critical errors." | AIPSTeam.ps1 -NODocumentator
+   ```
+
+   **Description**: This example analyzes the Windows Event Logs and provides a summary of critical errors. The `-NODocumentator` parameter disables the Documentator functions.
+
+8. **Backup Important Files**:
+
+   ```powershell
+   "Backup important files from Documents to an external drive." | AIPSTeam.ps1 -NOLog
+   ```
+
+   **Description**: This example backs up important files from the Documents folder to an external drive. The `-NOLog` parameter disables the logging functions.
 
 ## Developer Notes
 

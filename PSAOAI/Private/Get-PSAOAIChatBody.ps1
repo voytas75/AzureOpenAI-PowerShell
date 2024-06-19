@@ -71,7 +71,10 @@ function Get-PSAOAIChatBody {
         [bool]$stream, # The stream parameter for the API request
         
         [Parameter(Mandatory = $false)]
-        [string]$user # The user parameter for the API request
+        [string]$user, # The user parameter for the API request
+
+        [Parameter(Mandatory = $false)]
+        [int]$MaxTokens # max_tokens        
     )
 
     # Construct and return the body for the API request
@@ -85,5 +88,6 @@ function Get-PSAOAIChatBody {
         'stop'              = $stop
         'stream'            = $stream
         'user'              = $user
+        'max_tokens'        = $MaxTokens
     }
 }

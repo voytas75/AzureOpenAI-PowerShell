@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Added
 
-- Timeout param.
+- 
 
 ### Fix
 
@@ -17,6 +17,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ### Changed
 
 - 
+
+## [0.3.0] - 2024.06.19
+
+### Added
+
+- Timeout param,
+- Chat: param `max_tokens`.
 
 ## [0.2.1] - 2024.06.03
 
