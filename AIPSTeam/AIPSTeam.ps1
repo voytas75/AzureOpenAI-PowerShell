@@ -1,12 +1,12 @@
 <#PSScriptInfo
-.VERSION 1.5.1
+.VERSION 1.6.0
 .GUID f0f4316d-f106-43b5-936d-0dd93a49be6b
 .AUTHOR voytas75
 .TAGS ai,psaoai,llm,project,team,gpt
 .PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam/README.md
 .EXTERNALMODULEDEPENDENCIES PSAOAI, PSScriptAnalyzer
 .RELEASENOTES
-1.5.1: minor fixes, enhanced error reporting, added error handling, new menu options, and refactored functions.
+1.6.0: minor fixes, enhanced error reporting, added error handling, new menu options, and refactored functions.
 1.5.0: minor fixes, modularize PSScriptAnalyzer logic, load, save project status, State Management Object, refactoring.
 1.4.0: modularize feedback.
 1.3.0: add to menu Generate documentation, The code research, Requirement for PSAOAI version >= 0.2.1 , fix CyclomaticComplexity.
@@ -71,7 +71,7 @@ PS> "A PowerShell project to monitor CPU usage and display dynamic graph." | .\A
 This command runs the script without streaming output live (-Stream $false) and specifies custom user input about monitoring CPU usage instead of RAM, displaying it through dynamic graphing methods rather than static color blocks.
 
 .NOTES 
-Version: 1.5.1
+Version: 1.6.0
 Author: voytas75
 Creation Date: 05.2024
 Purpose/Change: Initial release for emulating teamwork within PowerShell scripting context, rest in PSScriptInfo Releasenotes.
@@ -109,7 +109,7 @@ param(
     [int] $MaxTokens = 20480
 
 )
-$AIPSTeamVersion = "1.5.0"
+$AIPSTeamVersion = "1.6.0"
 
 #region ProjectTeamClass
 <#
