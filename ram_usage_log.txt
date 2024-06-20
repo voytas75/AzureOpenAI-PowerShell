@@ -1,0 +1,4 @@
+2024-06-20 21:50:05 - RAM Usage: 51% - Color: Yellow
+2024-06-20 21:50:10 - RAM Usage: 51% - Color: Yellow
+2024-06-20 21:50:15 - RAM Usage: 51% - Color: Yellow
+2024-06-20 21:50:20 - RAM Usage: 51% - Color: Yellow

@@ -1,0 +1,14 @@
+{
+  "thresholds": {
+    "Low": 50,
+    "Medium": 75,
+    "High": 90
+  },
+  "colors": {
+    "Low": "Green",
+    "Medium": "Yellow",
+    "High": "Red"
+  },
+  "logFilePath": ".\\ram_usage_log.txt",
+  "interval": 5
+}

@@ -6,7 +6,7 @@
 .PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam/README.md
 .EXTERNALMODULEDEPENDENCIES PSAOAI, PSScriptAnalyzer
 .RELEASENOTES
-1.5.1: minor fixes, 
+1.5.1: minor fixes, enhanced error reporting, added error handling, new menu options, and refactored functions.
 1.5.0: minor fixes, modularize PSScriptAnalyzer logic, load, save project status, State Management Object, refactoring.
 1.4.0: modularize feedback.
 1.3.0: add to menu Generate documentation, The code research, Requirement for PSAOAI version >= 0.2.1 , fix CyclomaticComplexity.
@@ -307,10 +307,8 @@ class ProjectTeam {
             $this.Status = "Error"
             throw $_
         }
-    
         return $response
     }
-    
 
     [void] SetNextExpert([ProjectTeam] $nextExpert) {
         $this.NextExpert = $nextExpert
@@ -418,10 +416,11 @@ function SendFeedbackRequest {
         [scriptblock] $ResponseFunction, # The function to generate the response
         [PSCustomObject]$GlobalState
     )
-
-    # Define the feedback request prompt
-    $Systemprompt = $prompt 
-    $NewResponse = @"
+    try {
+        # Main logic here
+        # Define the feedback request prompt
+        $Systemprompt = $prompt 
+        $NewResponse = @"
 Review the following response and provide your suggestions for improvement as feedback to $($this.name). Generate a list of verification questions that could help to self-analyze. 
 I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
 
@@ -434,26 +433,35 @@ $($Response.trim())
 Think step by step. Make sure your answer is unbiased.
 "@
 
-    # Send the feedback request to the LLM model
-    $feedback = & $ResponseFunction -SystemPrompt $SystemPrompt -UserPrompt $NewResponse -Temperature $Temperature -TopP $TopP -MaxTokens $script:MaxTokens
+        # Send the feedback request to the LLM model
+        $feedback = & $ResponseFunction -SystemPrompt $SystemPrompt -UserPrompt $NewResponse -Temperature $Temperature -TopP $TopP -MaxTokens $script:MaxTokens
 
-    # Return the feedback
-    return $feedback
+        # Return the feedback
+        return $feedback
+    }
+    catch [System.Exception] {
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+    }
 }
 
 function Get-LastMemoryFromFeedbackTeamMembers {
     param (
         [array] $FeedbackTeam
     )
-
     $lastMemories = @()
-
-    foreach ($FeedbackTeamMember in $FeedbackTeam) {
-        $lastMemory = $FeedbackTeamMember.GetLastMemory().Response
-        $lastMemories += $lastMemory
+    try {
+        foreach ($FeedbackTeamMember in $FeedbackTeam) {
+            $lastMemory = $FeedbackTeamMember.GetLastMemory().Response
+            $lastMemories += $lastMemory
+        }
+        return ($lastMemories -join "`n")
     }
+    catch {
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
 
-    return ($lastMemories -join "`n")
+    }
 }
 
 function Add-ToGlobalResponses {
@@ -492,9 +500,10 @@ function New-FolderAtPath {
         # Return the full path of the folder
         return $CompleteFolderPath
     }
-    catch {
-        Write-Warning -Message "Failed to create folder at path: $CompleteFolderPath"
-        return $null
+    catch [System.Exception] {
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        return $null    
     }
 }
 
@@ -510,8 +519,9 @@ function Get-LatestVersion {
         # Return the latest version
         return $scriptInfo.Version
     }
-    catch {
-        #Write-warning "Failed to get the latest version of $scriptName from PowerShell Gallery. $($_.exception)"
+    catch [System.Exception] {
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
         return $null
     }
 }
@@ -521,20 +531,25 @@ function Get-CheckForScriptUpdate {
         $currentScriptVersion,
         [string]$scriptName
     )
-  
-    # Retrieve the latest version of the script
-    $latestScriptVersion = Get-LatestVersion -scriptName $scriptName
-  
-    if ($latestScriptVersion) {
-        # Compare the current version with the latest version
-        if (([version]$currentScriptVersion) -lt [version]$latestScriptVersion) {
-            Write-Host " A new version ($latestScriptVersion) of $scriptName is available. You are currently using version $currentScriptVersion. " -BackgroundColor DarkYellow -ForegroundColor Blue
-            write-Host "`n`n"
-        } 
+    try {
+        # Retrieve the latest version of the script
+        $latestScriptVersion = Get-LatestVersion -scriptName $scriptName
+        if ($latestScriptVersion) {
+            # Compare the current version with the latest version
+            if (([version]$currentScriptVersion) -lt [version]$latestScriptVersion) {
+                Write-Host " A new version ($latestScriptVersion) of $scriptName is available. You are currently using version $currentScriptVersion. " -BackgroundColor DarkYellow -ForegroundColor Blue
+                write-Host "`n`n"
+            } 
+        }
+        else {
+            Write-Warning "Failed to check for the latest version of the script."
+        }
     }
-    else {
-        Write-Warning "Failed to check for the latest version of the script."
+    catch [System.Exception] {
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
     }
+
 }
 
 function Show-Banner {
@@ -615,8 +630,9 @@ function Export-AndWritePowerShellCodeBlocks {
             return $false
         }
     }
-    catch {
-        Write-Error "!! An error occurred while processing: $_"
+    catch [System.Exception] {
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
     }
     return $false
 }
@@ -646,10 +662,10 @@ function Invoke-CodeWithPSScriptAnalyzer {
 
         # Run PSScriptAnalyzer on the file or script block
         if ($FilePath) {
-            $analysisResults = Invoke-ScriptAnalyzer -Path $FilePath
+            $analysisResults = Invoke-ScriptAnalyzer -Path $FilePath -Severity Warning, Error
         }
         elseif ($ScriptBlock) {
-            $analysisResults = Invoke-ScriptAnalyzer -ScriptDefinition $ScriptBlock
+            $analysisResults = Invoke-ScriptAnalyzer -ScriptDefinition $ScriptBlock -Severity Warning, Error
         }
         else {
             throw "No FilePath or ScriptBlock provided for analysis."
@@ -657,17 +673,18 @@ function Invoke-CodeWithPSScriptAnalyzer {
 
         # Display the analysis results
         if ($analysisResults.Count -eq 0) {
-            Write-Information "++ No issues found by PSScriptAnalyzer." -InformationAction Continue
+            Write-Information "++ No Warning, Error issues found by PSScriptAnalyzer." -InformationAction Continue
             return $false
         }
         else {
-            Write-Information "++ PSScriptAnalyzer found the following issues:" -InformationAction Continue
+            Write-Information "++ PSScriptAnalyzer found the following Warning, Error issues:" -InformationAction Continue
             return $analysisResults
         }
         return $false
     }
-    catch {
-        Write-Error "!! An error occurred while processing: $_"
+    catch [System.Exception] {
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
     }
     return $false
 }
@@ -713,24 +730,29 @@ function Get-SourceCodeAnalysis {
             Blanks     = $blanks
         }
     }
-
-    if ($FilePath) {
-        if (Test-Path $FilePath -PathType Leaf) {
-            $lines = Get-Content $FilePath
+    try {
+        if ($FilePath) {
+            if (Test-Path $FilePath -PathType Leaf) {
+                $lines = Get-Content $FilePath
+                $analysis = Get-AnalyzeLine -Lines $lines
+                Write-Output "$FilePath : $($analysis.CodeLines) lines of code, $($analysis.Comments) comments, $($analysis.Blanks) blank lines"
+            }
+            else {
+                Write-Error "File '$FilePath' does not exist."
+            }
+        }
+        elseif ($CodeBlock) {
+            $lines = $CodeBlock -split "`r?`n"
             $analysis = Get-AnalyzeLine -Lines $lines
-            Write-Output "$FilePath : $($analysis.CodeLines) lines of code, $($analysis.Comments) comments, $($analysis.Blanks) blank lines"
+            Write-Output "Code Block : $($analysis.CodeLines) lines of code, $($analysis.Comments) comments, $($analysis.Blanks) blank lines"
         }
         else {
-            Write-Error "File '$FilePath' does not exist."
+            Write-Error "No FilePath or CodeBlock provided for analysis."
         }
     }
-    elseif ($CodeBlock) {
-        $lines = $CodeBlock -split "`r?`n"
-        $analysis = Get-AnalyzeLine -Lines $lines
-        Write-Output "Code Block : $($analysis.CodeLines) lines of code, $($analysis.Comments) comments, $($analysis.Blanks) blank lines"
-    }
-    else {
-        Write-Error "No FilePath or CodeBlock provided for analysis."
+    catch [System.Exception] {
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
     }
 }
 
@@ -744,53 +766,59 @@ function Get-CyclomaticComplexity {
 
     # Initialize tokens array
     $tokens = @()
-
-    if ($FilePath) {
-        if (Test-Path $FilePath -PathType Leaf) {
-            # Parse the script file
-            $ast = [System.Management.Automation.Language.Parser]::ParseInput((Get-Content -Path $FilePath -Raw), [ref]$tokens, [ref]$null)
+    try {
+        if ($FilePath) {
+            if (Test-Path $FilePath -PathType Leaf) {
+                # Parse the script file
+                $ast = [System.Management.Automation.Language.Parser]::ParseInput((Get-Content -Path $FilePath -Raw), [ref]$tokens, [ref]$null)
+            }
+            else {
+                Write-Error "File '$FilePath' does not exist."
+                return
+            }
+        }
+        elseif ($CodeBlock) {
+            # Parse the code block
+            $ast = [System.Management.Automation.Language.Parser]::ParseInput($CodeBlock, [ref]$tokens, [ref]$null)
         }
         else {
-            Write-Error "File '$FilePath' does not exist."
+            Write-Error "No FilePath or CodeBlock provided for analysis."
             return
         }
-    }
-    elseif ($CodeBlock) {
-        # Parse the code block
-        $ast = [System.Management.Automation.Language.Parser]::ParseInput($CodeBlock, [ref]$tokens, [ref]$null)
-    }
-    else {
-        Write-Error "No FilePath or CodeBlock provided for analysis."
-        return
-    }
 
-    # Identify and loop through all function definitions
-    $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+        # Identify and loop through all function definitions
+        $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
     
-    if ($functions.Count -eq 0) {
-        Write-Information "-- No functions found for cyclomatic complexity analysis." -InformationAction Continue
-        return $false
-    }
-
-    foreach ($function in $functions) {
-        $cyclomaticComplexity = 1
-        $functionTokens = $tokens | Where-Object { $_.Extent.StartOffset -ge $function.Extent.StartOffset -and $_.Extent.EndOffset -le $function.Extent.EndOffset }
-        $observedBlocks = @()
-
-        foreach ($token in $functionTokens) {
-            if ($token.Kind -in 'If', 'ElseIf', 'Catch') {
-                $cyclomaticComplexity++
-            }
-            elseif ($token.Kind -in 'While', 'For', 'Switch') {
-                $cyclomaticComplexity++
-                $observedBlocks += $token
-            }
-            elseif ($token.Kind -in 'EndWhile', 'EndFor', 'EndSwitch') {
-                $observedBlocks = $observedBlocks | Where-Object { $_ -ne $token }
-            }
+        if ($functions.Count -eq 0) {
+            Write-Information "-- No functions found for cyclomatic complexity analysis." -InformationAction Continue
+            return $false
         }
-        Write-Output "$($function.Name) : $cyclomaticComplexity"
+
+        foreach ($function in $functions) {
+            $cyclomaticComplexity = 1
+            $functionTokens = $tokens | Where-Object { $_.Extent.StartOffset -ge $function.Extent.StartOffset -and $_.Extent.EndOffset -le $function.Extent.EndOffset }
+            $observedBlocks = @()
+
+            foreach ($token in $functionTokens) {
+                if ($token.Kind -in 'If', 'ElseIf', 'Catch') {
+                    $cyclomaticComplexity++
+                }
+                elseif ($token.Kind -in 'While', 'For', 'Switch') {
+                    $cyclomaticComplexity++
+                    $observedBlocks += $token
+                }
+                elseif ($token.Kind -in 'EndWhile', 'EndFor', 'EndSwitch') {
+                    $observedBlocks = $observedBlocks | Where-Object { $_ -ne $token }
+                }
+            }
+            Write-Output "$($function.Name) : $cyclomaticComplexity"
+        }
+    }    
+    catch [System.Exception] {
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
     }
+
 }
 
 function Get-FeedbackPrompt {
@@ -822,20 +850,26 @@ function Set-FeedbackAndGenerateResponse {
         [string]$tipAmount,
         [PSCustomObject] $GlobalState
     )
+    try {
+        # Generate the feedback prompt using the provided description and code
+        $feedbackPrompt = Get-FeedbackPrompt -description $GlobalState.UserInput -code $GlobalState.LastPSDevCode
 
-    # Generate the feedback prompt using the provided description and code
-    $feedbackPrompt = Get-FeedbackPrompt -description $GlobalState.UserInput -code $GlobalState.LastPSDevCode
+        # Get feedback from the role object
+        $feedback = $Reviewer.Feedback($Recipient, $feedbackPrompt)
 
-    # Get feedback from the role object
-    $feedback = $Reviewer.Feedback($Recipient, $feedbackPrompt)
+        # Add the feedback to global responses
+        Add-ToGlobalResponses -GlobalState $GlobalState -response $feedback
 
-    # Add the feedback to global responses
-    Add-ToGlobalResponses -GlobalState $GlobalState -response $feedback
+        # Process the feedback and generate a response
+        $response = $Recipient.ProcessInput("Based on $($Reviewer.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($Reviewer.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n``````powershell`n$($GlobalState.LastPSDevCode)`n```````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$tipAmount for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
 
-    # Process the feedback and generate a response
-    $response = $Recipient.ProcessInput("Based on $($Reviewer.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($Reviewer.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n``````powershell`n$($GlobalState.LastPSDevCode)`n```````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$tipAmount for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
+        return $response
+    }    
+    catch [System.Exception] {
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+    }
 
-    return $response
 }
 
 function Update-GlobalStateWithResponse {
@@ -861,14 +895,9 @@ function Update-GlobalStateWithResponse {
         # Output the saved file path for verbose logging
         write-verbose $_savedFile
     }
-    catch [System.IO.IOException] {
-        Write-Error "!! An I/O error occurred: $_"
-    }
-    catch [System.UnauthorizedAccessException] {
-        Write-Error "!! Unauthorized access: $_"
-    }
     catch [System.Exception] {
-        Write-Error "!! An unexpected error occurred: $_"
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
     }
 }
 
@@ -880,22 +909,25 @@ function Invoke-ProcessFeedbackAndResponse {
         [string]$tipAmount,
         [PSCustomObject] $GlobalState
     )
+    try {
+        # Measure the time taken to process feedback and generate a response
+        $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
-    # Measure the time taken to process feedback and generate a response
-    $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+        # Process feedback and generate a response
+        $response = Set-FeedbackAndGenerateResponse -Reviewer $Reviewer -Recipient $Recipient -tipAmount $tipAmount -GlobalState $GlobalState
 
-    # Process feedback and generate a response
-    $response = Set-FeedbackAndGenerateResponse -Reviewer $Reviewer -Recipient $Recipient -tipAmount $tipAmount -GlobalState $GlobalState
+        if ($response) {
+            # Update the global state with the new response
+            Update-GlobalStateWithResponse -response $response -GlobalState $GlobalState
+        }
 
-
-    if ($response) {
-        # Update the global state with the new response
-        Update-GlobalStateWithResponse -response $response -GlobalState $GlobalState
+        $stopwatch.Stop()
+        Write-Information "++ Time taken to process feedback and generate response: $($stopwatch.Elapsed.TotalSeconds) seconds" -InformationAction Continue
+    }    
+    catch [System.Exception] {
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
     }
-
-    $stopwatch.Stop()
-    Write-Information "++ Time taken to process feedback and generate response: $($stopwatch.Elapsed.TotalSeconds) seconds" -InformationAction Continue
-
 }
 
 # Refactor Save-AndUpdateCode to use the new function
@@ -904,9 +936,14 @@ function Save-AndUpdateCode {
         [string] $response,
         [PSCustomObject] $GlobalState
     )
-
-    # Update the global state with the new response
-    Update-GlobalStateWithResponse -response $response -GlobalState $GlobalState
+    try {
+        # Update the global state with the new response
+        Update-GlobalStateWithResponse -response $response -GlobalState $GlobalState
+    }    
+    catch [System.Exception] {
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+    }
 }
 
 function Save-AndUpdateCode {
@@ -932,18 +969,22 @@ function Save-AndUpdateCode {
         [string] $response, # The updated code to be saved
         [PSCustomObject] $GlobalState
     )
+    try {
+        # Save the response to a versioned file
+        $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $response -OutputFilePath $(join-path $GlobalState.teamDiscussionDataFolder "TheCode_v$($GlobalState.fileVersion).ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
+    
+        # Update the last code content with the saved file content
+        $GlobalState.lastPSDevCode = get-content -Path $_savedFile -raw 
+        # Increment the file version number
+        $GlobalState.fileVersion += 1
+        # Log the saved file path for verbose output
+        write-verbose $_savedFile
+    }    
+    catch [System.Exception] {
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+    }
 
-    # Save the response to a versioned file
-    $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $response -OutputFilePath $(join-path $GlobalState.teamDiscussionDataFolder "TheCode_v$($GlobalState.fileVersion).ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
-    
-    # Update the last code content with the saved file content
-    $GlobalState.lastPSDevCode = get-content -Path $_savedFile -raw 
-    
-    # Increment the file version number
-    $GlobalState.fileVersion += 1
-    
-    # Log the saved file path for verbose output
-    write-verbose $_savedFile
 }
 
 function Invoke-AnalyzeCodeWithPSScriptAnalyzer {
@@ -1000,49 +1041,48 @@ function Invoke-AnalyzeCodeWithPSScriptAnalyzer {
         if ($issues) {
             Write-Output ($issues | Select-Object line, message | Format-Table -AutoSize -Wrap)
         }
-    }
-    catch {
-        # Handle any errors that occur during analysis
-        Write-Error "!! An error occurred while PSScriptAnalyzer: $_"
-        return
-    }
-
-    # If issues were found, process them
-    if ($issues) {
-        foreach ($issue in $issues) {
-            $issueText += $issue.message + " (line: $($issue.Line); rule: $($issue.Rulename))`n"
-        }
-        
-        # Create a prompt message to address the issues found
-        $promptMessage = "You must address issues found in PSScriptAnalyzer report."
-        $promptMessage += "`n`nPSScriptAnalyzer report, issues:`n``````text`n$issueText`n```````n`n"
-        $promptMessage += "The code:`n``````powershell`n$($GlobalState.lastPSDevCode)`n```````n`nShow the new version of the code where issues are solved."
-        
-        # Reset issues and issueText variables
-        $issues = ""
-        $issueText = ""
-        
-        # Process the input with the PowerShell developer
-        $powerShellDeveloperResponce = $role.ProcessInput($promptMessage)
-        
-        if ($powerShellDeveloperResponce) {
-            # Update the global response with the new response
-            $GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
-            Add-ToGlobalResponses $GlobalState $powerShellDeveloperResponce
-            
-            # Save the new version of the code to a file
-            $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(Join-Path $GlobalState.TeamDiscussionDataFolder "TheCode_v$($GlobalState.FileVersion).ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
-            Write-Verbose $_savedFile
-            
-            # Update the last code and file version
-            $GlobalState.lastPSDevCode = Get-Content -Path $_savedFile -Raw 
-            $GlobalState.FileVersion += 1
-            Write-Verbose $GlobalState.lastPSDevCode
-        }
-    } 
     
-    # Log the last PowerShell developer code
-    Write-Verbose $GlobalState.lastPSDevCode
+        # If issues were found, process them
+        if ($issues) {
+            foreach ($issue in $issues) {
+                $issueText += $issue.message + " (line: $($issue.Line); rule: $($issue.Rulename))`n"
+            }
+        
+            # Create a prompt message to address the issues found
+            $promptMessage = "You must address issues found in PSScriptAnalyzer report."
+            $promptMessage += "`n`nPSScriptAnalyzer report, issues:`n``````text`n$issueText`n```````n`n"
+            $promptMessage += "The code:`n``````powershell`n$($GlobalState.lastPSDevCode)`n```````n`nShow the new version of the code where issues are solved."
+        
+            # Reset issues and issueText variables
+            $issues = ""
+            $issueText = ""
+        
+            # Process the input with the PowerShell developer
+            $powerShellDeveloperResponce = $role.ProcessInput($promptMessage)
+        
+            if ($powerShellDeveloperResponce) {
+                # Update the global response with the new response
+                $GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+                Add-ToGlobalResponses $GlobalState $powerShellDeveloperResponce
+            
+                # Save the new version of the code to a file
+                $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(Join-Path $GlobalState.TeamDiscussionDataFolder "TheCode_v$($GlobalState.FileVersion).ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
+                Write-Verbose $_savedFile
+            
+                # Update the last code and file version
+                $GlobalState.lastPSDevCode = Get-Content -Path $_savedFile -Raw 
+                $GlobalState.FileVersion += 1
+                Write-Verbose $GlobalState.lastPSDevCode
+            }
+        } 
+    
+        # Log the last PowerShell developer code
+        Write-Verbose $GlobalState.lastPSDevCode
+    }    
+    catch [System.Exception] {
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+    }
 }
 
 function Save-ProjectState {
@@ -1050,38 +1090,94 @@ function Save-ProjectState {
         [string]$FilePath,
         [PSCustomObject] $GlobalState
     )
-    $projectState = @{
-        LastPSDevCode            = $GlobalState.lastPSDevCode
-        FileVersion              = $GlobalState.FileVersion
-        GlobalPSDevResponse      = $GlobalState.GlobalPSDevResponse
-        GlobalResponse           = $GlobalState.GlobalResponse
-        TeamDiscussionDataFolder = $GlobalState.TeamDiscussionDataFolder
-        UserInput                = $GlobalState.userInput
-        OrgUserInput             = $GlobalState.OrgUserInput
-        LogFolder                = $GlobalState.LogFolder
+    try {
+        $projectState = @{
+            LastPSDevCode            = $GlobalState.lastPSDevCode
+            FileVersion              = $GlobalState.FileVersion
+            GlobalPSDevResponse      = $GlobalState.GlobalPSDevResponse
+            GlobalResponse           = $GlobalState.GlobalResponse
+            TeamDiscussionDataFolder = $GlobalState.TeamDiscussionDataFolder
+            UserInput                = $GlobalState.userInput
+            OrgUserInput             = $GlobalState.OrgUserInput
+            LogFolder                = $GlobalState.LogFolder
+        }
+        $projectState | Export-Clixml -Path $FilePath
+    }    
+    catch [System.Exception] {
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
     }
-    $projectState | Export-Clixml -Path $FilePath
 }
 
 function Get-ProjectState {
     param (
-        [string]$FilePath,
-        [PSCustomObject]$GlobalState
+        [string]$FilePath
+        #[PSCustomObject]$GlobalState
     )
-    if (Test-Path -Path $FilePath) {
-        $projectState = Import-Clixml -Path $FilePath
-        $GlobalState.LastPSDevCode = $projectState.LastPSDevCode
-        $GlobalState.FileVersion = $projectState.FileVersion
-        $GlobalState.GlobalPSDevResponse = $projectState.GlobalPSDevResponse
-        $GlobalState.TeamDiscussionDataFolder = $projectState.TeamDiscussionDataFolder
-        $GlobalState.userInput = $projectState.UserInput
-        $GlobalState.GlobalResponse = $projectState.GlobalResponse
-        $GlobalState.OrgUserInput = $projectState.OrgUserInput
-        $GlobalState.LogFolder = $projectState.LogFolder
+    try {
+        if (Test-Path -Path $FilePath) {
+            $projectState = Import-Clixml -Path $FilePath
+            $GlobalState.LastPSDevCode = $projectState.LastPSDevCode
+            $GlobalState.FileVersion = $projectState.FileVersion
+            $GlobalState.GlobalPSDevResponse = $projectState.GlobalPSDevResponse
+            $GlobalState.TeamDiscussionDataFolder = $projectState.TeamDiscussionDataFolder
+            $GlobalState.userInput = $projectState.UserInput
+            $GlobalState.GlobalResponse = $projectState.GlobalResponse
+            $GlobalState.OrgUserInput = $projectState.OrgUserInput
+            $GlobalState.LogFolder = $projectState.LogFolder
+            return $GlobalState
+        }
+        else {
+            Write-Host "-- Project state file not found."
+        }
+    }    
+    catch [System.Exception] {
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
     }
-    else {
-        Write-Host "-- Project state file not found."
+}
+
+function Update-ErrorHandling {
+    param (
+        [string]$ErrorMessage,
+        [string]$ErrorContext,
+        [string]$LogFilePath
+    )
+    # Capture detailed error information
+    $errorDetails = @{
+        ErrorMessage = $ErrorMessage
+        ErrorContext = $ErrorContext
+        Timestamp    = Get-Date
+        ScriptName   = $MyInvocation.MyCommand.Name
+        LineNumber   = $MyInvocation.ScriptLineNumber
+        StackTrace   = $Error[0].ScriptStackTrace
     }
+    # Log the error details
+    if ($LogFilePath) {
+        $errorDetails | Out-File -FilePath $LogFilePath -Append -Force
+    }
+    # Provide suggestions based on the error type
+    $suggestions = switch -Regex ($ErrorMessage) {
+        "PSScriptAnalyzer" {
+            "Ensure the PSScriptAnalyzer module is installed and up-to-date. Use 'Install-Module -Name PSScriptAnalyzer' or 'Update-Module -Name PSScriptAnalyzer'."
+        }
+        "Invoke-PSAOAIChatCompletion" {
+            "Check the PSAOAI module installation and the deployment chat environment variable. Ensure the API key and endpoint are correctly configured."
+        }
+        "UnauthorizedAccessException" {
+            "Check the file permissions and ensure you have the necessary access rights to the file or directory."
+        }
+        "IOException" {
+            "Ensure the file path is correct and the file is not being used by another process."
+        }
+        default {
+            "Refer to the error message and stack trace for more details. Consult the official documentation or seek help from the community."
+        }
+    }
+    # Display the error details and suggestions
+    Write-Error "Error: $ErrorMessage"
+    Write-Error "Context: $ErrorContext"
+    Write-Error "Suggestions: $suggestions"
 }
 #endregion Functions
 
@@ -1109,16 +1205,12 @@ else {
     Write-Warning "-- You need to install/update PSAOAI module version >= 0.2.1. Use: 'Install-Module PSAOAI' or 'Update-Module PSAOAI'"
     return
 }
-
-
 Show-Banner
 $scriptname = "AIPSTeam"
-Get-CheckForScriptUpdate -currentScriptVersion $AIPSTeamVersion -scriptName $scriptname
-
 if ($LoadProjectStatus) {
     # Load the project status from the specified file
     try {
-        Get-ProjectState -FilePath $LoadProjectStatus -State $GlobalState
+        $GlobalState = Get-ProjectState -FilePath $LoadProjectStatus
         Write-Information "++ Project state loaded successfully from $LoadProjectStatus" -InformationAction Continue
         Write-Verbose "`$GlobalState.TeamDiscussionDataFolder: $($GlobalState.TeamDiscussionDataFolder)"
         Write-Verbose "`$GlobalState.FileVersion: $($GlobalState.FileVersion)"
@@ -1128,9 +1220,9 @@ if ($LoadProjectStatus) {
         Write-Verbose "`$GlobalState.OrgUserInput: $($GlobalState.OrgUserInput)"
         Write-Verbose "`$GlobalState.UserInput: $($GlobalState.UserInput)"
         Write-Verbose "`$GlobalState.LogFolder: $($GlobalState.LogFolder)"
-    }
-    catch {
-        Write-Warning "!! Failed to load project state from ${LoadProjectStatus}: $_"
+    }    
+    catch [System.Exception] {
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "Load the project status"
     }
 }
 else {
@@ -1155,12 +1247,13 @@ else {
         }
     }
     Catch {
-        Write-Warning -Message "!! Failed to create discussion folder"
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "Create discussion folder" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
         return $false
     }
 }
 $DocumentationFullName = Join-Path $GlobalState.TeamDiscussionDataFolder "Documentation.txt"
 $ProjectfilePath = Join-Path $GlobalState.TeamDiscussionDataFolder "Project.xml"
+Get-CheckForScriptUpdate -currentScriptVersion $AIPSTeamVersion -scriptName $scriptname
 #endregion Setting Up
 
 #region ProjectTeam
@@ -1463,6 +1556,7 @@ if (-not $LoadProjectStatus) {
 
 # Define the menu prompt message
 $MenuPrompt = "{0} The previous version of the code has been shared below after the feedback block.`n`n````````text`n{1}`n`````````n`nHere is previous version of the code:`n`n``````powershell`n{2}`n```````n`nThink step by step. Make sure your answer is unbiased."
+$MenuPromptNoUserChanges = "{0} The previous version of the code has been shared below. The code:`n`n``````powershell`n{1}`n```````n`nThink step by step. Make sure your answer is unbiased."
 
 # Start a loop to keep the menu running until the user chooses to quit
 do {
@@ -1478,14 +1572,16 @@ do {
     Write-Host "6. Generate documentation"
     Write-Host "7. Show the code with research"
     Write-Host "8. Save Project State"
-    Write-Host "9. (Q)uit"
+    Write-Host "9. Code Refactoring Suggestions"
+    Write-Host "10. Security Audit"
+    Write-Host "11. (Q)uit"
 
     # Get the user's choice
     $userOption = Read-Host -Prompt "Enter your choice"
     Write-Output ""
 
     # Process the user's choice if it's not 'Q' or '9' (both of which mean 'quit')
-    if ($userOption -ne 'Q' -and $userOption -ne "9") {
+    if ($userOption -ne 'Q' -and $userOption -ne "11") {
         switch ($userOption) {
             '1' {
                 # Option 1: Suggest a new feature, enhancement, or change
@@ -1549,7 +1645,7 @@ do {
                 try {
                     # Call the function to check the code in 'TheCode.ps1' file
                     #$issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $(Export-AndWritePowerShellCodeBlocks -InputString $($powerShellDeveloper.GetLastMemory().Response) -StartDelimiter '```powershell' -EndDelimiter '```')
-                    $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $GlobalState.lastPSDevCode
+                    $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $GlobalState.lastPSDevCode 
                     if ($issues) {
                         write-output ($issues | Select-Object line, message | format-table -AutoSize -Wrap)
                     }
@@ -1690,6 +1786,62 @@ do {
                 }
                 
             }
+            '9' {
+                # Option 9: Code Refactoring Suggestions
+                Show-Header -HeaderText "Code Refactoring Suggestions"
+                $promptMessage = "Provide suggestions for refactoring the code to improve readability, maintainability, and performance."
+                $MenuPrompt_ = $MenuPromptNoUserChanges -f $promptMessage, $GlobalState.lastPSDevCode
+                $MenuPrompt_ += "`nShow only suggestions. No code"
+                $refactoringSuggestions = $powerShellDeveloper.ProcessInput($MenuPrompt_)
+                $GlobalState.GlobalPSDevResponse += $refactoringSuggestions
+                Add-ToGlobalResponses $GlobalState $refactoringSuggestions
+
+                # Display the refactoring suggestions to the user
+                Show-Header -HeaderText "Refactoring Suggestions Report"
+                Write-Output $refactoringSuggestions
+
+                # Ask the user if they want to deploy the refactoring suggestions
+                $deployChoice = Read-Host -Prompt "Do you want to deploy these refactoring suggestions? (Y/N)"
+                if ($deployChoice -eq 'Y' -or $deployChoice -eq 'y') {
+                    $deployPromptMessage = "Deploy the refactoring suggestions into the code. Show the next version of the code."
+                    $DeployMenuPrompt_ = $MenuPrompt -f $deployPromptMessage, $refactoringSuggestions, $GlobalState.lastPSDevCode
+                    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($DeployMenuPrompt_)
+                    $GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+                    Add-ToGlobalResponses $GlobalState $powerShellDeveloperResponce
+                    Save-AndUpdateCode -response $powerShellDeveloperResponce -GlobalState $GlobalState
+                }
+                else {
+                    Write-Output "Refactoring suggestions were not deployed."
+                }
+            }
+            '10' {
+                # Option 10: Security Audit
+                Show-Header -HeaderText "Security Audit"
+                $promptMessage = "Conduct a security audit of the code to identify potential vulnerabilities and ensure best security practices are followed. Show only security audit report."
+                $MenuPrompt_ = $MenuPromptNoUserChanges -f $promptMessage, $GlobalState.lastPSDevCode
+                $MenuPrompt_ += "`nShow only security audit report. No Code."
+                $powerShellDevelopersecurityAuditReport = $powerShellDeveloper.ProcessInput($MenuPrompt_)
+                $GlobalState.GlobalPSDevResponse += $powerShellDevelopersecurityAuditReport
+                Add-ToGlobalResponses $GlobalState $powerShellDevelopersecurityAuditReport
+
+                # Display the security audit report to the user
+                Show-Header -HeaderText "Security Audit Report"
+                Write-Output $powerShellDevelopersecurityAuditReport
+
+                # Ask the user if they want to deploy the security improvements
+                $deployChoice = Read-Host -Prompt "Do you want to deploy these security improvements? (Y/N)"
+                if ($deployChoice -eq 'Y' -or $deployChoice -eq 'y') {
+                    $deployPromptMessage = "Deploy the security improvements into the code. Show the next version of the code."
+                    $DeployMenuPrompt_ = $MenuPrompt -f $deployPromptMessage, $powerShellDevelopersecurityAuditReport, $GlobalState.lastPSDevCode
+                    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($DeployMenuPrompt_)
+                    $GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+                    Add-ToGlobalResponses $GlobalState $powerShellDeveloperResponce
+                    Save-AndUpdateCode -response $powerShellDeveloperResponce -GlobalState $GlobalState
+                }
+                else {
+                    Write-Output "Security improvements were not deployed."
+                }
+            }
             default {
                 # Handle invalid options
                 Write-Information "-- Invalid option. Please try again." -InformationAction Continue
@@ -1697,7 +1849,7 @@ do {
             }
         }
     }
-} while ($userOption -ne 'Q' -and $userOption -ne "9" ) # End the loop when the user chooses to quit
+} while ($userOption -ne 'Q' -and $userOption -ne "11" ) # End the loop when the user chooses to quit
 #endregion Menu
 
 #region PM Project report
@@ -1742,5 +1894,10 @@ else {
 }
 #endregion Final code
 Save-ProjectState -FilePath $ProjectfilePath -GlobalState $GlobalState
+if ($ProjectfilePath) {
+    Write-Host "`n`nYour progress on Project has been saved!`n`n"
+    Write-Host "You can resume working on this project at any time by loading the saved state. Just run:`nAIPSTeam.ps1 -LoadProjectStatus `"$ProjectfilePath`"`n`n"
+}
+
 Write-Host "Exiting..."
 #endregion Main
