@@ -1,11 +1,12 @@
 <#PSScriptInfo
-.VERSION 1.6.1
+.VERSION 1.6.2
 .GUID f0f4316d-f106-43b5-936d-0dd93a49be6b
 .AUTHOR voytas75
 .TAGS ai,psaoai,llm,project,team,gpt
 .PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam/README.md
 .EXTERNALMODULEDEPENDENCIES PSAOAI, PSScriptAnalyzer
 .RELEASENOTES
+1.6.2: fix double feedback display. 
 1.6.1: fix stream in feedback. 
 1.6.0: minor fixes, enhanced error reporting, added error handling, new menu options, and refactored functions.
 1.5.0: minor fixes, modularize PSScriptAnalyzer logic, load, save project status, State Management Object, refactoring.
@@ -72,7 +73,7 @@ PS> "A PowerShell project to monitor CPU usage and display dynamic graph." | .\A
 This command runs the script without streaming output live (-Stream $false) and specifies custom user input about monitoring CPU usage instead of RAM, displaying it through dynamic graphing methods rather than static color blocks.
 
 .NOTES 
-Version: 1.6.1
+Version: 1.6.2
 Author: voytas75
 Creation Date: 05.2024
 Purpose/Change: Initial release for emulating teamwork within PowerShell scripting context, rest in PSScriptInfo Releasenotes.
@@ -110,7 +111,7 @@ param(
     [int] $MaxTokens = 20480
 
 )
-$AIPSTeamVersion = "1.6.1"
+$AIPSTeamVersion = "1.6.2"
 
 #region ProjectTeamClass
 <#
@@ -1869,9 +1870,7 @@ do {
 
                 # Display the refactoring suggestions to the user
                 #Show-Header -HeaderText "Refactoring Suggestions Report"
-                if (-not $Stream) {
-                    Write-Output $refactoringSuggestions
-                }
+                #Write-Output $refactoringSuggestions
 
                 # Ask the user if they want to deploy the refactoring suggestions
                 $deployChoice = Read-Host -Prompt "Do you want to deploy these refactoring suggestions? (Y/N)"
