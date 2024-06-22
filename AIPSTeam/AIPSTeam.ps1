@@ -6,6 +6,7 @@
 .PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam/README.md
 .EXTERNALMODULEDEPENDENCIES PSAOAI, PSScriptAnalyzer
 .RELEASENOTES
+1.7.0: 
 1.6.2: fix double feedback display. 
 1.6.1: fix stream in feedback. 
 1.6.0: minor fixes, enhanced error reporting, added error handling, new menu options, and refactored functions.
