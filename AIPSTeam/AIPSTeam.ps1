@@ -231,7 +231,7 @@ class ProjectTeam {
         try {
             Write-verbose $script:MaxTokens
 
-            Write-Host $userinput -ForegroundColor Cyan
+            #Write-Host $userinput -ForegroundColor Cyan
             # Use the user-provided function to get the response
             #$response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $userinput -Temperature $this.Temperature -TopP $this.TopP -MaxTokens $script:MaxTokens
             $response = Invoke-LLMChatCompletion -Provider $this.LLMProvider -SystemPrompt $this.Prompt -UserPrompt $userinput -Temperature $this.Temperature -TopP $this.TopP -MaxTokens $script:MaxTokens -Stream $script:Stream -LogFolder $script:GlobalState.TeamDiscussionDataFolder -DeploymentChat $script:DeploymentChat -ollamaModel $script:ollamaModel
@@ -929,7 +929,7 @@ function Get-FeedbackPrompt {
         [string]$code
     )
     return @"
-Review the following responses:
+Your task is write review of the Powershell code.
 
 Description and objectives:
 ````````text
@@ -941,7 +941,7 @@ The code:
 $code
 ``````
 
-Think step by step, make sure your answer is unbiased, show the review. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks. Provide your suggestions for improvement as feedback to Powershell Developer. Generate a list of verification questions that could help to self-analyze. I will tip you `$100 when your suggestions are consistent with the project description and objectives. 
+Show paragraph style review with your suggestions for improvement of the code to Powershell Developer. Think step by step, make sure your answer is unbiased. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks. Possibly join a list of verification questions that could help to analyze. 
 "@
 }
 
@@ -959,9 +959,13 @@ function Set-FeedbackAndGenerateResponse {
         [PSCustomObject] $GlobalState
     )
     try {
+
         # Generate the feedback prompt using the provided description and code
         $feedbackPrompt = Get-FeedbackPrompt -description $GlobalState.UserInput -code $GlobalState.LastPSDevCode
 
+        if ($tipAmount) {
+            $feedbackPrompt += "`n`nNote: There is `$$tipAmount tip for this task."
+        }
         # Get feedback from the role object
         $feedback = $Reviewer.Feedback($Recipient, $feedbackPrompt)
 
@@ -970,9 +974,10 @@ function Set-FeedbackAndGenerateResponse {
 
         # Process the feedback and generate a response
         if ($tipAmount) {
-            $response = $Recipient.ProcessInput("Based on $($Reviewer.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($Reviewer.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n``````powershell`n$($GlobalState.LastPSDevCode)`n```````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$$tipAmount for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
-        } else {
-            $response = $Recipient.ProcessInput("Based on $($Reviewer.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($Reviewer.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n``````powershell`n$($GlobalState.LastPSDevCode)`n```````n`nThink step by step. Make sure your answer is unbiased. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
+            $response = $Recipient.ProcessInput("Modify Powershell code with suggested improvements and optimizations based on $($Reviewer.Name) review. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($Reviewer.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n``````powershell`n$($GlobalState.LastPSDevCode)`n```````n`nShow the new version of PowerShell code. Think step by step. Make sure your answer is unbiased. I will tip you `$$tipAmount for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
+        }
+        else {
+            $response = $Recipient.ProcessInput("Modify Powershell code with suggested improvements and optimizations based on $($Reviewer.Name) review. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($Reviewer.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n``````powershell`n$($GlobalState.LastPSDevCode)`n```````n`nShow the new version of PowerShell code. Think step by step. Make sure your answer is unbiased. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
         }
 
         return $response
@@ -1038,7 +1043,8 @@ function Invoke-ProcessFeedbackAndResponse {
         # Process feedback and generate a response
         if ($null -eq $tipAmount) {
             $response = Set-FeedbackAndGenerateResponse -Reviewer $Reviewer -Recipient $Recipient -GlobalState $GlobalState
-        } else {
+        }
+        else {
             $response = Set-FeedbackAndGenerateResponse -Reviewer $Reviewer -Recipient $Recipient -tipAmount $tipAmount -GlobalState $GlobalState
         }
 
@@ -1333,10 +1339,14 @@ function Invoke-LLMChatCompletion {
         [string]$ollamaModel
     )
 
+    Write-Host "SystemPrompt: $SystemPrompt" -ForegroundColor DarkMagenta
+
+    Write-Host "UserPrompt: $UserPrompt" -ForegroundColor DarkYellow
+
     switch ($Provider) {
         "ollama" {
             if ($Stream) {
-                Write-Host "-- Streaming is not implemented yet. Displaying information instead."
+                Write-Information "-- Streaming is not implemented yet. Displaying information instead." -InformationAction Continue
                 $script:stream = $false
                 $stream = $false
             } 
@@ -1398,8 +1408,22 @@ function Invoke-AIPSTeamOllamaCompletion {
         stream  = $stream
     } | ConvertTo-Json
     Write-Information "++ Ollama ($($script:ollamamodel)) is working..." -InformationAction Continue
+    $response = Invoke-WebRequest -Method POST -Body $ollamajson -uri "http://localhost:11434/api/generate"
+    # Log the prompt and response to the log file
+    $logEntry = @{
+        Timestamp    = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+        SystemPrompt = $SystemPrompt
+        UserPrompt   = $UserPrompt
+        Response     = ($response).Content
+    } | ConvertTo-Json
+    
+    $this.Log.Add($logEntry)
+    # Log the summary
+    $this.AddLogEntry("SystemPrompt:`n$SystemPrompt")
+    $this.AddLogEntry("UserPrompt:`n$UserPrompt")
+    $this.AddLogEntry("Response:`n$Response")
 
-    return (Invoke-WebRequest -Method POST -Body $ollamajson -uri "http://localhost:11434/api/generate").Content | convertfrom-json | Select-Object -ExpandProperty response
+    return ($response).Content | convertfrom-json | Select-Object -ExpandProperty response
 }
 #endregion Functions
 
@@ -1493,8 +1517,6 @@ Provide a detailed feasibility report covering all the following aspects:
 - Point out potential challenges and limitations.
 
 Additional information: PowerShell is a task automation and configuration management platform from Microsoft, consisting of a command-line shell and a scripting language. It is widely used to manage and automate tasks in various Microsoft and third-party environments.
-
-Think step by step. Generate a list of self-assessment questions that can help with self-analysis. Make sure your answer is unbiased.
 "@ -f $requirementsAnalystRole,
     0.6,
     0.9,
@@ -1528,7 +1550,6 @@ You act as {0}. Your task is provide specialized insights and recommendations ba
 5. Reviewing Program Design:
     - Review the program's design to identify any domain-specific constraints and requirements.
     - Provide feedback and recommendations to address these constraints and ensure the design aligns with domain best practices.
-Generate a list of verification questions that could help to analyze. Think step by step. Make sure your answer is unbiased.
 "@ -f $domainExpertRole,
     0.65,
     0.9,
@@ -1557,7 +1578,6 @@ Design includes:
 - Documenting security considerations and ensuring the architecture adheres to best security practices.
 - Creating a detailed architectural design document.
 - Generate a list of verification questions that could help to analyze. 
-Think step by step. Make sure your answer is unbiased.
 "@ -f $systemArchitectRole,
     0.7,
     0.85,
@@ -1614,8 +1634,6 @@ Instructions:
 
 ###Background PowerShell Information###
 PowerShell scripts can interact with a wide range of systems and applications, making it a versatile tool for system administrators and developers. Ensure your code adheres to PowerShell best practices for readability, maintainability, and performance.
-
-Generate a list of verification questions that could help to analyze. Think step by step. Make sure your answer is unbiased. Show the new version of the Powershell code. Everything except the code must be commented or in comment block. Show the powershell code.
 "@ -f $powerShellDeveloperRole,
     0.65,
     0.8,
@@ -1751,7 +1769,7 @@ if (-not $NOLog) {
 
 if (-not $LoadProjectStatus) {
     #region PM-PSDev
-    $examplePScode =@'
+    $examplePScode = @'
 ###Example of PowerShell script block###
 
 ```powershell
@@ -1761,15 +1779,15 @@ powershell_code_here
 ###Background PowerShell Information###
 PowerShell scripts can interact with a wide range of systems and applications, making it a versatile tool for system administrators and developers. Ensure your code adheres to PowerShell best practices for readability, maintainability, and performance.
 
-Show the powershell code. Everything except the code must be commented or in comment block. Optionaly generate a list of verification questions that could help to analyze. Think step by step. Make sure your answer is unbiased. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.
+Show the powershell code based on review. Everything except the code must be commented or in comment block. Optionally generate a list of verification questions that could help to analyze. Think step by step. Make sure your answer is unbiased. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.
 '@
 
     $userInputOryginal = $userInput
     $GlobalState.OrgUserInput = $userInputOryginal
-    $projectManagerFeedback = $projectManager.Feedback($powerShellDeveloper, "Based on user input you must create detailed and concise PowerShell project name, description, objectives, deliverables, additional considerations, and success criteria only." + ($NOTips.IsPresent ? "" : " User will tip you `$100 for including all the elements provided by the user.") + "`n`n````````text`n" + $userInputOryginal + "`n`````````n`n")
+    $projectManagerFeedback = $projectManager.Feedback($powerShellDeveloper, "Write detailed and concise PowerShell project name, description, objectives, deliverables, additional considerations, and success criteria based on user input." + ($NOTips.IsPresent ? "" : " User will tip you `$100 for including all the elements provided by the user.") + "`n`n###User input###`n`n````````text`n" + $userInputOryginal + "`n`````````n`n")
     Add-ToGlobalResponses $GlobalState $projectManagerFeedback
     $GlobalState.userInput = $projectManagerFeedback
-    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($projectManager.Name) review, you must create the first version of the Powershell code.`n`n$($projectManager.Name) review:`n`n````````text`n$($GlobalState.userInput)`n`````````n`n" + ($NOTips.IsPresent ? "`n`n" : " I will tip you `$50 for showing a Powershell code.`n`n") + $examplePScode)
+    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("You must write the first version of the Powershell code based on $($projectManager.Name) review.`n`n$($projectManager.Name) review:`n`n````````text`n$($GlobalState.userInput)`n`````````n`n" + ($NOTips.IsPresent ? "`n" : " I will tip you `$50 for showing a Powershell code.`n`n") + $examplePScode)
 
     #$GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
     Add-ToGlobalPSDevResponses $GlobalState $powerShellDeveloperResponce
@@ -2136,7 +2154,7 @@ if (-not $NOLog) {
     #Export-AndWritePowerShellCodeBlocks -InputString $(get-content $(join-path $GlobalState.TeamDiscussionDataFolder "TheCodeF.log") -raw) -OutputFilePath $(join-path $GlobalState.TeamDiscussionDataFolder "TheCode.ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
     if (Test-Path -Path $TheFinalCodeFullName) {
         # Call the function to check the code in 'TheCode.ps1' file
-        Write-Information "The final code was exported to $TheFinalCodeFullName" -InformationAction Continue
+        Write-Information "++ The final code was exported to $TheFinalCodeFullName" -InformationAction Continue
         $issues = Invoke-CodeWithPSScriptAnalyzer -FilePath $TheFinalCodeFullName
         if ($issues) {
             write-output ($issues | Select-Object line, message | format-table -AutoSize -Wrap)
@@ -2159,8 +2177,8 @@ else {
 #endregion Final code
 Save-ProjectState -FilePath $ProjectfilePath -GlobalState $GlobalState
 if ($ProjectfilePath) {
-    Write-Host "`n`nYour progress on Project has been saved!`n`n"
-    Write-Host "You can resume working on this project at any time by loading the saved state. Just run:`nAIPSTeam.ps1 -LoadProjectStatus `"$ProjectfilePath`"`n`n"
+    Write-Host "`n`n++ Your progress on Project has been saved!`n`n"
+    Write-Host "++ You can resume working on this project at any time by loading the saved state. Just run:`nAIPSTeam.ps1 -LoadProjectStatus `"$ProjectfilePath`"`n`n"
 }
 
 Write-Host "Exiting..."
