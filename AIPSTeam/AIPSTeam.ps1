@@ -1779,15 +1779,42 @@ powershell_code_here
 ###Background PowerShell Information###
 PowerShell scripts can interact with a wide range of systems and applications, making it a versatile tool for system administrators and developers. Ensure your code adheres to PowerShell best practices for readability, maintainability, and performance.
 
-Show the powershell code based on review. Everything except the code must be commented or in comment block. Optionally generate a list of verification questions that could help to analyze. Think step by step. Make sure your answer is unbiased. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.
+Write the powershell code based on review. Everything except the code must be commented or in comment block. Optionally generate a list of verification questions that could help to analyze. Think step by step. Make sure your answer is unbiased. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.
 '@
 
     $userInputOryginal = $userInput
     $GlobalState.OrgUserInput = $userInputOryginal
-    $projectManagerFeedback = $projectManager.Feedback($powerShellDeveloper, "Write detailed and concise PowerShell project name, description, objectives, deliverables, additional considerations, and success criteria based on user input." + ($NOTips.IsPresent ? "" : " User will tip you `$100 for including all the elements provided by the user.") + "`n`n###User input###`n`n````````text`n" + $userInputOryginal + "`n`````````n`n")
+    $projectManagerPrompt = @"
+Write detailed and concise PowerShell project name, description, objectives, deliverables, additional considerations, and success criteria based on user input.
+
+###User input###
+
+````````text
+$userInputOryginal
+````````
+"@
+    if (-not $NOTips) {
+        $projectManagerPrompt += "`n`nNote: There is `$50 tip for this task."
+    }
+    $projectManagerFeedback = $projectManager.Feedback($powerShellDeveloper, $projectManagerPrompt)
     Add-ToGlobalResponses $GlobalState $projectManagerFeedback
     $GlobalState.userInput = $projectManagerFeedback
-    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("You must write the first version of the Powershell code based on $($projectManager.Name) review.`n`n$($projectManager.Name) review:`n`n````````text`n$($GlobalState.userInput)`n`````````n`n" + ($NOTips.IsPresent ? "`n" : " I will tip you `$50 for showing a Powershell code.`n`n") + $examplePScode)
+    $powerShellDeveloperPrompt = @"
+Write the first version of the Powershell code based on $($projectManager.Name) review.
+
+$($projectManager.Name) review:
+
+````````text
+$($GlobalState.userInput)
+````````
+
+$examplePScode
+"@
+    if (-not $NOTips) {
+        $powerShellDeveloperPrompt += "`n`nNote: There is `$50 tip for this task."
+    }
+
+    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($powerShellDeveloperPrompt)
 
     #$GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
     Add-ToGlobalPSDevResponses $GlobalState $powerShellDeveloperResponce
@@ -1797,19 +1824,36 @@ Show the powershell code based on review. Everything except the code must be com
     
     #region RA-PSDev
     #Invoke-ProcessFeedbackAndResponse -role $requirementsAnalyst -description $GlobalState.userInput -code $lastPSDevCode -tipAmount 100 -globalResponse ([ref]$GlobalPSDevResponse) -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $GlobalState.TeamDiscussionDataFolder
-    Invoke-ProcessFeedbackAndResponse -reviewer $requirementsAnalyst -recipient $powerShellDeveloper -tipAmount 100 -GlobalState $GlobalState
+    if ($NOTips) {
+        Invoke-ProcessFeedbackAndResponse -reviewer $requirementsAnalyst -recipient $powerShellDeveloper -GlobalState $GlobalState
+    }else {
+        Invoke-ProcessFeedbackAndResponse -reviewer $requirementsAnalyst -recipient $powerShellDeveloper -GlobalState $GlobalState -tipAmount 100
+    }
     #endregion RA-PSDev
 
     #region SA-PSDev
-    Invoke-ProcessFeedbackAndResponse -reviewer $systemArchitect -recipient $powerShellDeveloper -tipAmount 150 -GlobalState $GlobalState
+    if ($NOTips) {
+        Invoke-ProcessFeedbackAndResponse -reviewer $systemArchitect -recipient $powerShellDeveloper -GlobalState $GlobalState
+    }else {
+        Invoke-ProcessFeedbackAndResponse -reviewer $systemArchitect -recipient $powerShellDeveloper -GlobalState $GlobalState -tipAmount 150
+    }
+
     #endregion SA-PSDev
 
     #region DE-PSDev
-    Invoke-ProcessFeedbackAndResponse -reviewer $domainExpert -recipient $powerShellDeveloper -tipAmount 200 -GlobalState $GlobalState
+    if ($NOTips) {
+        Invoke-ProcessFeedbackAndResponse -reviewer $domainExpert -recipient $powerShellDeveloper -GlobalState $GlobalState
+    }else {
+        Invoke-ProcessFeedbackAndResponse -reviewer $domainExpert -recipient $powerShellDeveloper -GlobalState $GlobalState -tipAmount 200
+    }
     #endregion DE-PSDev
 
     #region QAE-PSDev
-    Invoke-ProcessFeedbackAndResponse -reviewer $qaEngineer -recipient $powerShellDeveloper -tipAmount 300 -GlobalState $GlobalState
+    if ($NOTips) {
+        Invoke-ProcessFeedbackAndResponse -reviewer $qaEngineer -recipient $powerShellDeveloper -GlobalState $GlobalState
+    }else {
+        Invoke-ProcessFeedbackAndResponse -reviewer $qaEngineer -recipient $powerShellDeveloper -GlobalState $GlobalState -tipAmount 300
+    }
     #endregion QAE-PSDev
 
     #region PSScriptAnalyzer
