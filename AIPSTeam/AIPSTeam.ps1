@@ -1,12 +1,12 @@
 <#PSScriptInfo
-.VERSION 1.6.2
+.VERSION 2.0.1
 .GUID f0f4316d-f106-43b5-936d-0dd93a49be6b
 .AUTHOR voytas75
 .TAGS ai,psaoai,llm,project,team,gpt
 .PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam/README.md
 .EXTERNALMODULEDEPENDENCIES PSAOAI, PSScriptAnalyzer
 .RELEASENOTES
-1.7.0: 
+2.0.1: add abstract layer for LLM providers, fix update of lastPSDevCode, default no tips.
 1.6.2: fix double feedback display. 
 1.6.1: fix stream in feedback. 
 1.6.0: minor fixes, enhanced error reporting, added error handling, new menu options, and refactored functions.
@@ -74,7 +74,7 @@ PS> "A PowerShell project to monitor CPU usage and display dynamic graph." | .\A
 This command runs the script without streaming output live (-Stream $false) and specifies custom user input about monitoring CPU usage instead of RAM, displaying it through dynamic graphing methods rather than static color blocks.
 
 .NOTES 
-Version: 1.6.2
+Version: 2.0.1
 Author: voytas75
 Creation Date: 05.2024
 Purpose/Change: Initial release for emulating teamwork within PowerShell scripting context, rest in PSScriptInfo Releasenotes.
@@ -99,6 +99,9 @@ param(
     [Parameter(Mandatory = $false, HelpMessage = "Disables the logging functions when used.")]
     [switch] $NOLog,
 
+    [Parameter(Mandatory = $false, HelpMessage = "Disables tips.")]
+    [switch] $NOTips,
+
     [Parameter(Mandatory = $false, HelpMessage = "Specifies the folder where logs should be stored.")]
     [string] $LogFolder,
 
@@ -109,8 +112,11 @@ param(
     [string] $LoadProjectStatus,
 
     [Parameter(Mandatory = $false, HelpMessage = "Specifies the maximum number of tokens to generate in the response. Default is 20480.")]
-    [int] $MaxTokens = 20480
+    [int] $MaxTokens = 20480,
 
+    [Parameter(Mandatory = $false, HelpMessage = "Specifies the LLM provider to use (e.g., OpenAI, AzureOpenAI).")]
+    [ValidateSet("AzureOpenAI", "ollama", "LMStudio", "OpenAI" )]
+    [string]$LLMProvider = "AzureOpenAI"
 )
 $AIPSTeamVersion = "1.6.2"
 
@@ -151,6 +157,7 @@ class ProjectTeam {
     [string] $LogFilePath  # Path to the log file
     [array] $FeedbackTeam  # Team of experts providing feedback
     [PSCustomObject] $GlobalState
+    [string] $LLMProvider
     
     # Constructor for the ProjectTeam class
     ProjectTeam([string] $name, [string] $role, [string] $prompt, [double] $temperature, [double] $top_p, [scriptblock] $responseFunction, [PSCustomObject] $GlobalState) {
@@ -167,6 +174,7 @@ class ProjectTeam {
         $this.GlobalState = $GlobalState
         $this.LogFilePath = "$($GlobalState.TeamDiscussionDataFolder)\$name.log"
         $this.FeedbackTeam = @()
+        $this.LLMProvider = "AzureOpenAI"  # Default to AzureOpenAI, can be changed as needed
         
     }
 
@@ -222,8 +230,12 @@ class ProjectTeam {
         #write-Host $script:Stream
         try {
             Write-verbose $script:MaxTokens
+
+            Write-Host $userinput -ForegroundColor Cyan
             # Use the user-provided function to get the response
-            $response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $userinput -Temperature $this.Temperature -TopP $this.TopP -MaxTokens $script:MaxTokens
+            #$response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $userinput -Temperature $this.Temperature -TopP $this.TopP -MaxTokens $script:MaxTokens
+            $response = Invoke-LLMChatCompletion -Provider $this.LLMProvider -SystemPrompt $this.Prompt -UserPrompt $userinput -Temperature $this.Temperature -TopP $this.TopP -MaxTokens $script:MaxTokens -Stream $script:Stream -LogFolder $script:GlobalState.TeamDiscussionDataFolder -DeploymentChat $script:DeploymentChat -ollamaModel $script:ollamaModel
+ 
             if (-not $script:Stream) {
                 #write-host ($response | convertto-json -Depth 100)
                 Write-Host $response
@@ -282,7 +294,9 @@ class ProjectTeam {
             }
             
             # Use the user-provided function to get the response
-            $response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $Expertinput -Temperature $this.Temperature -TopP $this.TopP -MaxTokens $script:MaxTokens
+            #$response = & $this.ResponseFunction -SystemPrompt $this.Prompt -UserPrompt $Expertinput -Temperature $this.Temperature -TopP $this.TopP -MaxTokens $script:MaxTokens
+            $response = Invoke-LLMChatCompletion -Provider $this.LLMProvider -SystemPrompt $this.Prompt -UserPrompt $Expertinput -Temperature $this.Temperature -TopP $this.TopP -MaxTokens $script:MaxTokens -Stream $script:Stream -LogFolder $script:GlobalState.TeamDiscussionDataFolder -DeploymentChat $script:DeploymentChat -ollamaModel $script:ollamaModel
+
             if (-not $script:stream) {
                 write-Host $response
             }
@@ -359,7 +373,9 @@ class ProjectTeam {
 
         try {
             # Use the user-provided function to get the summary
-            $summary = & $this.ResponseFunction -SystemPrompt $fullPrompt -UserPrompt "" -Temperature 0.7 -TopP 0.9 -MaxTokens $script:MaxTokens
+            #$summary = & $this.ResponseFunction -SystemPrompt $fullPrompt -UserPrompt "" -Temperature 0.7 -TopP 0.9 -MaxTokens $script:MaxTokens
+            $summary = Invoke-LLMChatCompletion -Provider $this.LLMProvider -SystemPrompt $fullPrompt -UserPrompt "" -Temperature 0.7 -TopP 0.7 -MaxTokens $script:MaxTokens -Stream $script:Stream -LogFolder $script:GlobalState.TeamDiscussionDataFolder -DeploymentChat $script:DeploymentChat -ollamaModel $script:ollamaModel
+       
             # Log the summary
             $this.AddLogEntry("Generated summary:`n$summary")
             return $summary
@@ -481,6 +497,17 @@ function Add-ToGlobalResponses {
     $GlobalState.GlobalResponse += $response
 }
 
+function Add-ToGlobalPSDevResponses {
+    param (
+        [Parameter()]
+        [PSCustomObject] 
+        $GlobalState,
+    
+        $response
+    )
+    $GlobalState.GlobalPSDevResponse += $response
+}
+
 function New-FolderAtPath {
     param(
         [Parameter(Mandatory = $true)]
@@ -598,7 +625,9 @@ function Show-Banner {
 
 function Export-AndWritePowerShellCodeBlocks {
     param(
+        [Parameter(Mandatory = $true)]
         [string]$InputString,
+        [Parameter(Mandatory = $false)]
         [string]$OutputFilePath,
         [string]$StartDelimiter,
         [string]$EndDelimiter
@@ -846,8 +875,8 @@ function Get-CyclomaticComplexity {
 
         # Add function complexity to the array
         $complexityData += [PSCustomObject]@{
-            Name       = $function.Name
-            Complexity = $functionComplexity
+            Name        = $function.Name
+            Complexity  = $functionComplexity
             Description = Get-ComplexityDescription -complexity $functionComplexity
         }
     }
@@ -872,8 +901,8 @@ function Get-CyclomaticComplexity {
 
     # Add global complexity to the array
     $complexityData += [PSCustomObject]@{
-        Name       = "Global (code outside of functions)"
-        Complexity = $totalComplexity
+        Name        = "Global (code outside of functions)"
+        Complexity  = $totalComplexity
         Description = Get-ComplexityDescription -complexity $totalComplexity
     }
 
@@ -918,9 +947,15 @@ Think step by step, make sure your answer is unbiased, show the review. Use reli
 
 function Set-FeedbackAndGenerateResponse {
     param (
+        [Parameter(Mandatory = $true)]
         [object]$Reviewer,
+        
+        [Parameter(Mandatory = $true)]
         [object]$Recipient,
+
+        [Parameter(Mandatory = $false)]
         [string]$tipAmount,
+        
         [PSCustomObject] $GlobalState
     )
     try {
@@ -934,7 +969,11 @@ function Set-FeedbackAndGenerateResponse {
         Add-ToGlobalResponses -GlobalState $GlobalState -response $feedback
 
         # Process the feedback and generate a response
-        $response = $Recipient.ProcessInput("Based on $($Reviewer.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($Reviewer.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n``````powershell`n$($GlobalState.LastPSDevCode)`n```````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$tipAmount for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
+        if ($tipAmount) {
+            $response = $Recipient.ProcessInput("Based on $($Reviewer.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($Reviewer.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n``````powershell`n$($GlobalState.LastPSDevCode)`n```````n`nThink step by step. Make sure your answer is unbiased. I will tip you `$$tipAmount for the correct code. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
+        } else {
+            $response = $Recipient.ProcessInput("Based on $($Reviewer.Name) feedback, modify the code with suggested improvements and optimizations. The previous version of the code has been shared below after the feedback block.`n`n````````text`n" + $($Reviewer.GetLastMemory().Response) + "`n`````````n`nHere is previous version of the code:`n`n``````powershell`n$($GlobalState.LastPSDevCode)`n```````n`nThink step by step. Make sure your answer is unbiased. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.")
+        }
 
         return $response
     }    
@@ -942,7 +981,6 @@ function Set-FeedbackAndGenerateResponse {
         $functionName = $MyInvocation.MyCommand.Name
         Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
     }
-
 }
 
 function Update-GlobalStateWithResponse {
@@ -961,12 +999,17 @@ function Update-GlobalStateWithResponse {
         # Save the new version of the code to a file
         $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $response -OutputFilePath $(join-path $GlobalState.teamDiscussionDataFolder "TheCode_v$($GlobalState.fileVersion).ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
 
-        # Update the last code and file version
-        $GlobalState.lastPSDevCode = get-content -Path $_savedFile -raw
-        $GlobalState.fileVersion += 1
+        if ((Test-Path -Path $_savedFile) -and $_savedFile) {
+            # Update the last code and file version
+            $GlobalState.lastPSDevCode = Get-Content -Path $_savedFile -Raw
+            $GlobalState.fileVersion += 1
 
-        # Output the saved file path for verbose logging
-        write-verbose $_savedFile
+            # Output the saved file path for verbose logging
+            Write-Verbose $_savedFile
+        }
+        else {
+            Write-Warning "!! The code does not exist. Unable to update the last code and file version."
+        }
     }
     catch [System.Exception] {
         $functionName = $MyInvocation.MyCommand.Name
@@ -977,9 +1020,15 @@ function Update-GlobalStateWithResponse {
 # Refactor Invoke-ProcessFeedbackAndResponse to use the new functions
 function Invoke-ProcessFeedbackAndResponse {
     param (
+        [Parameter(Mandatory = $true)]
         [object]$Reviewer,
+        
+        [Parameter(Mandatory = $true)]
         [object]$Recipient,
+
+        [Parameter(Mandatory = $false)]
         [string]$tipAmount,
+
         [PSCustomObject] $GlobalState
     )
     try {
@@ -987,7 +1036,11 @@ function Invoke-ProcessFeedbackAndResponse {
         $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
         # Process feedback and generate a response
-        $response = Set-FeedbackAndGenerateResponse -Reviewer $Reviewer -Recipient $Recipient -tipAmount $tipAmount -GlobalState $GlobalState
+        if ($null -eq $tipAmount) {
+            $response = Set-FeedbackAndGenerateResponse -Reviewer $Reviewer -Recipient $Recipient -GlobalState $GlobalState
+        } else {
+            $response = Set-FeedbackAndGenerateResponse -Reviewer $Reviewer -Recipient $Recipient -tipAmount $tipAmount -GlobalState $GlobalState
+        }
 
         if ($response) {
             # Update the global state with the new response
@@ -1019,7 +1072,7 @@ function Save-AndUpdateCode {
     }
 }
 
-function Save-AndUpdateCode {
+function Save-AndUpdateCode2 {
     <#
     .SYNOPSIS
     Saves the updated code to a file and updates the last code and file version.
@@ -1046,13 +1099,18 @@ function Save-AndUpdateCode {
         # Save the response to a versioned file
         $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $response -OutputFilePath $(join-path $GlobalState.teamDiscussionDataFolder "TheCode_v$($GlobalState.fileVersion).ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
     
-        # Update the last code content with the saved file content
-        $GlobalState.lastPSDevCode = get-content -Path $_savedFile -raw 
-        # Increment the file version number
-        $GlobalState.fileVersion += 1
-        # Log the saved file path for verbose output
-        write-verbose $_savedFile
-    }    
+        if (Test-Path -Path $_savedFile) {
+            # Update the last code content with the saved file content
+            $GlobalState.lastPSDevCode = Get-Content -Path $_savedFile -Raw 
+            # Increment the file version number
+            $GlobalState.fileVersion += 1
+            # Log the saved file path for verbose output
+            Write-Verbose $_savedFile
+        }
+        else {
+            Write-Error "The file $_savedFile does not exist."
+        }
+    }
     catch [System.Exception] {
         $functionName = $MyInvocation.MyCommand.Name
         Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
@@ -1103,9 +1161,11 @@ function Invoke-AnalyzeCodeWithPSScriptAnalyzer {
         # Export the PowerShell code blocks from the input string
         $_exportedCode = Export-AndWritePowerShellCodeBlocks -InputString $InputString -StartDelimiter '```powershell' -EndDelimiter '```'
         
-        # Update the last PowerShell developer code with the exported code
-        $GlobalState.lastPSDevCode = $_exportedCode
-        Write-Verbose "_exportCode, lastPSDevCode: $($GlobalState.lastPSDevCode)"
+        # Update the last PowerShell developer code with the exported code when not false
+        if ($null -ne $_exportedCode -and $_exportedCode -ne $false) {
+            $GlobalState.lastPSDevCode = $_exportedCode
+            Write-Verbose "_exportCode, lastPSDevCode: $($GlobalState.lastPSDevCode)"
+        }
         
         # Analyze the code using PSScriptAnalyzer
         $issues = Invoke-CodeWithPSScriptAnalyzer -ScriptBlock $GlobalState.lastPSDevCode
@@ -1135,17 +1195,23 @@ function Invoke-AnalyzeCodeWithPSScriptAnalyzer {
         
             if ($powerShellDeveloperResponce) {
                 # Update the global response with the new response
-                $GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+                #$GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+                Add-ToGlobalPSDevResponses $GlobalState $powerShellDeveloperResponce
                 Add-ToGlobalResponses $GlobalState $powerShellDeveloperResponce
             
                 # Save the new version of the code to a file
                 $_savedFile = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -OutputFilePath $(Join-Path $GlobalState.TeamDiscussionDataFolder "TheCode_v$($GlobalState.FileVersion).ps1") -StartDelimiter '```powershell' -EndDelimiter '```'
                 Write-Verbose $_savedFile
             
-                # Update the last code and file version
-                $GlobalState.lastPSDevCode = Get-Content -Path $_savedFile -Raw 
-                $GlobalState.FileVersion += 1
-                Write-Verbose $GlobalState.lastPSDevCode
+                if ($null -ne $_savedFile -and $_savedFile -ne $false) {
+                    # Update the last code and file version
+                    $GlobalState.lastPSDevCode = Get-Content -Path $_savedFile -Raw 
+                    $GlobalState.FileVersion += 1
+                    Write-Verbose $GlobalState.lastPSDevCode
+                }
+                else {
+                    Write-Information "-- No valid file to update the last code and file version."
+                }
             }
         } 
     
@@ -1251,6 +1317,89 @@ function Update-ErrorHandling {
     Write-Error "Error: $ErrorMessage"
     Write-Error "Context: $ErrorContext"
     Write-Error "Suggestions: $suggestions"
+}
+
+function Invoke-LLMChatCompletion {
+    param (
+        [string]$Provider,
+        [string]$SystemPrompt,
+        [string]$UserPrompt,
+        [double]$Temperature,
+        [double]$TopP,
+        [int]$MaxTokens,
+        [bool]$Stream,
+        [string]$LogFolder,
+        [string]$DeploymentChat,
+        [string]$ollamaModel
+    )
+
+    switch ($Provider) {
+        "ollama" {
+            if ($Stream) {
+                Write-Host "-- Streaming is not implemented yet. Displaying information instead."
+                $script:stream = $false
+                $stream = $false
+            } 
+            return Invoke-AIPSTeamOllamaCompletion -SystemPrompt $SystemPrompt -UserPrompt $UserPrompt -Temperature $Temperature -TopP $TopP -ollamaModel $ollamamodel -Stream $Stream
+        }
+        "LMStudio" {
+            throw "-- Unsupported LLM provider: $Provider. This provider is not implemented yet."
+        }
+        "OpenAI" {
+            throw "-- Unsupported LLM provider: $Provider. This provider is not implemented yet."
+        }
+        "AzureOpenAI" {
+            return Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -Deployment $DeploymentChat -simpleresponse -OneTimeUserPrompt -Stream $script:Stream -LogFolder $GlobalState.TeamDiscussionDataFolder
+            return Invoke-AIPSTeamAzureOpenAIChatCompletion -SystemPrompt $SystemPrompt -UserPrompt $UserPrompt -Temperature $Temperature -TopP $TopP -MaxTokens $MaxTokens -Stream $Stream -LogFolder $LogFolder -DeploymentChat $DeploymentChat
+        }
+        default {
+            throw "!! Unsupported LLM provider: $Provider"
+        }
+    }
+}
+
+function Invoke-AIPSTeamAzureOpenAIChatCompletion {
+    param (
+        [string]$SystemPrompt,
+        [string]$UserPrompt,
+        [double]$Temperature,
+        [double]$TopP,
+        [int]$MaxTokens,
+        [bool]$Stream,
+        [string]$LogFolder,
+        [string]$DeploymentChat
+    )
+
+    # Call Azure OpenAI API
+    $response = Invoke-PSAOAIChatCompletion -SystemPrompt $SystemPrompt -usermessage $UserPrompt -Temperature $Temperature -TopP $TopP -MaxTokens $MaxTokens -Stream $Stream -LogFolder $LogFolder -Deployment $DeploymentChat
+    return $response
+}
+
+function Invoke-AIPSTeamOllamaCompletion {
+    param (
+        [string]$SystemPrompt,
+        [string]$UserPrompt,
+        [double]$Temperature,
+        [double]$TopP,
+        [string]$ollamaModel,
+        [bool]$Stream
+    )
+
+    $ollamaOptiona = [pscustomobject]@{
+        temperature = $Temperature
+        top_p       = $TopP
+    }
+
+    # Call Ollama
+    $ollamajson = [pscustomobject]@{
+        model   = $ollamaModel
+        prompt  = $systemprompt + "`n" + $Userprompt
+        options = $ollamaOptiona
+        stream  = $stream
+    } | ConvertTo-Json
+    Write-Information "++ Ollama ($($script:ollamamodel)) is working..." -InformationAction Continue
+
+    return (Invoke-WebRequest -Method POST -Body $ollamajson -uri "http://localhost:11434/api/generate").Content | convertfrom-json | Select-Object -ExpandProperty response
 }
 #endregion Functions
 
@@ -1425,7 +1574,7 @@ $powerShellDeveloper = [ProjectTeam]::new(
     "Developer",
     $powerShellDeveloperRole,
     @"
-You act as {0}. You are tasked with developing the PowerShell program based on the provided requirements and implementation strategy. Your goal is to write clean, efficient, and functional code that meets the specified objectives and best practices. 
+You act as {0}. You are tasked with developing the PowerShell script based on the provided requirements and implementation strategy. Your goal is to write clean, efficient, and functional powershell code that meets the specified objectives and best practices. 
 Instructions:
 1. Develop the PowerShell program according to the provided requirements and strategy:
     - Review the requirements and implementation strategy thoroughly before starting development.
@@ -1457,9 +1606,16 @@ Instructions:
     - Collaborate with team members to review each other's code for correctness, clarity, and adherence to best practices.
     - Provide constructive feedback and suggestions for improvement during code reviews.
 
-Background Information: PowerShell scripts can interact with a wide range of systems and applications, making it a versatile tool for system administrators and developers. Ensure your code adheres to PowerShell best practices for readability, maintainability, and performance.
+###Example of PowerShell script block###
 
-Generate a list of verification questions that could help to analyze. Think step by step. Make sure your answer is unbiased. Show the new version of the code.
+``````powershell
+<powershell_code>
+``````
+
+###Background PowerShell Information###
+PowerShell scripts can interact with a wide range of systems and applications, making it a versatile tool for system administrators and developers. Ensure your code adheres to PowerShell best practices for readability, maintainability, and performance.
+
+Generate a list of verification questions that could help to analyze. Think step by step. Make sure your answer is unbiased. Show the new version of the Powershell code. Everything except the code must be commented or in comment block. Show the powershell code.
 "@ -f $powerShellDeveloperRole,
     0.65,
     0.8,
@@ -1566,9 +1722,22 @@ $Team += $qaEngineer
 $Team += $documentationSpecialist
 $Team += $projectManager
 
+foreach ($TeamMember in $Team) {
+    $TeamMember.LLMProvider = $LLMProvider
+}
+
+if ($LLMProvider -eq "ollama" -and -not [string]::IsNullOrEmpty($env:OLLAMA_MODEL)) {
+    $script:ollamaModel = $env:OLLAMA_MODEL
+}
+elseif ($LLMProvider -eq "ollama") {
+    $script:ollamaModel = Read-Host "Please provide the LLM model for ollama"
+}
+
+
 if ($NOLog) {
     foreach ($TeamMember_ in $Team) {
         $TeamMember_.LogFilePath = ""
+        $TeamMember.LLMProvider = $LLMProvider
     }
 }
 
@@ -1576,22 +1745,38 @@ if (-not $NOLog) {
     foreach ($TeamMember in $Team) {
         $TeamMember.DisplayInfo(0) | Out-File -FilePath $TeamMember.LogFilePath -Append
     }
+    Write-Host "++ " -NoNewline
     Start-Transcript -Path (join-path $GlobalState.TeamDiscussionDataFolder "TRANSCRIPT.log") -Append
 }
 
 if (-not $LoadProjectStatus) {
     #region PM-PSDev
+    $examplePScode =@'
+###Example of PowerShell script block###
+
+```powershell
+powershell_code_here
+```
+
+###Background PowerShell Information###
+PowerShell scripts can interact with a wide range of systems and applications, making it a versatile tool for system administrators and developers. Ensure your code adheres to PowerShell best practices for readability, maintainability, and performance.
+
+Show the powershell code. Everything except the code must be commented or in comment block. Optionaly generate a list of verification questions that could help to analyze. Think step by step. Make sure your answer is unbiased. Use reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks.
+'@
+
     $userInputOryginal = $userInput
     $GlobalState.OrgUserInput = $userInputOryginal
-    $projectManagerFeedback = $projectManager.Feedback($powerShellDeveloper, "Based on user input you must create detailed and concise project name, description, objectives, deliverables, additional considerations, and success criteria only. User will tip you `$100 for including all the elements provided by the user.`n`n````````text`n" + $userInputOryginal + "`n`````````n`n")
+    $projectManagerFeedback = $projectManager.Feedback($powerShellDeveloper, "Based on user input you must create detailed and concise PowerShell project name, description, objectives, deliverables, additional considerations, and success criteria only." + ($NOTips.IsPresent ? "" : " User will tip you `$100 for including all the elements provided by the user.") + "`n`n````````text`n" + $userInputOryginal + "`n`````````n`n")
     Add-ToGlobalResponses $GlobalState $projectManagerFeedback
     $GlobalState.userInput = $projectManagerFeedback
-    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($projectManager.Name) review, you must create the first version of the code.`n`n````````text`n$($GlobalState.userInput)`n`````````n`nUse reliable sources like official documentation, research papers from reputable institutions, or widely used textbooks. I will tip you `$50 for showing the code.")
-    $GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+    $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput("Based on $($projectManager.Name) review, you must create the first version of the Powershell code.`n`n$($projectManager.Name) review:`n`n````````text`n$($GlobalState.userInput)`n`````````n`n" + ($NOTips.IsPresent ? "`n`n" : " I will tip you `$50 for showing a Powershell code.`n`n") + $examplePScode)
+
+    #$GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+    Add-ToGlobalPSDevResponses $GlobalState $powerShellDeveloperResponce
     Add-ToGlobalResponses $GlobalState $powerShellDeveloperResponce
     Save-AndUpdateCode -response $powerShellDeveloperResponce -GlobalState $GlobalState
     #endregion PM-PSDev
-
+    
     #region RA-PSDev
     #Invoke-ProcessFeedbackAndResponse -role $requirementsAnalyst -description $GlobalState.userInput -code $lastPSDevCode -tipAmount 100 -globalResponse ([ref]$GlobalPSDevResponse) -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $GlobalState.TeamDiscussionDataFolder
     Invoke-ProcessFeedbackAndResponse -reviewer $requirementsAnalyst -recipient $powerShellDeveloper -tipAmount 100 -GlobalState $GlobalState
@@ -1670,7 +1855,8 @@ do {
                 $MenuPrompt_ = $MenuPrompt -f $promptMessage, $userChanges, $GlobalState.lastPSDevCode
                 $MenuPrompt_ += "`nYou need to show all the code."
                 $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($MenuPrompt_)
-                $GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+                #$GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+                Add-ToGlobalPSDevResponses $GlobalState $powerShellDeveloperResponce
                 Add-ToGlobalResponses $GlobalState $powerShellDeveloperResponce
                 $theCode = Export-AndWritePowerShellCodeBlocks -InputString $powerShellDeveloperResponce -StartDelimiter '```powershell' -EndDelimiter '```'
                 if ($theCode) {
@@ -1696,9 +1882,9 @@ do {
                     foreach ($issue in $issues) {
                         $issueText += $issue.message + " (line: $($issue.Line); rule: $($issue.Rulename))`n"
                     }
-                    $promptMessage = "You must address issues found in PSScriptAnalyzer report."
+                    $promptMessage = "Your task is to address issues found in PSScriptAnalyzer report."
                     $promptMessage += "`n`nPSScriptAnalyzer report, issues:`n``````text`n$issueText`n```````n`n"
-                    $promptMessage += "The code:`n``````powershell`n" + $GlobalState.lastPSDevCode + "`n```````n`nShow the new version of the code where issues are solved."
+                    $promptMessage += "The code:`n``````powershell`n" + $GlobalState.lastPSDevCode + "`n```````n`nShow the new version of the Powershell code with solved issues."
                     $issues = ""
                     $issueText = ""
                     $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($promptMessage)
@@ -1735,7 +1921,8 @@ do {
                 $promptMessage += "The code:`n``````powershell`n" + $GlobalState.lastPSDevCode + "`n```````n"
                 try {
                     $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($promptMessage)
-                    $GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+                    #$GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+                    Add-ToGlobalPSDevResponses $GlobalState $powerShellDeveloperResponce
                     Add-ToGlobalResponses $GlobalState $powerShellDeveloperResponce
                 }
                 catch [System.Exception] {
@@ -1755,7 +1942,8 @@ do {
                     $MenuPrompt_ = $MenuPrompt -f $promptMessage, $userChanges, $GlobalState.lastPSDevCode
                     $MenuPrompt_ += $userChanges
                     $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($MenuPrompt_)
-                    $GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+                    #$GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+                    Add-ToGlobalPSDevResponses $GlobalState $powerShellDeveloperResponce
                     Add-ToGlobalResponses $GlobalState $powerShellDeveloperResponce
                 }
                 catch [System.Management.Automation.PSInvalidOperationException] {
@@ -1879,7 +2067,8 @@ do {
                     $deployPromptMessage = "Deploy the refactoring suggestions into the code. Show the next version of the code."
                     $DeployMenuPrompt_ = $MenuPrompt -f $deployPromptMessage, $refactoringSuggestions, $GlobalState.lastPSDevCode
                     $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($DeployMenuPrompt_)
-                    $GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+                    #$GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+                    Add-ToGlobalPSDevResponses $GlobalState $powerShellDeveloperResponce
                     Add-ToGlobalResponses $GlobalState $powerShellDeveloperResponce
                     Save-AndUpdateCode -response $powerShellDeveloperResponce -GlobalState $GlobalState
                 }
@@ -1907,7 +2096,8 @@ do {
                     $deployPromptMessage = "Deploy the security improvements into the code. Show the next version of the code."
                     $DeployMenuPrompt_ = $MenuPrompt -f $deployPromptMessage, $powerShellDevelopersecurityAuditReport, $GlobalState.lastPSDevCode
                     $powerShellDeveloperResponce = $powerShellDeveloper.ProcessInput($DeployMenuPrompt_)
-                    $GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+                    #$GlobalState.GlobalPSDevResponse += $powerShellDeveloperResponce
+                    Add-ToGlobalPSDevResponses $GlobalState $powerShellDeveloperResponce
                     Add-ToGlobalResponses $GlobalState $powerShellDeveloperResponce
                     Save-AndUpdateCode -response $powerShellDeveloperResponce -GlobalState $GlobalState
                 }
@@ -1955,6 +2145,7 @@ if (-not $NOLog) {
     foreach ($TeamMember in $Team) {
         $TeamMember.DisplayInfo(0) | Out-File -FilePath $TeamMember.LogFilePath -Append
     }
+    Write-Host "++ " -NoNewline
     Stop-Transcript
 }
 else {
