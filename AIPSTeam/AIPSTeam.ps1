@@ -6,7 +6,7 @@
 .PROJECTURI https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam/README.md
 .EXTERNALMODULEDEPENDENCIES PSAOAI, PSScriptAnalyzer
 .RELEASENOTES
-2.0.1: add abstract layer for LLM providers, fix update of lastPSDevCode, default no tips.
+2.0.1: add abstract layer for LLM providers, fix update of lastPSDevCode, ann NOTips, Updated error handling, Added VerbosePrompt switch.
 1.6.2: fix double feedback display. 
 1.6.1: fix stream in feedback. 
 1.6.0: minor fixes, enhanced error reporting, added error handling, new menu options, and refactored functions.
@@ -36,31 +36,40 @@ This script emulates a team of specialists working together on a PowerShell proj
 The script simulates a team of specialists, each with a unique role in executing a project. The user input is processed by one specialist who performs their task and passes the result to the next specialist. This process continues until all tasks are completed.
 
 .PARAMETER userInput 
-This parameter defines the project outline as a string. The default value is a project to monitor RAM load and display a color block based on the load levels. This parameter can also accept input from the pipeline.
+Defines the project outline as a string. Default is to monitor RAM usage and show a color block based on the load. This parameter can also accept input from the pipeline.
 
 .PARAMETER Stream 
-This parameter controls whether the output should be streamed live. By default, this parameter is set to $true, enabling live streaming. If set to $false, live streaming is disabled.
+Controls whether the output should be streamed live. Default is `$true`.
 
 .PARAMETER NOPM 
-This optional switch disables the Project Manager functions when used.
+Disables the Project Manager functions when used.
 
 .PARAMETER NODocumentator 
-This optional switch disables the Documentator functions when used.
+Disables the Documentator functions when used.
 
 .PARAMETER NOLog
-This optional switch disables the logging functions when used.
+Disables the logging functions when used.
+
+.PARAMETER NOTips
+Disables tips.
+
+.PARAMETER VerbosePrompt
+Show Prompts.
 
 .PARAMETER LogFolder
-This parameter specifies the folder where logs should be stored.
+Specifies the folder where logs should be stored.
 
 .PARAMETER DeploymentChat
-This parameter specifies the deployment chat environment variable for PSAOAI.
+Specifies the deployment chat environment variable for PSAOAI. Default is retrieved from the environment variable `PSAOAI_API_AZURE_OPENAI_CC_DEPLOYMENT`.
 
 .PARAMETER LoadProjectStatus
-This parameter is used to load the project status from a specified string. It is part of the 'LoadStatus' parameter set.
+Loads the project status from a specified path. Part of the 'LoadStatus' parameter set.
 
 .PARAMETER MaxTokens
-This parameter specifies the maximum number of tokens to generate in the response. Tokens can be as short as one character or as long as one word (e.g., "a" or "apple"). The default value is 20480. Adjusting this parameter allows you to control the length of the generated output, which can be useful for managing the verbosity and detail of the response.
+Specifies the maximum number of tokens to generate in the response. Default is 20480.
+
+.PARAMETER LLMProvider
+Specifies the LLM provider to use (e.g., ollama, LMStudio, AzureOpenAI). Default is "AzureOpenAI".
 
 .INPUTS 
 System.String. You can pipe a string to the 'userInput' parameter.
@@ -121,7 +130,7 @@ param(
     [ValidateSet("AzureOpenAI", "ollama", "LMStudio", "OpenAI" )]
     [string]$LLMProvider = "AzureOpenAI"
 )
-$AIPSTeamVersion = "1.6.2"
+$AIPSTeamVersion = "2.0.1"
 
 #region ProjectTeamClass
 <#
@@ -601,6 +610,8 @@ function Show-Banner {
    |__/  |__/|______/|__/       \______/    |__/ \_______/ \_______/|__/ |__/ |__/ 
                                                                                   
    AI PowerShell Team                                     powered by PSAOAI Module
+                                                                     Ollama
+                                                                     LM Studio
          
        https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/AIPSTeam
   
@@ -609,7 +620,7 @@ function Show-Banner {
          The script is designed to simulate a project team working on a PowerShell project. The script creates different   
          roles such as Requirements Analyst, System Architect, PowerShell Developer, QA Engineer, Documentation Specialist, 
          and Project Manager. Each role has specific tasks and responsibilities, and they interact with each other 
-         to complete a PS project.
+         to complete a PS project. The script leverages LLMs providers like Azure OpenAI (PSAOAI), Ollama, and LM Studio.
          
 "@ -ForegroundColor Blue
   
@@ -1391,7 +1402,7 @@ function Invoke-LLMChatCompletion {
             return Invoke-AIPSTeamAzureOpenAIChatCompletion -SystemPrompt $SystemPrompt -UserPrompt $UserPrompt -Temperature $Temperature -TopP $TopP -MaxTokens $MaxTokens -Stream $Stream -LogFolder $LogFolder -DeploymentChat $DeploymentChat
         }
         default {
-            throw "!! Unsupported LLM provider: $Provider"
+            throw "!! Unknown LLM provider: $Provider"
         }
     }
 }
@@ -1538,7 +1549,7 @@ function Invoke-AIPSTeamLMStudioChatCompletion {
     # Log the summary
     $this.AddLogEntry("SystemPrompt:`n$SystemPrompt")
     $this.AddLogEntry("UserPrompt:`n$UserPrompt")
-    $this.AddLogEntry("Response:`n$Response")
+    $this.AddLogEntry("Response:`n$($Response | convertto-JSON)")
 
     return $response.Choices[0].message.content
 }
@@ -1743,15 +1754,6 @@ Instructions:
 6. Conduct peer code reviews to ensure quality:
     - Collaborate with team members to review each other's code for correctness, clarity, and adherence to best practices.
     - Provide constructive feedback and suggestions for improvement during code reviews.
-
-###Example of PowerShell script block###
-
-``````powershell
-<powershell_code>
-``````
-
-###Background PowerShell Information###
-PowerShell scripts can interact with a wide range of systems and applications, making it a versatile tool for system administrators and developers. Ensure your code adheres to PowerShell best practices for readability, maintainability, and performance.
 "@ -f $powerShellDeveloperRole,
     0.65,
     0.8,
@@ -1869,11 +1871,9 @@ elseif ($LLMProvider -eq "ollama") {
     $script:ollamaModel = Read-Host "Please provide the LLM model for ollama"
 }
 
-
 if ($NOLog) {
     foreach ($TeamMember_ in $Team) {
         $TeamMember_.LogFilePath = ""
-        $TeamMember.LLMProvider = $LLMProvider
     }
 }
 

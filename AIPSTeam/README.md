@@ -74,6 +74,11 @@ This PowerShell script simulates a team of specialists working together on a Pow
   - `-LogFolder`: Specifies the folder where logs should be stored.
   - `-DeploymentChat`: Specifies the deployment chat environment variable for Azure OpenAI (default: retrieved from environment variable `PSAOAI_API_AZURE_OPENAI_CC_DEPLOYMENT` - [PSAOAI](https://github.com/voytas75/AzureOpenAI-PowerShell/tree/master/PSAOAI#powershell-azure-openai-psaoai-module)).
   - `MaxTokens`: Specifies the maximum number of tokens to generate in the response. This parameter controls the length of the generated output. The default value is set within the script, but it can be overridden by the user if needed.
+  - `-LLMProvider`: Specifies the LLM provider to use (e.g., ollama, LMStudio, AzureOpenAI). Default is "AzureOpenAI".
+  - `-NOTips`: Disables tips.
+  - `-VerbosePrompt`: Show Prompts.
+  - `-LoadProjectStatus`: Loads the project status from a specified path. Part of the 'LoadStatus' parameter set.
+  - `-LLMProvider`: Specifies the LLM provider to use (e.g., ollama, LMStudio, AzureOpenAI). Default is "AzureOpenAI".
 
 ### Usage
 
@@ -140,6 +145,55 @@ This PowerShell script simulates a team of specialists working together on a Pow
    ```
 
    **Description**: This example backs up important files from the Documents folder to an external drive. The `-NOLog` parameter disables the logging functions.
+
+
+9. **Monitor GPU Usage**:
+
+   ```powershell
+   "Monitor GPU usage and display a bar chart of GPU load." | AIPSTeam.ps1 -Stream $true
+   ```
+
+   **Description**: This example monitors the GPU usage and displays a bar chart showing the GPU load. The `-Stream $true` parameter enables live streaming of the output.
+
+10. **Check System Uptime**:
+
+   ```powershell
+   "Check system uptime and display the total uptime in days." | AIPSTeam.ps1 -NOLog -NOPM
+   ```
+
+   **Description**: This example checks the system uptime and displays the total uptime in days. The `-NOLog` parameter disables the logging functions, and the `-NOPM` parameter disables the Project Manager functions.
+
+11. **Generate Security Audit Report**:
+
+   ```powershell
+   "Generate a security audit report for the system." | AIPSTeam.ps1 -LogFolder "C:\SecurityReports" -NODocumentator
+   ```
+
+   **Description**: This example generates a security audit report for the system. The report is saved in the specified log folder `C:\SecurityReports`. The `-NODocumentator` parameter disables the Documentator functions.
+
+12. **Monitor Network Bandwidth**:
+
+   ```powershell
+   "Monitor network bandwidth usage and display a real-time graph." | AIPSTeam.ps1 -Stream $true -NOLog
+   ```
+
+   **Description**: This example monitors the network bandwidth usage and displays a real-time graph. The `-Stream $true` parameter enables live streaming of the output, and the `-NOLog` parameter disables the logging functions.
+
+13. **Check Disk Health**:
+
+   ```powershell
+   "Check disk health and display a summary of SMART attributes." | AIPSTeam.ps1 -NOPM -NODocumentator
+   ```
+
+   **Description**: This example checks the disk health and displays a summary of SMART attributes. The `-NOPM` parameter disables the Project Manager functions, and the `-NODocumentator` parameter disables the Documentator functions.
+
+14. **Generate Text Summary Using LLM Provider**:
+
+   ```powershell
+   "Recent software activities on Windows 11." | AIPSTeam.ps1 -LLMProvider "ollama" -Stream $false
+   ```
+
+   **Description**: This example generates a text summary of recent project activities using the specified LLM provider, in this case, "ollama". The `-Stream $false` parameter disables live streaming of the output.
 
 ## Developer Notes
 
@@ -215,3 +269,22 @@ This PowerShell script simulates a team of specialists working together on a Pow
 3. **Where are the log files stored?**
 
    Log files are stored in the specified log folder or the default folder in `MyDocuments`.
+
+4. **How do I load a saved project status?**
+
+   ```powershell
+   AIPSTeam.ps1 -LoadProjectStatus "path\to\your\Project.xml"
+   ```
+
+5. **How do I disable the Project Manager functions?**
+
+   ```powershell
+   AIPSTeam.ps1 -NOPM
+   ```
+
+6. **How do I specify a custom LLM model for ollama?**
+
+   ```powershell
+   $env:OLLAMA_MODEL = "your_custom_model"
+   AIPSTeam.ps1 -LLMProvider "ollama"
+   ```
