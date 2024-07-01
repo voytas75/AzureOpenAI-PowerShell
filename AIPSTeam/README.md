@@ -160,43 +160,43 @@ This PowerShell script simulates a team of specialists working together on a Pow
 
 10. **Check System Uptime**:
 
-   ```powershell
-   "Check system uptime and display the total uptime in days." | AIPSTeam.ps1 -NOLog -NOPM
-   ```
+      ```powershell
+      "Check system uptime and display the total uptime in days." | AIPSTeam.ps1 -NOLog -NOPM
+      ```
 
-   **Description**: This example checks the system uptime and displays the total uptime in days. The `-NOLog` parameter disables the logging functions, and the `-NOPM` parameter disables the Project Manager functions.
+      **Description**: This example checks the system uptime and displays the total uptime in days. The `-NOLog` parameter disables the logging functions, and the `-NOPM` parameter disables the Project Manager functions.
 
 11. **Generate Security Audit Report**:
 
-   ```powershell
-   "Generate a security audit report for the system." | AIPSTeam.ps1 -LogFolder "C:\SecurityReports" -NODocumentator
-   ```
+      ```powershell
+      "Generate a security audit report for the system." | AIPSTeam.ps1 -LogFolder "C:\SecurityReports" -NODocumentator
+      ```
 
-   **Description**: This example generates a security audit report for the system. The report is saved in the specified log folder `C:\SecurityReports`. The `-NODocumentator` parameter disables the Documentator functions.
+      **Description**: This example generates a security audit report for the system. The report is saved in the specified log folder `C:\SecurityReports`. The `-NODocumentator` parameter disables the Documentator functions.
 
 12. **Monitor Network Bandwidth**:
 
-   ```powershell
-   "Monitor network bandwidth usage and display a real-time graph." | AIPSTeam.ps1 -Stream $true -NOLog
-   ```
+      ```powershell
+      "Monitor network bandwidth usage and display a real-time graph." | AIPSTeam.ps1 -Stream $true -NOLog
+      ```
 
-   **Description**: This example monitors the network bandwidth usage and displays a real-time graph. The `-Stream $true` parameter enables live streaming of the output, and the `-NOLog` parameter disables the logging functions.
+      **Description**: This example monitors the network bandwidth usage and displays a real-time graph. The `-Stream $true` parameter enables live streaming of the output, and the `-NOLog` parameter disables the logging functions.
 
 13. **Check Disk Health**:
 
-   ```powershell
-   "Check disk health and display a summary of SMART attributes." | AIPSTeam.ps1 -NOPM -NODocumentator
-   ```
+      ```powershell
+      "Check disk health and display a summary of SMART attributes." | AIPSTeam.ps1 -NOPM -NODocumentator
+      ```
 
-   **Description**: This example checks the disk health and displays a summary of SMART attributes. The `-NOPM` parameter disables the Project Manager functions, and the `-NODocumentator` parameter disables the Documentator functions.
+      **Description**: This example checks the disk health and displays a summary of SMART attributes. The `-NOPM` parameter disables the Project Manager functions, and the `-NODocumentator` parameter disables the Documentator functions.
 
 14. **Generate Text Summary Using LLM Provider**:
 
-   ```powershell
-   "Recent software activities on Windows 11." | AIPSTeam.ps1 -LLMProvider "ollama" -Stream $false
-   ```
+      ```powershell
+      "Recent software activities on Windows 11." | AIPSTeam.ps1 -LLMProvider "ollama" -Stream $false
+      ```
 
-   **Description**: This example generates a text summary of recent project activities using the specified LLM provider, in this case, "ollama". The `-Stream $false` parameter disables live streaming of the output.
+      **Description**: This example generates a text summary of recent project activities using the specified LLM provider, in this case, "ollama". The `-Stream $false` parameter disables live streaming of the output.
 
 ## Developer Notes
 
