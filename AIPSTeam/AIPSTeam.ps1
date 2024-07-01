@@ -102,6 +102,9 @@ param(
     [Parameter(Mandatory = $false, HelpMessage = "Disables tips.")]
     [switch] $NOTips,
 
+    [Parameter(Mandatory = $false, HelpMessage = "Show Prompts.")]
+    [switch] $VerbosePrompt,
+
     [Parameter(Mandatory = $false, HelpMessage = "Specifies the folder where logs should be stored.")]
     [string] $LogFolder,
 
@@ -1289,14 +1292,14 @@ function Update-ErrorHandling {
         [string]$LogFilePath
     )
     # Capture detailed error information
-    $errorDetails = @{
+    $errorDetails = [ordered]@{
+        Timestamp    = Get-Date
         ErrorMessage = $ErrorMessage
         ErrorContext = $ErrorContext
-        Timestamp    = Get-Date
         ScriptName   = $MyInvocation.MyCommand.Name
         LineNumber   = $MyInvocation.ScriptLineNumber
-        StackTrace   = $Error[0].ScriptStackTrace
-    }
+        StackTrace   = $($Error[0] | Select-Object -ExpandProperty ScriptStackTrace)
+    } | ConvertTo-Json
     # Log the error details
     if ($LogFilePath) {
         $errorDetails | Out-File -FilePath $LogFilePath -Append -Force
@@ -1339,9 +1342,10 @@ function Invoke-LLMChatCompletion {
         [string]$ollamaModel
     )
 
-    Write-Host "SystemPrompt: $SystemPrompt" -ForegroundColor DarkMagenta
-
-    Write-Host "UserPrompt: $UserPrompt" -ForegroundColor DarkYellow
+    if ($VerbosePrompt) {
+        Write-Host $SystemPrompt -ForegroundColor DarkMagenta
+        Write-Host $UserPrompt -ForegroundColor DarkYellow
+    }
 
     switch ($Provider) {
         "ollama" {
@@ -1353,7 +1357,13 @@ function Invoke-LLMChatCompletion {
             return Invoke-AIPSTeamOllamaCompletion -SystemPrompt $SystemPrompt -UserPrompt $UserPrompt -Temperature $Temperature -TopP $TopP -ollamaModel $ollamamodel -Stream $Stream
         }
         "LMStudio" {
-            throw "-- Unsupported LLM provider: $Provider. This provider is not implemented yet."
+            if ($Stream) {
+                Write-Information "-- Streaming is not implemented yet. Displaying information instead." -InformationAction Continue
+                $script:stream = $false
+                $stream = $false
+            } 
+            $response = Invoke-AIPSTeamLMStudioChatCompletion -SystemPrompt $SystemPrompt -UserPrompt $UserPrompt -Temperature $Temperature -TopP $TopP -Stream $Stream -ApiKey "lm-studio" -endpoint "http://localhost:1234/v1/chat/completions"
+            return $response
         }
         "OpenAI" {
             throw "-- Unsupported LLM provider: $Provider. This provider is not implemented yet."
@@ -1424,6 +1434,80 @@ function Invoke-AIPSTeamOllamaCompletion {
     $this.AddLogEntry("Response:`n$Response")
 
     return ($response).Content | convertfrom-json | Select-Object -ExpandProperty response
+}
+
+function Invoke-AIPSTeamLMStudioChatCompletion {
+    param (
+        [string]$SystemPrompt,
+        [string]$UserPrompt,
+        [double]$Temperature,
+        [double]$TopP,
+        [string]$Model = "",
+        [string]$ApiKey = "lm-studio",
+        [string]$endpoint = "http://localhost:1234/v1/chat/completions",
+        [bool]$Stream
+    )
+    $response = ""
+    $headers = @{
+        "Content-Type"  = "application/json"
+        "Authorization" = "Bearer '$ApiKey'"
+    }
+    $bodyJSON = @{
+        model       = $Model
+        messages    = @(
+            @{
+                role    = "system"
+                content = $SystemPrompt
+            },
+            @{
+                role    = "user"
+                content = $UserPrompt
+            }
+        )
+        temperature = $Temperature
+        top_p       = $TopP
+    } | ConvertTo-Json
+
+    # Call lm-studio
+    $InfoText = "++ LM Studio" + $(if ($Model) { " ($Model)" } else { "" }) + " is working..."
+    Write-Host $InfoText
+
+    try {
+        $response = Invoke-RestMethod -Uri $endpoint -Headers $headers -Method POST -Body $bodyJSON -TimeoutSec 240
+    }
+    catch [System.InvalidOperationException] {
+        Write-Error "Error Type: $($_.Exception.GetType().Name)"
+        Write-Error "Error Message: $($_.Exception.Message)"
+        Write-Error "Stack Trace: $($_.Exception.StackTrace)"
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Throw $_
+    }
+    catch {
+        Write-Host "reszta"
+        Write-Error "Error Type: $($_.Exception.GetType().Name)"
+        Write-Error "Error Message: $($_.Exception.Message)"
+        Write-Error "Stack Trace: $($_.Exception.StackTrace)"
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Throw $_
+    }
+
+    # Log the prompt and response to the log file
+    $logEntry = @{
+        Timestamp    = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+        SystemPrompt = $SystemPrompt
+        UserPrompt   = $UserPrompt
+        Response     = $response.choices[0]
+    } | ConvertTo-Json
+    
+    $this.Log.Add($logEntry)
+    # Log the summary
+    $this.AddLogEntry("SystemPrompt:`n$SystemPrompt")
+    $this.AddLogEntry("UserPrompt:`n$UserPrompt")
+    $this.AddLogEntry("Response:`n$Response")
+
+    return $response.Choices[0].message.content
 }
 #endregion Functions
 
@@ -1826,7 +1910,8 @@ $examplePScode
     #Invoke-ProcessFeedbackAndResponse -role $requirementsAnalyst -description $GlobalState.userInput -code $lastPSDevCode -tipAmount 100 -globalResponse ([ref]$GlobalPSDevResponse) -lastCode ([ref]$lastPSDevCode) -fileVersion ([ref]$FileVersion) -teamDiscussionDataFolder $GlobalState.TeamDiscussionDataFolder
     if ($NOTips) {
         Invoke-ProcessFeedbackAndResponse -reviewer $requirementsAnalyst -recipient $powerShellDeveloper -GlobalState $GlobalState
-    }else {
+    }
+    else {
         Invoke-ProcessFeedbackAndResponse -reviewer $requirementsAnalyst -recipient $powerShellDeveloper -GlobalState $GlobalState -tipAmount 100
     }
     #endregion RA-PSDev
@@ -1834,7 +1919,8 @@ $examplePScode
     #region SA-PSDev
     if ($NOTips) {
         Invoke-ProcessFeedbackAndResponse -reviewer $systemArchitect -recipient $powerShellDeveloper -GlobalState $GlobalState
-    }else {
+    }
+    else {
         Invoke-ProcessFeedbackAndResponse -reviewer $systemArchitect -recipient $powerShellDeveloper -GlobalState $GlobalState -tipAmount 150
     }
 
@@ -1843,7 +1929,8 @@ $examplePScode
     #region DE-PSDev
     if ($NOTips) {
         Invoke-ProcessFeedbackAndResponse -reviewer $domainExpert -recipient $powerShellDeveloper -GlobalState $GlobalState
-    }else {
+    }
+    else {
         Invoke-ProcessFeedbackAndResponse -reviewer $domainExpert -recipient $powerShellDeveloper -GlobalState $GlobalState -tipAmount 200
     }
     #endregion DE-PSDev
@@ -1851,7 +1938,8 @@ $examplePScode
     #region QAE-PSDev
     if ($NOTips) {
         Invoke-ProcessFeedbackAndResponse -reviewer $qaEngineer -recipient $powerShellDeveloper -GlobalState $GlobalState
-    }else {
+    }
+    else {
         Invoke-ProcessFeedbackAndResponse -reviewer $qaEngineer -recipient $powerShellDeveloper -GlobalState $GlobalState -tipAmount 300
     }
     #endregion QAE-PSDev
