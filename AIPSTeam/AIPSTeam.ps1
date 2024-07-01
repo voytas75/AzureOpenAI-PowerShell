@@ -466,7 +466,7 @@ Think step by step. Make sure your answer is unbiased.
     }
     catch [System.Exception] {
         $functionName = $MyInvocation.MyCommand.Name
-        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Update-ErrorHandling -ErrorRecord $_ -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
     }
 }
 
@@ -484,8 +484,7 @@ function Get-LastMemoryFromFeedbackTeamMembers {
     }
     catch {
         $functionName = $MyInvocation.MyCommand.Name
-        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
-
+        Update-ErrorHandling -ErrorRecord $_ -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
     }
 }
 
@@ -538,7 +537,7 @@ function New-FolderAtPath {
     }
     catch [System.Exception] {
         $functionName = $MyInvocation.MyCommand.Name
-        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Update-ErrorHandling -ErrorRecord $_ -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")  
         return $null    
     }
 }
@@ -557,7 +556,7 @@ function Get-LatestVersion {
     }
     catch [System.Exception] {
         $functionName = $MyInvocation.MyCommand.Name
-        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Update-ErrorHandling -ErrorRecord $_ -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")  
         return $null
     }
 }
@@ -583,7 +582,7 @@ function Get-CheckForScriptUpdate {
     }
     catch [System.Exception] {
         $functionName = $MyInvocation.MyCommand.Name
-        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Update-ErrorHandling -ErrorRecord $_ -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")  
     }
 
 }
@@ -670,7 +669,7 @@ function Export-AndWritePowerShellCodeBlocks {
     }
     catch [System.Exception] {
         $functionName = $MyInvocation.MyCommand.Name
-        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Update-ErrorHandling -ErrorRecord $_ -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")  
     }
     return $false
 }
@@ -722,7 +721,7 @@ function Invoke-CodeWithPSScriptAnalyzer {
     }
     catch [System.Exception] {
         $functionName = $MyInvocation.MyCommand.Name
-        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Update-ErrorHandling -ErrorRecord $_ -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")  
     }
     return $false
 }
@@ -790,7 +789,7 @@ function Get-SourceCodeAnalysis {
     }
     catch [System.Exception] {
         $functionName = $MyInvocation.MyCommand.Name
-        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Update-ErrorHandling -ErrorRecord $_ -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")  
     }
 }
 
@@ -987,7 +986,7 @@ function Set-FeedbackAndGenerateResponse {
     }    
     catch [System.Exception] {
         $functionName = $MyInvocation.MyCommand.Name
-        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Update-ErrorHandling -ErrorRecord $_ -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")  
     }
 }
 
@@ -1021,7 +1020,7 @@ function Update-GlobalStateWithResponse {
     }
     catch [System.Exception] {
         $functionName = $MyInvocation.MyCommand.Name
-        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Update-ErrorHandling -ErrorRecord $_ -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")  
     }
 }
 
@@ -1061,7 +1060,7 @@ function Invoke-ProcessFeedbackAndResponse {
     }    
     catch [System.Exception] {
         $functionName = $MyInvocation.MyCommand.Name
-        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Update-ErrorHandling -ErrorRecord $_ -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")  
     }
 }
 
@@ -1077,7 +1076,7 @@ function Save-AndUpdateCode {
     }    
     catch [System.Exception] {
         $functionName = $MyInvocation.MyCommand.Name
-        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Update-ErrorHandling -ErrorRecord $_ -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")  
     }
 }
 
@@ -1122,7 +1121,7 @@ function Save-AndUpdateCode2 {
     }
     catch [System.Exception] {
         $functionName = $MyInvocation.MyCommand.Name
-        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Update-ErrorHandling -ErrorRecord $_ -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")  
     }
 
 }
@@ -1229,7 +1228,7 @@ function Invoke-AnalyzeCodeWithPSScriptAnalyzer {
     }    
     catch [System.Exception] {
         $functionName = $MyInvocation.MyCommand.Name
-        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Update-ErrorHandling -ErrorRecord $_ -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")  
     }
 }
 
@@ -1253,7 +1252,7 @@ function Save-ProjectState {
     }    
     catch [System.Exception] {
         $functionName = $MyInvocation.MyCommand.Name
-        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Update-ErrorHandling -ErrorRecord $_ -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")  
     }
 }
 
@@ -1281,29 +1280,35 @@ function Get-ProjectState {
     }    
     catch [System.Exception] {
         $functionName = $MyInvocation.MyCommand.Name
-        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Update-ErrorHandling -ErrorRecord $_ -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")  
     }
 }
 
 function Update-ErrorHandling {
     param (
-        [string]$ErrorMessage,
+        [Parameter(Mandatory = $true)]
+        [System.Management.Automation.ErrorRecord]$ErrorRecord,
+
         [string]$ErrorContext,
+
         [string]$LogFilePath
     )
+
     # Capture detailed error information
     $errorDetails = [ordered]@{
-        Timestamp    = Get-Date
-        ErrorMessage = $ErrorMessage
-        ErrorContext = $ErrorContext
-        ScriptName   = $MyInvocation.MyCommand.Name
-        LineNumber   = $MyInvocation.ScriptLineNumber
-        StackTrace   = $($Error[0] | Select-Object -ExpandProperty ScriptStackTrace)
+        Timestamp         = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        ErrorMessage      = $ErrorRecord.Exception.Message
+        ExceptionType     = $ErrorRecord.Exception.GetType().FullName
+        ErrorContext      = $ErrorContext
+        ScriptFullName    = $MyInvocation.ScriptName
+        LineNumber        = $MyInvocation.ScriptLineNumber
+        StackTrace        = $ErrorRecord.ScriptStackTrace
+        UserName          = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+        MachineName       = $env:COMPUTERNAME
+        PowerShellVersion = $PSVersionTable.PSVersion.ToString()
+
     } | ConvertTo-Json
-    # Log the error details
-    if ($LogFilePath) {
-        $errorDetails | Out-File -FilePath $LogFilePath -Append -Force
-    }
+
     # Provide suggestions based on the error type
     $suggestions = switch -Regex ($ErrorMessage) {
         "PSScriptAnalyzer" {
@@ -1322,10 +1327,23 @@ function Update-ErrorHandling {
             "Refer to the error message and stack trace for more details. Consult the official documentation or seek help from the community."
         }
     }
+
     # Display the error details and suggestions
-    Write-Error "Error: $ErrorMessage"
-    Write-Error "Context: $ErrorContext"
-    Write-Error "Suggestions: $suggestions"
+    #Write-Host "-- Error: $($ErrorRecord.Exception.Message)"
+    Write-Host "-- Context: $ErrorContext"
+    Write-Host "-- Suggestions: $suggestions"
+    Write-Host "-- Error: $($ErrorRecord.Exception.Message)"
+
+    # Log the error details if LogFilePath is provided
+    if ($LogFilePath) {
+        $errorDetails | Out-File -FilePath $LogFilePath -Append -Force
+        if (Test-Path -Path $LogFilePath) {
+            Write-Host "Error details have been saved to the file: $LogFilePath" -ForegroundColor Yellow
+        }
+        else {
+            Write-Host "The specified log file path does not exist: $LogFilePath" -ForegroundColor Red
+        }
+    }        
 }
 
 function Invoke-LLMChatCompletion {
@@ -1448,6 +1466,28 @@ function Invoke-AIPSTeamLMStudioChatCompletion {
         [bool]$Stream
     )
     $response = ""
+    
+    # Test lm-studio
+    try {
+        $modelResponse = Invoke-RestMethod -Uri "http://localhost:1234/v1/models"
+        if ($modelResponse.data.id) {
+            $model = $modelResponse.data.id
+        }
+    }
+    catch [System.Net.WebException] {
+        #System.InvalidOperationException
+        Write-Warning "LM Studio server is not running or not reachable. Please ensure the server is up and running at $endpoint."
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorRecord $_ -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Throw $_
+    }
+    catch {
+        $functionName = $MyInvocation.MyCommand.Name
+        Update-ErrorHandling -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt") -ErrorRecord $_
+        #Throw $_.Exception.Message
+    }
+
+
     $headers = @{
         "Content-Type"  = "application/json"
         "Authorization" = "Bearer '$ApiKey'"
@@ -1476,20 +1516,13 @@ function Invoke-AIPSTeamLMStudioChatCompletion {
         $response = Invoke-RestMethod -Uri $endpoint -Headers $headers -Method POST -Body $bodyJSON -TimeoutSec 240
     }
     catch [System.InvalidOperationException] {
-        Write-Error "Error Type: $($_.Exception.GetType().Name)"
-        Write-Error "Error Message: $($_.Exception.Message)"
-        Write-Error "Stack Trace: $($_.Exception.StackTrace)"
         $functionName = $MyInvocation.MyCommand.Name
-        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Update-ErrorHandling -ErrorRecord $_ -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
         Throw $_
     }
     catch {
-        Write-Host "reszta"
-        Write-Error "Error Type: $($_.Exception.GetType().Name)"
-        Write-Error "Error Message: $($_.Exception.Message)"
-        Write-Error "Stack Trace: $($_.Exception.StackTrace)"
         $functionName = $MyInvocation.MyCommand.Name
-        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Update-ErrorHandling -ErrorRecord $_ -ErrorContext "$functionName function" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
         Throw $_
     }
 
@@ -1552,7 +1585,7 @@ if ($LoadProjectStatus) {
         Write-Verbose "`$GlobalState.LogFolder: $($GlobalState.LogFolder)"
     }    
     catch [System.Exception] {
-        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "Load the project status"
+        Update-ErrorHandling -ErrorRecord $_ -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
     }
 }
 else {
@@ -1577,7 +1610,8 @@ else {
         }
     }
     Catch {
-        Update-ErrorHandling -ErrorMessage $_.Exception.Message -ErrorContext "Create discussion folder" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+        Update-ErrorHandling -ErrorRecord $_ -ErrorContext "Create discussion folder" -LogFilePath (Join-Path $GlobalState.TeamDiscussionDataFolder "ERROR.txt")
+
         return $false
     }
 }
