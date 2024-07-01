@@ -238,7 +238,7 @@ This PowerShell script simulates a team of specialists working together on a Pow
    "Monitor RAM usage and show a single color block based on the load." | AIPSTeam.ps1
    ```
 
-   **Expected Output**: A color block indicating RAM usage levels.
+   **Expected Output**: Discussion flow with Powershell code to monitor RAM usage with color block.
 
 2. **Monitor CPU Usage**:
 
@@ -246,7 +246,7 @@ This PowerShell script simulates a team of specialists working together on a Pow
    "Monitor CPU usage and display dynamic graph." | AIPSTeam.ps1
    ```
 
-   **Expected Output**: A dynamic graph showing CPU usage.
+   **Expected Output**: Discussion flow with Powershell code to show a dynamic graph showing CPU usage.
 
 ## Troubleshooting Tips and Common Issues
 
