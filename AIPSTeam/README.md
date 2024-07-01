@@ -23,7 +23,13 @@
 
 ## Overview
 
-This PowerShell script simulates a team of specialists working together on a PowerShell project. Each specialist has a unique role and contributes to the project in a sequential manner. The script processes user input, performs various tasks, and generates outputs such as code, documentation, and analysis reports.
+This PowerShell script simulates a team of specialists working together on a PowerShell project. Each specialist has a unique role and contributes to the project in a sequential manner. The script processes user input, performs various tasks, and generates outputs such as code, documentation, and analysis reports. App can utylize Azure OpenAI, Ollama or LMStudio to generate the output.
+
+For more information on the AI models and services used in this script, please refer to the following links:
+
+- [Azure OpenAI](https://azure.microsoft.com/en-us/services/cognitive-services/openai-service/)
+- [LM Studio](https://lmstudio.ai/)
+- [Ollama](https://ollama.com/)
 
 > [!IMPORTANT]
 > You need AZURE OpenAI subscription, Ollama or LMStudio to use this script.
