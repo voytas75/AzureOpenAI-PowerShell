@@ -79,7 +79,7 @@ function Get-APIVersion {
             }
         }
     } catch {
-        Write-Error "Failed to retrieve API versions: $_"
+        #Write-Error "Failed to retrieve API versions: $($_.Exception.Message)"
         return
     }
 

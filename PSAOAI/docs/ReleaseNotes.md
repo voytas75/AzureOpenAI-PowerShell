@@ -8,7 +8,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Added
 
-- 
+### Fix
+
+### Changed
+
+## [0.3.1] - 2024.07.02
 
 ### Fix
 
