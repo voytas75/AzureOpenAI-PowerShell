@@ -2,7 +2,30 @@
 
 ![AzureOpenAI-PowerShell](https://github.com/voytas75/AzureOpenAI-PowerShell/blob/master/images/MSOpenAI_830x200.jpg?raw=true "AzureOpenAI-PowerShell")
 
-Welcome to the GitHub repository for Azure OpenAI PowerShell Module and Functions! This project provides a collection of PowerShell functions that allow you to interact with Azure OpenAI's powerful language models.
+Welcome to the GitHub repository for Azure OpenAI PowerShell Module and other interesting programs! This project provides a collection of PowerShell scripts that allow you to interact with Azure OpenAI's powerful language models, other like ollama, LM Studio and more.
+
+## Repository Evolution
+
+This repository has significantly evolved over time, leading to the creation of several projects that have become separate repositories. These new repositories focus on specific functionalities and enhancements, allowing for more specialized development and maintenance. We encourage you to explore these repositories to find more targeted solutions and advanced features that have branched out from the original AzureOpenAI-PowerShell project.
+
+## Links to New Repositories
+
+As the AzureOpenAI-PowerShell project has evolved, several new repositories have been created to focus on specific functionalities and enhancements. Below is a table with links to these new repositories:
+
+| Repository Name | Description | Link |
+|-----------------|-------------|------|
+| AIPSTeam | A PowerShell script designed to streamline and enhance team collaboration and management within Azure environments, ollama, LM Studio. This script leverages the capabilities of LLM providers to automate various tasks, ensuring efficient and effective team operations. | [AIPSTeam](https://github.com/voytas75/AIPSTeam) |
+|  |  | [AzureOpenAI-Embeddings](https://github.com/voytas75/AzureOpenAI-Embeddings) |
+|  |  | [AzureOpenAI-DALLE](https://github.com/voytas75/AzureOpenAI-DALLE) |
+|  |  | [AzureOpenAI-Completion](https://github.com/voytas75/AzureOpenAI-Completion) |
+
+We encourage you to explore these repositories to find more targeted solutions and advanced features that have branched out from the original AzureOpenAI-PowerShell project.
+
+
+
+
+
+
 
 ## &nbsp;
 
