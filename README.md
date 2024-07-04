@@ -15,7 +15,7 @@ As the AzureOpenAI-PowerShell project has evolved, several new repositories have
 | Repository Name | Description | Link |
 |-----------------|-------------|------|
 | AI PowerShell Team | A PowerShell script designed to streamline and enhance team collaboration and management within Azure environments, ollama, LM Studio. This script leverages the capabilities of LLM providers to automate various tasks, ensuring efficient and effective team operations. | [AIPSTeam](https://github.com/voytas75/AIPSTeam) |
-| AI Event Analyzer | This PowerShell script is designed to analyze Windows event logs using AI. It prompts the user to select an action, a log to analyze, the severity level of the events, and the number of most recent events to analyze. The script then invokes an AI model to analyze the selected events and logs the results. | [AzureOpenAI-Embeddings](https://github.com/voytas75/AzureOpenAI-Embeddings) |
+| AI Event Analyzer | This PowerShell script is designed to analyze Windows event logs using AI. It prompts the user to select an action, a log to analyze, the severity level of the events, and the number of most recent events to analyze. The script then invokes an AI model to analyze the selected events and logs the results. | [AIEventAnalyzer](https://github.com/voytas75/AIEventAnalyzer) |
 |  |  | [AzureOpenAI-DALLE](https://github.com/voytas75/AzureOpenAI-DALLE) |
 |  |  | [AzureOpenAI-Completion](https://github.com/voytas75/AzureOpenAI-Completion) |
 
