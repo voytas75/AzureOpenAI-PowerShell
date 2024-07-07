@@ -2,6 +2,8 @@
 
 ![AzureOpenAI-PowerShell](https://github.com/voytas75/AzureOpenAI-PowerShell/blob/master/images/MSOpenAI_830x200.jpg?raw=true "AzureOpenAI-PowerShell")
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/A0A6KYBUS)
+
 Welcome to the GitHub repository for Azure OpenAI PowerShell Module and other interesting programs! This project provides a collection of PowerShell scripts that allow you to interact with Azure OpenAI's powerful language models, other like ollama, LM Studio and more.
 
 ## Repository Evolution
