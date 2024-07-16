@@ -21,13 +21,13 @@ Analyze the provided PowerShell code for quality and adherence to best practices
         - Offer actionable suggestions for improvement
     4. Calculate an overall score by averaging the category scores.
 After your detailed analysis, create a summary section formatted as follows:
+Overall Score: [Insert overall score]
+
 ---
 PowerShell Code Quality Assessment Summary
 
-Overall Score: [Insert overall score]
-
 Key Strengths:
-- [Bullet point list of 2-3 key strengths]
+- [Bullet point list of key strengths]
 
 Priority Improvements:
 N. [Concise, actionable improvement point]
