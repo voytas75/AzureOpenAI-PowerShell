@@ -28,9 +28,3 @@ First, show the corrected code, followed by a possible description of your analy
 
 ### Question ###
 What elements of code can be improved?
-
-###
-```#{language}
-#{source_code}
-```
-###
