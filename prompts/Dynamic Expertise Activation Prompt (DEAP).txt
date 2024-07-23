@@ -14,9 +14,3 @@ If the task is to summarize a text, state that you are activating your 'summariz
 3. Expert Skill Activation: Explicit statement of the 'expert' skills or knowledge.
 4. Detailed Response: Provide a response with reasoning for your choices.
 5. Summary Statement: Summary of the reasoning process.
-
-### User Input ###
-
-```
-[user's input here]
-```
