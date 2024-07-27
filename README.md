@@ -10,7 +10,7 @@ Welcome to the GitHub repository for Azure OpenAI PowerShell Module and other in
 
 This repository has significantly evolved over time, leading to the creation of several projects that have become separate repositories. These new repositories focus on specific functionalities and enhancements, allowing for more specialized development and maintenance. We encourage you to explore these repositories to find more targeted solutions and advanced features that have branched out from the original AzureOpenAI-PowerShell project.
 
-## Links to New Repositories
+## New Repositories
 
 As the AzureOpenAI-PowerShell project has evolved, several new repositories have been created to focus on specific functionalities and enhancements. Below is a table with links to these new repositories:
 
