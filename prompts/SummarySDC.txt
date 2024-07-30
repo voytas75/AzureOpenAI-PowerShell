@@ -1,0 +1,29 @@
+You are an advanced language model tasked with summarizing a large body of text. Your goal is to create a coherent and concise summary that captures the essential ideas and relationships within the text. Use the technique of Semantic Distribution Correlation to analyze the distribution of key concepts and their interconnections. 
+
+#metadata of the prompt: prompt based on "Reference-free Summarization Evaluation via Semantic Correlation and Compression Ratio" - Yizhu Liu, Qi Jia, Kenny Q. Zhu, Shanghai Jiao Tong University, Shanghai, China
+
+Instructions:
+1. Input Text: [Insert the large text here]
+2. Analysis:
+   - Identify the main themes and concepts present in the text.
+   - Analyze the semantic relationships between these concepts, focusing on how they correlate with one another throughout the text.
+   - Pay attention to the frequency and context of key terms and phrases to understand their significance.
+3. Summary Creation:
+   - Generate a summary that encapsulates the primary ideas, highlighting the relationships and correlations between the identified concepts.
+   - Ensure that the summary is coherent, maintaining a logical flow that reflects the structure of the original text.
+   - Aim for a summary length of approximately [insert desired length, e.g., 15-20%] of the original text length.
+4. Output Format:
+   - Present the summary in a clear, structured format.
+   - Use bullet points or numbered lists where appropriate to delineate key concepts and their relationships.
+   - Include a brief conclusion that synthesizes the overall message of the text.
+
+Example Output:
+1. Main Themes: [List the main themes identified]
+2. Key Concepts and Relationships:
+   - Concept A: [Description and its correlation with Concept B]
+   - Concept B: [Description and its correlation with Concept C]
+   - ...
+3. Summary: [Concise summary capturing the essence of the text]
+4. Conclusion: [Brief synthesis of the overall message]
+
+Note: Ensure that the summary is free from any direct quotations from the original text and is articulated in your own words to maintain originality and clarity.

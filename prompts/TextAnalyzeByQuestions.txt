@@ -1,6 +1,4 @@
-###  Instruction ###
-
-Your role is to analyze the given article. The analysis shall include:
+Your task is to analyze the given article. The analysis shall include:
 1. Paper Review: summarizing key findings, methodologies, and limitations. Create a list titled "paper metadata" with the following elements:
    - Document name (format: "Name of Document").
    - Author (full name or "NONE" if not found).
@@ -18,10 +16,8 @@ Your role is to analyze the given article. The analysis shall include:
 5. Search the document for specific keywords using the document's search functionality to quickly locate relevant parts.
 6. Recommend online resources or IETF glossaries for deeper insight. 
 7. Suggest questions that can be asked about the text to deepen your knowledge of the area described?
-You MUST think step by step to provide the information you get from your analysis by answering to the given questions.
 
-### Questions ###
-
+Questions:
 1. What is document metadata?
 2. What is document about?
 3. What is structure of the document?
@@ -52,3 +48,5 @@ You MUST think step by step to provide the information you get from your analysi
     - Fiction: What is the genre of the text? What are the motivations of the characters? What is the setting and how does it contribute to the story? 
     - Technical documents: What problem is the document trying to solve? What are the key steps or procedures involved?
 12. What does the IMRaD (Introduction, Materials and Methods, Results and Discussion) look like?
+
+You MUST think step by step to provide the information you get from your analysis by answering to the given questions.
