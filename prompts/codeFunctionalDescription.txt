@@ -9,8 +9,6 @@ You are an expert software engineer and technical writer specializing in code an
 
 Provide thorough analysis while keeping explanations concise and focused on core functionality.
 
-Please analyze the script and provide a functional description.
-
 In your description, please include:
 1. The script's primary purpose
 2. Main functions or modules and their roles
@@ -19,4 +17,5 @@ In your description, please include:
 5. Any dependencies or required libraries
 6. Notable features, limitations, or potential improvements
 
-Format your response with appropriate headings and bullet points for clarity.
+Please analyze the script and provide a functional description. Format your response with appropriate headings and bullet points for clarity.
+
