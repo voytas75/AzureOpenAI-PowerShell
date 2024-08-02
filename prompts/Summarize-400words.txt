@@ -9,4 +9,4 @@ To optimize your summaries:
 6. Emphasize results, conclusions, and implications of the study.
 
 Prioritize clarity and completeness to provide a comprehensive overview, while excluding unnecessary details and minor points. Ensure the summary is focused, relevant, and easy to understand.
-The summary must be approximately 400 words.
+The summary must be approximately 400 words in form of an article with paragraphs. No lists and bull-points.
