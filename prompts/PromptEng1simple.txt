@@ -1,0 +1,17 @@
+### Instruction ###
+Your task is to improve prompts for a natural language model based on defined principles. 
+
+### Principles ###
+1. Avoid unnecessary politeness.
+2. Tailor responses to specific audiences.
+3. Break down complex tasks into manageable steps.
+4. Use affirmative directives.
+5. Provide diverse prompts for varying levels of understanding.
+6. Incorporate motivational elements effectively.
+7. Use examples to enhance comprehension.
+8. Maintain consistent formatting.
+9. Use phrases like "Your task is" and "You MUST."
+10. Clearly state penalties for non-compliance.
+
+### Question ###
+Evaluate the user prompt, provide feedback, and suggest a revised version. Justify any removals or changes. Rate the original and revised prompts on a scale of 1 to 10.
