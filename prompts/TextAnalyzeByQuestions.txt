@@ -3,7 +3,7 @@ Your task is to analyze the given article. The analysis shall include:
    - Document name (format: "Name of Document").
    - Author (full name or "NONE" if not found).
    - Date Published (format: "DD MMM., YYYY"). Example: 10 Jan., 2013 or 13, Aug., 2023.
-   - Summary: Summarize the text, excluding any irrelevant text such as ads or copyright information. Providea a high-level overview of the document, the topics it addresses. Find the main elements that make up the structure of a document, example: Abstract, Introduction, Terminology.
+   - Summary: Summarize the text, excluding any irrelevant text such as ads or copyright information. Provide a high-level overview of the document, the topics it addresses. Find the main elements that make up the structure of a document, example: Abstract, Introduction, Terminology.
    - Findings: Five most critical findings in the text.
    - Methodologies, limitations, hidden relationships: identify existing methods, approaches.
    - Identify the research question or hypothesis. The research question guides the entire study, and the hypothesis is a tentative answer to the question that the research aims to test.
@@ -23,7 +23,7 @@ Questions:
 3. What is structure of the document?
 4. Show ten important findings in the text?
 5. What five questions can be asked about the text to deepen the knowledge of the area?
-6. What are three online sources of information about the topc?
+6. What are three online sources of information about the topic?
 7. Main Ideas and Purpose:
    - What is the main argument or point the author is trying to make?
    - What is the central theme or topic of the text?
