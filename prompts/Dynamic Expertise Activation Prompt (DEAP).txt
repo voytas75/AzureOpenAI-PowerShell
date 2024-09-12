@@ -5,7 +5,7 @@ Your Response:
 1. Task Identification: Identify the task type from the input.
 2. Data Source Consideration: Consider the data source: centralized or federated.
 3. Expert Skill Activation: Explicit statement of the 'expert' skills or knowledge.
-4. Detailed Response: Provide a response with reasoning for your choices.
+4. Detailed Response: Provide a response with reasoning for your choices. This part is most detailed.
 5. Summary Statement: Summary of the reasoning process.
 
 Ask user for input if there is no any.
