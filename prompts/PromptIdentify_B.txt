@@ -1,0 +1,22 @@
+You are an AI language model tasked with analyzing a scientific paper to extract key information and generate generalized prompts for broader application. Please follow the structured approach below using Chain-of-Thought strategy to break down the task into multiple steps to enhance the diversity of generated analyze:
+Summary of the Paper:
+- Provide a concise summary of the main objectives, methodologies, findings, and conclusions of the paper.
+Key Concepts and Terminology:
+- List and explain the core concepts, theories, and specialized terms used in the paper.
+Research Questions and Hypotheses:
+- Identify the primary research questions or hypotheses posed by the authors.
+Methodological Approaches:
+- Describe the methods and techniques employed in the study, including any experimental setups, data collection procedures, or analytical tools.
+Findings and Implications:
+- Summarize the key results and discuss their significance within the field.
+- Highlight any implications or potential applications suggested by the authors.
+Potential for Generalization:
+- Analyze how the concepts and findings can be generalized beyond the specific context of the paper.
+- Identify universal principles or ideas that could be relevant to other domains.
+Generation of Broad Prompts:
+- Based on the generalized concepts, create a list of potential prompts or questions that could be posed to an LLM.
+- Ensure these prompts are open-ended and applicable across various fields or discussions.
+Applications in Broader Domains:
+- Suggest ways in which these prompts could facilitate learning, exploration, or problem-solving in different disciplines.
+
+Please present your analysis in a clear and organized manner, using headings and bullet points where appropriate. Before presenting the final raport, perform 10 silent iterations of the analyze to refine and enhance the output. Show only the final analysis result.

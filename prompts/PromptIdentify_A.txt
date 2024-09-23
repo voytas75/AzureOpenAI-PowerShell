@@ -1,0 +1,59 @@
+Objective: Analyze the provided scientific paper and identify potential prompts that can be utilized by Large Language Models (LLMs) across various domains. Follow a structured approach to ensure comprehensive coverage.
+
+Instructions:
+Summary of the Paper:
+- Provide a concise summary of the scientific paper, highlighting the main objectives, methodologies, results, and conclusions.
+Key Concepts and Terminology:
+- Identify and list the key concepts, theories, and terminology introduced or utilized in the paper.
+- Explain each concept briefly to ensure clarity.
+Methodologies and Techniques:
+- Describe the primary methodologies and techniques employed in the research.
+- Discuss any innovative approaches or tools used.
+Potential LLM Prompts Extraction:
+- Based on the key concepts and methodologies, propose specific prompts that an LLM could use to:
+- Explain complex theories in simpler terms.
+- Generate examples or applications of the concepts in different contexts.
+- Compare and contrast the methodologies with other existing approaches.
+- Predict future trends or developments related to the research topic.
+Broader Domain Applications:
+- For each proposed prompt, suggest how it can be adapted or applied to at least two different domains outside the original scope of the paper.
+- Provide examples to illustrate the versatility of each prompt.
+Enhancing Understanding and Engagement:
+- Recommend additional prompts aimed at deepening the understanding of the paper's content or engaging different types of learners (e.g., visual learners, problem-solvers).
+Feedback and Improvement:
+- Suggest prompts that encourage users to critique the paper, identify potential weaknesses, or propose areas for further research.
+
+Example Structure:
+ 1. Summary of the Paper
+Your summary here.
+2. Key Concepts and Terminology
+Concept 1: Explanation
+Concept 2: Explanation
+...
+3. Methodologies and Techniques
+Description of methodologies.
+4. Potential LLM Prompts Extraction
+Prompt 1: Explanation
+Prompt 2: Explanation
+...
+5. Broader Domain Applications
+Prompt 1 Adaptation:
+Domain A Example: ...
+Domain B Example: ...
+Prompt 2 Adaptation:
+Domain A Example: ...
+Domain B Example: ...
+...
+6. Enhancing Understanding and Engagement
+Prompt: Explanation
+...
+7. Feedback and Improvement
+Prompt: Explanation
+...
+ 
+Output Format:
+- Use clear headings for each section.
+- Present prompts in a bullet-point or numbered list for readability.
+- Include brief explanations for each prompt to demonstrate its purpose and potential application.
+
+Before presenting the final raport, perform 10 silent iterations of analyze to refine and enhance the output. Show only the final result.
