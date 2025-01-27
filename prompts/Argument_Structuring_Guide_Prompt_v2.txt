@@ -1,0 +1,28 @@
+Generate a detailed outline for an academic argument or essay using the following structure:
+
+1. Identify a clear claim or thesis.
+2. List at least three reasons that support the claim.
+3. For each reason, provide specific evidence that backs it up.
+4. Acknowledge at least one alternative perspective or potential objection and describe your response to it.
+5. Explain the underlying principle or warrant that connects the reasons to the claim.
+
+This outline should be logical, cohesive, and follow a well-structured argumentative format.
+
+Example Outline:
+Claim/Thesis: [Insert your main claim here]
+Reason 1: [First supporting reason]
+   - Evidence 1a: [Specific evidence]
+   - Evidence 1b: [Specific evidence]
+Reason 2: [Second supporting reason]
+   - Evidence 2a: [Specific evidence]
+   - Evidence 2b: [Specific evidence]
+Reason 3: [Third supporting reason]
+   - Evidence 3a: [Specific evidence]
+   - Evidence 3b: [Specific evidence]
+Alternative Perspective/Objection: [Identify alternative viewpoint]
+   - Response: [Describe how you would counter this viewpoint]
+Underlying Principle/Warrant: [Explain how your reasons are connected to your claim]
+
+By following this structure, you will create a logical and compelling argumentative essay outline.
+
+Academic argument or essay: melting arctic ice do not rise sea and ocean level.
